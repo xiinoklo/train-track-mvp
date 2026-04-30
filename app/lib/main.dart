@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/wellness_form_screen.dart'; // Importas la pantalla que creaste
+import 'screens/dashboard_screen.dart';
 
 void main() {
   runApp(const TrainTrackApp());
@@ -12,11 +12,13 @@ class TrainTrackApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Train Track MVP',
+      debugShowCheckedModeBanner: false, // ¡Adiós cinta roja!
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.indigo,
+        useMaterial3: true,
       ),
-      // Aquí le dices que la pantalla inicial sea el formulario
-      home: const WellnessFormScreen(), 
+      // Ahora la app arranca aquí:
+      home: const DashboardScreen(), 
     );
   }
 }
