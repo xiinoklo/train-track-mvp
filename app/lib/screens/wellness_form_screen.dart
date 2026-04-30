@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import '../utils/load_engine.dart'; // Importamos la l贸gica del motor de carga
-import 'workout_screen.dart';     // Para la navegaci贸n a la rutina
+import '../services/api_service.dart';
+import 'workout_screen.dart';
 
 class WellnessFormScreen extends StatefulWidget {
   const WellnessFormScreen({Key? key}) : super(key: key);
 
   @override
-  _WellnessFormScreenState createState() => _WellnessFormScreenState();
+  State<WellnessFormScreen> createState() => _WellnessFormScreenState();
 }
 
 class _WellnessFormScreenState extends State<WellnessFormScreen> {
-  // Estado inicial de las 5 variables de bienestar requeridas por el MVP
   double sleep = 3;
   double pain = 1;
   double fatigue = 3;
@@ -20,9 +19,12 @@ class _WellnessFormScreenState extends State<WellnessFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100], // Fondo sutil para resaltar las tarjetas[cite: 1]
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Registro de Bienestar', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Registro de Bienestar',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
@@ -34,57 +36,120 @@ class _WellnessFormScreenState extends State<WellnessFormScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'Eval煤a tu estado actual (1 al 5)',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+              'Evalúa tu estado actual (1 al 5)',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
               textAlign: TextAlign.center,
             ),
+
             const SizedBox(height: 20),
-            
-            // Generaci贸n de tarjetas para cada indicador solicitado[cite: 1]
-            _buildMetricCard('馃槾 Calidad de Sue帽o', sleep, (val) => setState(() => sleep = val), false),
-            _buildMetricCard('馃 Nivel de Dolor', pain, (val) => setState(() => pain = val), true),
-            _buildMetricCard('馃攱 Nivel de Fatiga', fatigue, (val) => setState(() => fatigue = val), true),
-            _buildMetricCard('馃く Nivel de Estr茅s', stress, (val) => setState(() => stress = val), true),
-            _buildMetricCard('馃槉 Estado de 脕nimo', mood, (val) => setState(() => mood = val), false),
+
+            _buildMetricCard(
+              'Calidad de Sue?o',
+              sleep,
+              (val) => setState(() => sleep = val),
+              false,
+            ),
+            _buildMetricCard(
+              'Nivel de Dolor',
+              pain,
+              (val) => setState(() => pain = val),
+              true,
+            ),
+            _buildMetricCard(
+              'Nivel de Fatiga',
+              fatigue,
+              (val) => setState(() => fatigue = val),
+              true,
+            ),
+            _buildMetricCard(
+              'Nivel de Estrés',
+              stress,
+              (val) => setState(() => stress = val),
+              true,
+            ),
+            _buildMetricCard(
+              'Estado de ánimo',
+              mood,
+              (val) => setState(() => mood = val),
+              false,
+            ),
 
             const SizedBox(height: 30),
-            
-            // Bot贸n de acci贸n principal para generar la sesi贸n ajustada[cite: 1]
+
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.indigo,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              onPressed: () {
-                // 1. El motor calcula el factor de ajuste basado en los datos actuales[cite: 1]
-                double factorCalculado = LoadEngine.calculateLoadFactor(
-                  sleep: sleep,
-                  pain: pain,
-                  fatigue: fatigue,
-                  stress: stress,
-                  mood: mood,
-                );
-
-                // 2. Navegaci贸n a la rutina enviando el factor de carga[cite: 1]
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => WorkoutScreen(loadFactor: factorCalculado),
+              onPressed: () async {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Analizando bienestar... Generando rutina ajustada.',
+                    ),
                   ),
                 );
 
-                // Feedback visual r谩pido[cite: 1]
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Analizando bienestar... Generando rutina ajustada.')),
-                );
+                try {
+                  final data = await ApiService.generateWorkout(
+                    sleep: sleep.round(),
+                    pain: pain.round(),
+                    fatigue: fatigue.round(),
+                    stress: stress.round(),
+                    mood: mood.round(),
+                  );
+
+                  final double factorCalculado =
+    (data['loadFactor'] as num).toDouble();
+
+final List<Map<String, dynamic>> exercises =
+    (data['exercises'] as List)
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+
+if (!mounted) return;
+
+Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(
+    builder: (context) => WorkoutScreen(
+      loadFactor: factorCalculado,
+      recommendation: data['recommendation'],
+      message: data['message'],
+      exercises: exercises,
+    ),
+  ),
+);
+                } catch (e) {
+                  if (!mounted) return;
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Error al conectar con el backend. Revisa que el servidor esté encendido.',
+                      ),
+                    ),
+                  );
+                }
               },
               child: const Text(
-                'GENERAR ENTRENAMIENTO', 
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.1)
+                'GENERAR ENTRENAMIENTO',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.1,
+                ),
               ),
             ),
+
             const SizedBox(height: 20),
           ],
         ),
@@ -92,12 +157,18 @@ class _WellnessFormScreenState extends State<WellnessFormScreen> {
     );
   }
 
-  // Widget modular para las tarjetas de m茅tricas (RNF-01: Usabilidad)[cite: 1]
-  Widget _buildMetricCard(String title, double value, Function(double) onChanged, bool inverseColor) {
+  Widget _buildMetricCard(
+    String title,
+    double value,
+    Function(double) onChanged,
+    bool inverseColor,
+  ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -106,10 +177,20 @@ class _WellnessFormScreenState extends State<WellnessFormScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 Text(
-                  value.round().toString(), 
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  value.round().toString(),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.indigo,
+                  ),
                 ),
               ],
             ),
@@ -128,15 +209,12 @@ class _WellnessFormScreenState extends State<WellnessFormScreen> {
     );
   }
 
-  // L贸gica de color din谩mica para mejorar la comprensi贸n visual (UX)[cite: 1]
   Color _getDynamicColor(double value, bool inverse) {
     if (inverse) {
-      // Para Dolor/Fatiga/Estr茅s: 1 es verde (bueno), 5 es rojo (malo)[cite: 1]
       if (value <= 2) return Colors.green;
       if (value == 3) return Colors.orange;
       return Colors.red;
     } else {
-      // Para Sue帽o/脕nimo: 1 es rojo (malo), 5 es verde (bueno)[cite: 1]
       if (value >= 4) return Colors.green;
       if (value == 3) return Colors.orange;
       return Colors.red;
