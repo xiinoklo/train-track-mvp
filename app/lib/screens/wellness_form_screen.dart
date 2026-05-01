@@ -90,56 +90,68 @@ class _WellnessFormScreenState extends State<WellnessFormScreen> {
                 ),
               ),
               onPressed: () async {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Analizando bienestar... Generando rutina ajustada.',
-                    ),
-                  ),
-                );
-
-                try {
-                  final data = await ApiService.generateWorkout(
-                    sleep: sleep.round(),
-                    pain: pain.round(),
-                    fatigue: fatigue.round(),
-                    stress: stress.round(),
-                    mood: mood.round(),
-                  );
-
-                  final double factorCalculado =
-    (data['loadFactor'] as num).toDouble();
-
-final List<Map<String, dynamic>> exercises =
-    (data['exercises'] as List)
-        .map((item) => Map<String, dynamic>.from(item))
-        .toList();
-
-if (!mounted) return;
-
-Navigator.pushReplacement(
-  context,
-  MaterialPageRoute(
-    builder: (context) => WorkoutScreen(
-      loadFactor: factorCalculado,
-      recommendation: data['recommendation'],
-      message: data['message'],
-      exercises: exercises,
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Guardando bienestar... Generando rutina ajustada.'),
     ),
-  ),
-);
-                } catch (e) {
-                  if (!mounted) return;
+  );
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Error al conectar con el backend. Revisa que el servidor est¨¦ encendido.',
-                      ),
-                    ),
-                  );
-                }
-              },
+  try {
+    final int sleepValue = sleep.round();
+    final int painValue = pain.round();
+    final int fatigueValue = fatigue.round();
+    final int stressValue = stress.round();
+    final int moodValue = mood.round();
+
+    await ApiService.saveWellness(
+      sleep: sleepValue,
+      pain: painValue,
+      fatigue: fatigueValue,
+      stress: stressValue,
+      mood: moodValue,
+    );
+
+    final data = await ApiService.generateWorkout(
+      sleep: sleepValue,
+      pain: painValue,
+      fatigue: fatigueValue,
+      stress: stressValue,
+      mood: moodValue,
+    );
+
+    final double factorCalculado =
+        (data['loadFactor'] as num).toDouble();
+
+    final List<Map<String, dynamic>> exercises =
+        (data['exercises'] as List)
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList();
+
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WorkoutScreen(
+          loadFactor: factorCalculado,
+          recommendation: data['recommendation'],
+          message: data['message'],
+          exercises: exercises,
+        ),
+      ),
+    );
+  } catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Error al conectar con el backend. Revisa que el servidor est¨¦ encendido.',
+        ),
+      ),
+    );
+  }
+},
               child: const Text(
                 'GENERAR ENTRENAMIENTO',
                 style: TextStyle(
