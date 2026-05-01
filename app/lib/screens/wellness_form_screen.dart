@@ -9,227 +9,469 @@ class WellnessFormScreen extends StatefulWidget {
   State<WellnessFormScreen> createState() => _WellnessFormScreenState();
 }
 
-class _WellnessFormScreenState extends State<WellnessFormScreen> {
+class _WellnessFormScreenState extends State<WellnessFormScreen>
+    with SingleTickerProviderStateMixin {
   double sleep = 3;
   double pain = 1;
   double fatigue = 3;
   double stress = 3;
   double mood = 3;
 
+  bool isLoading = false;
+
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  static const Color primaryColor = Color(0xFF1E3A8A);
+  static const Color secondaryColor = Color(0xFF22C55E);
+  static const Color backgroundColor = Color(0xFFF8FAFC);
+  static const Color darkText = Color(0xFF0F172A);
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.08),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOut,
+      ),
+    );
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _generateWorkout() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final int sleepValue = sleep.round();
+      final int painValue = pain.round();
+      final int fatigueValue = fatigue.round();
+      final int stressValue = stress.round();
+      final int moodValue = mood.round();
+
+      await ApiService.saveWellness(
+        sleep: sleepValue,
+        pain: painValue,
+        fatigue: fatigueValue,
+        stress: stressValue,
+        mood: moodValue,
+      );
+
+      final data = await ApiService.generateWorkout(
+        sleep: sleepValue,
+        pain: painValue,
+        fatigue: fatigueValue,
+        stress: stressValue,
+        mood: moodValue,
+      );
+
+      final double factorCalculado =
+          (data['loadFactor'] as num).toDouble();
+
+      final List<Map<String, dynamic>> exercises =
+          (data['exercises'] as List)
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList();
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WorkoutScreen(
+            loadFactor: factorCalculado,
+            recommendation: data['recommendation'],
+            message: data['message'],
+            exercises: exercises,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Error al conectar con el backend. Revisa que el servidor est¨¦ encendido.',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text(
-          'Registro de Bienestar',
-          style: TextStyle(fontWeight: FontWeight.bold),
+      backgroundColor: backgroundColor,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF1E3A8A),
+              Color(0xFF2563EB),
+              Color(0xFFF8FAFC),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            stops: [0.0, 0.34, 0.34],
+          ),
         ),
-        centerTitle: true,
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
-        elevation: 0,
+        child: SafeArea(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: Column(
+                children: [
+                  _buildHeader(context),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildIntroCard(),
+
+                          const SizedBox(height: 18),
+
+                          _buildMetricCard(
+                            title: 'Calidad de sue?o',
+                            subtitle: '1 = muy mala ¡¤ 5 = excelente',
+                            icon: Icons.bedtime_outlined,
+                            value: sleep,
+                            inverseColor: false,
+                            onChanged: (val) => setState(() => sleep = val),
+                          ),
+
+                          _buildMetricCard(
+                            title: 'Nivel de dolor',
+                            subtitle: '1 = sin dolor ¡¤ 5 = dolor alto',
+                            icon: Icons.healing_outlined,
+                            value: pain,
+                            inverseColor: true,
+                            onChanged: (val) => setState(() => pain = val),
+                          ),
+
+                          _buildMetricCard(
+                            title: 'Nivel de fatiga',
+                            subtitle: '1 = descansado ¡¤ 5 = agotado',
+                            icon: Icons.battery_2_bar_outlined,
+                            value: fatigue,
+                            inverseColor: true,
+                            onChanged: (val) => setState(() => fatigue = val),
+                          ),
+
+                          _buildMetricCard(
+                            title: 'Nivel de estr¨¦s',
+                            subtitle: '1 = tranquilo ¡¤ 5 = muy estresado',
+                            icon: Icons.psychology_alt_outlined,
+                            value: stress,
+                            inverseColor: true,
+                            onChanged: (val) => setState(() => stress = val),
+                          ),
+
+                          _buildMetricCard(
+                            title: 'Estado de ¨¢nimo',
+                            subtitle: '1 = bajo ¡¤ 5 = excelente',
+                            icon: Icons.sentiment_satisfied_alt_outlined,
+                            value: mood,
+                            inverseColor: false,
+                            onChanged: (val) => setState(() => mood = val),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          _buildGenerateButton(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Eval¨²a tu estado actual (1 al 5)',
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 20, 18),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back_rounded),
+            color: Colors.white,
+          ),
+          const SizedBox(width: 4),
+          const Expanded(
+            child: Text(
+              'Registro de Bienestar',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 20),
-
-            _buildMetricCard(
-              'Calidad de Sue?o',
-              sleep,
-              (val) => setState(() => sleep = val),
-              false,
-            ),
-            _buildMetricCard(
-              'Nivel de Dolor',
-              pain,
-              (val) => setState(() => pain = val),
-              true,
-            ),
-            _buildMetricCard(
-              'Nivel de Fatiga',
-              fatigue,
-              (val) => setState(() => fatigue = val),
-              true,
-            ),
-            _buildMetricCard(
-              'Nivel de Estr¨¦s',
-              stress,
-              (val) => setState(() => stress = val),
-              true,
-            ),
-            _buildMetricCard(
-              'Estado de ¨¢nimo',
-              mood,
-              (val) => setState(() => mood = val),
-              false,
-            ),
-
-            const SizedBox(height: 30),
-
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.indigo,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onPressed: () async {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Guardando bienestar... Generando rutina ajustada.'),
-    ),
-  );
-
-  try {
-    final int sleepValue = sleep.round();
-    final int painValue = pain.round();
-    final int fatigueValue = fatigue.round();
-    final int stressValue = stress.round();
-    final int moodValue = mood.round();
-
-    await ApiService.saveWellness(
-      sleep: sleepValue,
-      pain: painValue,
-      fatigue: fatigueValue,
-      stress: stressValue,
-      mood: moodValue,
-    );
-
-    final data = await ApiService.generateWorkout(
-      sleep: sleepValue,
-      pain: painValue,
-      fatigue: fatigueValue,
-      stress: stressValue,
-      mood: moodValue,
-    );
-
-    final double factorCalculado =
-        (data['loadFactor'] as num).toDouble();
-
-    final List<Map<String, dynamic>> exercises =
-        (data['exercises'] as List)
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList();
-
-    if (!mounted) return;
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => WorkoutScreen(
-          loadFactor: factorCalculado,
-          recommendation: data['recommendation'],
-          message: data['message'],
-          exercises: exercises,
-        ),
-      ),
-    );
-  } catch (e) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Error al conectar con el backend. Revisa que el servidor est¨¦ encendido.',
-        ),
-      ),
-    );
-  }
-},
-              child: const Text(
-                'GENERAR ENTRENAMIENTO',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.1,
-                ),
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: -0.4,
               ),
             ),
-
-            const SizedBox(height: 20),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildMetricCard(
-    String title,
-    double value,
-    Function(double) onChanged,
-    bool inverseColor,
-  ) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
+  Widget _buildIntroCard() {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: secondaryColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Icon(
+              Icons.monitor_heart,
+              color: secondaryColor,
+              size: 34,
+            ),
+          ),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                  'Eval¨²a tu estado actual',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: darkText,
                   ),
                 ),
+                SizedBox(height: 6),
                 Text(
-                  value.round().toString(),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.indigo,
+                  'Usa una escala del 1 al 5 para ajustar tu entrenamiento de hoy.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.35,
+                    color: Colors.grey,
                   ),
                 ),
               ],
             ),
-            Slider(
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required double value,
+    required bool inverseColor,
+    required Function(double) onChanged,
+  }) {
+    final Color metricColor = _getDynamicColor(value, inverseColor);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: metricColor.withOpacity(0.18),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.045),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(11),
+                decoration: BoxDecoration(
+                  color: metricColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  icon,
+                  color: metricColor,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: darkText,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 42,
+                height: 42,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: metricColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Text(
+                  value.round().toString(),
+                  style: TextStyle(
+                    color: metricColor,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: metricColor,
+              inactiveTrackColor: const Color(0xFFE2E8F0),
+              thumbColor: metricColor,
+              overlayColor: metricColor.withOpacity(0.15),
+              trackHeight: 5,
+              thumbShape: const RoundSliderThumbShape(
+                enabledThumbRadius: 11,
+              ),
+            ),
+            child: Slider(
               value: value,
               min: 1,
               max: 5,
               divisions: 4,
-              activeColor: _getDynamicColor(value, inverseColor),
-              inactiveColor: Colors.grey[300],
+              label: value.round().toString(),
               onChanged: onChanged,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildGenerateButton() {
+    return ElevatedButton(
+      onPressed: isLoading ? null : _generateWorkout,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: Colors.grey[400],
+        padding: const EdgeInsets.symmetric(vertical: 19),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        elevation: 0,
+      ),
+      child: isLoading
+          ? const SizedBox(
+              height: 22,
+              width: 22,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: Colors.white,
+              ),
+            )
+          : const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.auto_awesome_rounded),
+                SizedBox(width: 10),
+                Text(
+                  'GENERAR ENTRENAMIENTO',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
     );
   }
 
   Color _getDynamicColor(double value, bool inverse) {
     if (inverse) {
-      if (value <= 2) return Colors.green;
-      if (value == 3) return Colors.orange;
-      return Colors.red;
+      if (value <= 2) return const Color(0xFF22C55E);
+      if (value == 3) return const Color(0xFFF59E0B);
+      return const Color(0xFFEF4444);
     } else {
-      if (value >= 4) return Colors.green;
-      if (value == 3) return Colors.orange;
-      return Colors.red;
+      if (value >= 4) return const Color(0xFF22C55E);
+      if (value == 3) return const Color(0xFFF59E0B);
+      return const Color(0xFFEF4444);
     }
   }
 }
