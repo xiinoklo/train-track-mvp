@@ -3,6 +3,7 @@ const cors = require("cors");
 
 const exercises = require("./data/exercises");
 const { calculateLoadFactor } = require("./services/loadEngine");
+const exerciseRoutes = require("./routes/exerciseRoutes");
 
 const app = express();
 
@@ -20,12 +21,7 @@ app.get("/health", (req, res) => {
   });
 });
 
-app.get("/api/exercises", (req, res) => {
-  res.json({
-    total: exercises.length,
-    exercises: exercises
-  });
-});
+app.use("/api/exercises", exerciseRoutes);
 
 app.post("/api/workouts/generate", (req, res) => {
   const { sleep, pain, fatigue, stress, mood } = req.body;
