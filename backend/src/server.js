@@ -1,14 +1,15 @@
 const express = require("express");
 const cors = require("cors");
 
+const exercises = require("./data/exercises");
+const { calculateLoadFactor } = require("./services/loadEngine");
+
 const app = express();
 
 const PORT = 3000;
 
 app.use(cors());
 app.use(express.json());
-
-const exercises = require("./data/exercises");
 
 const wellnessEntries = [];
 
@@ -25,31 +26,6 @@ app.get("/api/exercises", (req, res) => {
     exercises: exercises
   });
 });
-
-function calculateLoadFactor({ sleep, pain, fatigue, stress, mood }) {
-  if (pain >= 4 || fatigue >= 5) {
-    return {
-      factor: 0,
-      label: "Descanso recomendado",
-      message:
-        "Hoy se recomienda descanso o movilidad suave por dolor o fatiga alta."
-    };
-  }
-
-  if (sleep <= 2 || stress >= 4 || fatigue >= 4 || mood <= 2) {
-    return {
-      factor: 0.5,
-      label: "Sesión reducida",
-      message: "Hoy se recomienda reducir volumen e intensidad."
-    };
-  }
-
-  return {
-    factor: 1,
-    label: "Sesión normal",
-    message: "Estado favorable para realizar la sesión planificada."
-  };
-}
 
 app.post("/api/workouts/generate", (req, res) => {
   const { sleep, pain, fatigue, stress, mood } = req.body;
