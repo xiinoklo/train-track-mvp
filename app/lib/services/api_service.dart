@@ -97,4 +97,16 @@ class ApiService {
 
     return jsonDecode(response.body);
   }
+
+  static Future<Map<String, dynamic>> getWellnessHistory() async {
+    final url = Uri.parse('$baseUrl/api/wellness');
+
+    final response = await http.get(url);
+
+    if (response.statusCode != 200) {
+      throw Exception('Error al obtener historial de bienestar');
+    }
+
+    return jsonDecode(response.body);
+  }
 }
