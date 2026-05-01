@@ -15,7 +15,8 @@ const exercises = [
     level: "principiante",
     muscleGroup: "pecho",
     description: "Ejercicio de empuje horizontal para tren superior.",
-    instructions: "Mantén la espalda estable, baja controlado y empuja sin bloquear los codos.",
+    instructions:
+      "Mantén la espalda estable, baja controlado y empuja sin bloquear los codos.",
     videoUrl: "https://www.youtube.com/watch?v=rT7DgCr-3pg",
     isActive: true
   },
@@ -25,7 +26,8 @@ const exercises = [
     level: "principiante",
     muscleGroup: "espalda",
     description: "Ejercicio de tracción para espalda.",
-    instructions: "Lleva los codos hacia atrás y evita inclinar demasiado el torso.",
+    instructions:
+      "Lleva los codos hacia atrás y evita inclinar demasiado el torso.",
     videoUrl: "https://www.youtube.com/watch?v=GZbfZ033f74",
     isActive: true
   },
@@ -35,11 +37,13 @@ const exercises = [
     level: "principiante",
     muscleGroup: "piernas",
     description: "Ejercicio básico para tren inferior.",
-    instructions: "Mantén el pecho arriba, baja controlado y empuja desde los talones.",
+    instructions:
+      "Mantén el pecho arriba, baja controlado y empuja desde los talones.",
     videoUrl: "https://www.youtube.com/watch?v=MeIiIdhvXT4",
     isActive: true
   }
 ];
+
 const wellnessEntries = [];
 
 app.get("/health", (req, res) => {
@@ -49,12 +53,20 @@ app.get("/health", (req, res) => {
   });
 });
 
+app.get("/api/exercises", (req, res) => {
+  res.json({
+    total: exercises.length,
+    exercises: exercises
+  });
+});
+
 function calculateLoadFactor({ sleep, pain, fatigue, stress, mood }) {
   if (pain >= 4 || fatigue >= 5) {
     return {
       factor: 0,
       label: "Descanso recomendado",
-      message: "Hoy se recomienda descanso o movilidad suave por dolor o fatiga alta."
+      message:
+        "Hoy se recomienda descanso o movilidad suave por dolor o fatiga alta."
     };
   }
 
@@ -113,12 +125,6 @@ app.post("/api/workouts/generate", (req, res) => {
   });
 });
 
-app.get("/api/exercises", (req, res) => {
-  res.json({
-    total: exercises.length,
-    exercises: exercises
-  });
-});
 app.post("/api/workouts/rpe", (req, res) => {
   const { rpe } = req.body;
 
@@ -135,16 +141,26 @@ app.post("/api/workouts/rpe", (req, res) => {
     rpe: rpe
   });
 });
+
 app.post("/api/wellness", (req, res) => {
   const { sleep, pain, fatigue, stress, mood } = req.body;
 
   if (
-    !sleep || !pain || !fatigue || !stress || !mood ||
-    sleep < 1 || sleep > 5 ||
-    pain < 1 || pain > 5 ||
-    fatigue < 1 || fatigue > 5 ||
-    stress < 1 || stress > 5 ||
-    mood < 1 || mood > 5
+    !sleep ||
+    !pain ||
+    !fatigue ||
+    !stress ||
+    !mood ||
+    sleep < 1 ||
+    sleep > 5 ||
+    pain < 1 ||
+    pain > 5 ||
+    fatigue < 1 ||
+    fatigue > 5 ||
+    stress < 1 ||
+    stress > 5 ||
+    mood < 1 ||
+    mood > 5
   ) {
     return res.status(400).json({
       message: "Todos los valores de bienestar deben estar entre 1 y 5"
@@ -168,6 +184,13 @@ app.post("/api/wellness", (req, res) => {
   res.status(201).json({
     message: "Bienestar registrado correctamente",
     wellness: wellnessEntry
+  });
+});
+
+app.get("/api/wellness", (req, res) => {
+  res.json({
+    total: wellnessEntries.length,
+    wellnessEntries: wellnessEntries
   });
 });
 
