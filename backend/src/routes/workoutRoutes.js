@@ -28,10 +28,12 @@ router.post("/generate", protect, async (req, res) => {
     const dbExercises = await Exercise.find({ isActive: true });
     
     workoutExercises = dbExercises.map((exercise) => ({
-      exerciseId: exercise._id, // Ahora usamos el _id real de Mongo
+      exerciseId: exercise._id,
       name: exercise.name,
       sets: sets,
-      reps: "10-12"
+      reps: "10-12",
+      videoUrl: exercise.videoUrl,
+      instructions: exercise.instructions
     }));
   }
 
