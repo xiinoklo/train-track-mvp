@@ -1,5 +1,4 @@
 const express = require("express");
-<<<<<<< HEAD
 const Exercise = require("../models/Exercise");
 
 const router = express.Router();
@@ -43,17 +42,6 @@ router.put("/:id", async (req, res) => {
   } catch (error) {
     res.status(400).json({ message: "Error al actualizar", error: error.message });
   }
-=======
-const exercises = require("../data/exercises");
-
-const router = express.Router();
-
-router.get("/", (req, res) => {
-  res.json({
-    total: exercises.length,
-    exercises: exercises
-  });
->>>>>>> 576b4005b62eace3620becba8b991738cb1e630f
 });
 
 module.exports = router;

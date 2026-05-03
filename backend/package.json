@@ -16,7 +16,6 @@
   "author": "Grupo 7",
   "license": "ISC",
   "dependencies": {
-<<<<<<< HEAD
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -26,18 +25,8 @@
     "mongodb": "^7.2.0",
     "mongoose": "^8.5.1",
     "nodemailer": "^8.0.7"
-=======
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "mongoose": "^8.5.1"
->>>>>>> 576b4005b62eace3620becba8b991738cb1e630f
   },
   "devDependencies": {
     "nodemon": "^3.1.4"
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 576b4005b62eace3620becba8b991738cb1e630f
