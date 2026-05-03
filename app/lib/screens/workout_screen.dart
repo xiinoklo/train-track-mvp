@@ -3,7 +3,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 
 class WorkoutScreen extends StatefulWidget {
+<<<<<<< HEAD
   final String sessionId;
+=======
+>>>>>>> 576b4005b62eace3620becba8b991738cb1e630f
   final double loadFactor;
   final String recommendation;
   final String message;
@@ -11,7 +14,10 @@ class WorkoutScreen extends StatefulWidget {
 
   const WorkoutScreen({
     Key? key,
+<<<<<<< HEAD
     required this.sessionId,
+=======
+>>>>>>> 576b4005b62eace3620becba8b991738cb1e630f
     required this.loadFactor,
     required this.recommendation,
     required this.message,
@@ -642,9 +648,14 @@ class _WorkoutScreenState extends State<WorkoutScreen>
 
                           try {
                             await ApiService.registerRpe(
+<<<<<<< HEAD
                             sessionId: widget.sessionId, 
                             rpe: rpe.round(),
                           );
+=======
+                              rpe: rpe.round(),
+                            );
+>>>>>>> 576b4005b62eace3620becba8b991738cb1e630f
 
                             if (!mounted) return;
 
