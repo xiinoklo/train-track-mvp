@@ -1,0 +1,19 @@
+# Node
+node_modules/
+backend/node_modules/
+
+# Flutter
+app/.dart_tool/
+app/build/
+app/.packages
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+
+# Environment variables
+.env
+backend/.env
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
