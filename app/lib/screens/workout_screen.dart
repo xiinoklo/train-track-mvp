@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
+import 'dashboard_screen.dart';
 
 class WorkoutScreen extends StatefulWidget {
   final String sessionId;
@@ -617,7 +618,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                           },
                   ),
                   Text(
-                    '1 = muy fácil · 10 = máximo esfuerzo',
+                    '1 = muy fácil | 10 = máximo esfuerzo',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
@@ -642,21 +643,29 @@ class _WorkoutScreenState extends State<WorkoutScreen>
 
                           try {
                             await ApiService.registerRpe(
-                            sessionId: widget.sessionId, 
-                            rpe: rpe.round(),
-                          );
+                              sessionId: widget.sessionId,
+                              rpe: rpe.round(),
+                            );
 
                             if (!mounted) return;
 
                             Navigator.pop(dialogContext);
 
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'RPE registrado en backend: ${rpe.round()}',
-                                ),
+                              const SnackBar(
+                                content: Text('Entrenamiento finalizado con éxito 🏆'),
+                                backgroundColor: Colors.green,
                               ),
                             );
+
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const DashboardScreen(),
+                              ),
+                              (route) => false,
+                            );
+                            
                           } catch (e) {
                             if (!mounted) return;
 
