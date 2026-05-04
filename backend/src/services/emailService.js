@@ -6,7 +6,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const sendVerificationEmail = async (userEmail, code) => {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'TrainTrack <onboarding@resend.dev>', // Resend te da este correo de prueba gratis
+      from: 'TrainTrack <joquin1troncoso@gmail.com>', // Resend te da este correo de prueba gratis
       to: [userEmail],
       subject: 'Código de Verificación - TrainTrack',
       html: `
