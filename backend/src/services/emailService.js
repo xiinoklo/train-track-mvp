@@ -1,19 +1,14 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require('resend');
+
+// Inicializas Resend con tu llave
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendVerificationEmail = async (userEmail, code) => {
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    const mailOptions = {
-      from: `"TrainTrack UXLAB" <${process.env.EMAIL_USER}>`,
-      to: userEmail,
-      subject: "Código de Verificación - TrainTrack",
+    const { data, error } = await resend.emails.send({
+      from: 'TrainTrack <onboarding@resend.dev>', // Resend te da este correo de prueba gratis
+      to: [userEmail],
+      subject: 'Código de Verificación - TrainTrack',
       html: `
         <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
           <h2>¡Bienvenido a TrainTrack!</h2>
@@ -22,13 +17,17 @@ const sendVerificationEmail = async (userEmail, code) => {
           <p>Este código <strong>expirará en 10 minutos</strong>. Si no lo usas, tu registro será eliminado.</p>
         </div>
       `,
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
-    console.log(`[+] Correo OTP enviado a ${userEmail}`);
+    if (error) {
+      console.error("[ERROR] Fallo en la API de Resend:", error);
+      return false;
+    }
+
+    console.log(`[+] Correo OTP enviado a ${userEmail} vía Resend`);
     return true;
   } catch (error) {
-    console.error("[ERROR] Fallo al enviar correo:", error);
+    console.error("[ERROR] Excepción al enviar correo:", error);
     return false;
   }
 };
