@@ -109,7 +109,9 @@ class ApiService {
     return prefs.getString('jwt_token');
   }
 
-  static Future<Map<String, dynamic>?> generateWorkout(Map<String, dynamic> wellnessData) async {
+  static Future<Map<String, dynamic>?> generateWorkout(
+    Map<String, dynamic> wellnessData,
+  ) async {
     final token = await getToken();
 
     if (token == null) {
@@ -130,7 +132,9 @@ class ApiService {
       if (response.statusCode == 201) {
         return jsonDecode(response.body);
       } else {
-        print('[ERROR] Rechazo del servidor: ${response.statusCode} - ${response.body}');
+        print(
+          '[ERROR] Rechazo del servidor: ${response.statusCode} - ${response.body}',
+        );
         return null;
       }
     } catch (e) {
@@ -209,6 +213,30 @@ class ApiService {
     } catch (e) {
       print('[ERROR] Error al guardar bienestar: $e');
       return false;
+    }
+  }
+
+  static Future<Map<String, dynamic>> getRecoveryStatus() async {
+    final token = await getToken();
+
+    if (token == null) {
+      throw Exception('No autorizado');
+    }
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/recovery'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(
+        'Error al obtener recuperacion muscular: ${response.statusCode}',
+      );
     }
   }
 }

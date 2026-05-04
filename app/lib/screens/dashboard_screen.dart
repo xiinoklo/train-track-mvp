@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'wellness_form_screen.dart';
 import 'history_screen.dart';
+import 'recovery_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -77,10 +78,20 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
+  void _goToRecovery() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const RecoveryScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const Color primaryColor = Color(0xFF1E3A8A);
     const Color secondaryColor = Color(0xFF22C55E);
+    const Color warningColor = Color(0xFFF59E0B);
     const Color darkText = Color(0xFF0F172A);
 
     return Scaffold(
@@ -151,7 +162,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     const SizedBox(height: 12),
 
                     Text(
-                      'Registra tu bienestar diario y recibe una rutina ajustada a tu estado físico.',
+                      'Registra tu bienestar diario, genera rutinas ajustadas y controla tu recuperación muscular.',
                       style: TextStyle(
                         fontSize: 15,
                         height: 1.4,
@@ -200,7 +211,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Bienestar diario',
+                                        'Panel de entrenamiento',
                                         style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.w900,
@@ -209,7 +220,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                       ),
                                       SizedBox(height: 4),
                                       Text(
-                                        'Sueño, dolor, fatiga, estrés y ánimo.',
+                                        'Bienestar, historial y descanso muscular.',
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: Colors.grey,
@@ -259,6 +270,27 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 ),
                               ),
                             ),
+
+                            const SizedBox(height: 14),
+
+                            OutlinedButton.icon(
+                              onPressed: _goToRecovery,
+                              icon: const Icon(Icons.health_and_safety_rounded),
+                              label: const Text('Descanso Muscular'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: warningColor,
+                                side: const BorderSide(
+                                  color: warningColor,
+                                  width: 1.4,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 18,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -281,7 +313,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                           SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'La carga se ajusta automáticamente según tu estado diario.',
+                              'La carga y el descanso se ajustan según tu estado y sesiones recientes.',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
