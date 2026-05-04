@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiService {
   // ATENCIÓN: Si pruebas en dispositivo físico o web, usa la IP de tu PC o localhost.
   // 10.0.2.2 es el mapeo estándar para emuladores Android hacia localhost.
-  static const String baseUrl = 'http://10.0.2.2:3000/api';
+  static const String baseUrl = 'https://train-track-mvp.onrender.com/api';
 
   // Función para Registrar Usuario + Onboarding
   static Future<bool> registerUser({
