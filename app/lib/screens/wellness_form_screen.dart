@@ -67,7 +67,6 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
     });
 
     try {
-      // 1. Empaquetar los datos
       final wellnessData = {
         "sleep": sleep.round(),
         "pain": pain.round(),
@@ -76,25 +75,24 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
         "mood": mood.round(),
       };
 
-      // 2. Guardar el registro en el historial (Ruta POST /wellness)
       await ApiService.saveWellness(wellnessData);
 
-      // 3. Generar la rutina (Ruta POST /workouts/generate)
       final data = await ApiService.generateWorkout(wellnessData);
 
       if (!mounted) return;
 
       if (data != null) {
-        final double factorCalculado = (data['loadFactor'] as num).toDouble();
+        final double factorCalculado =
+            (data['loadFactor'] as num).toDouble();
+
         final List<Map<String, dynamic>> exercises =
             List<Map<String, dynamic>>.from(data['exercises']);
 
-        // 4. Navegar a la pantalla de Rutina inyectando el sessionId de MongoDB
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => WorkoutScreen(
-              sessionId: data['sessionId'], // El ID real generado por el backend
+              sessionId: data['sessionId'],
               loadFactor: factorCalculado,
               recommendation: data['recommendation'],
               message: data['message'] ?? '',
@@ -106,9 +104,10 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
         setState(() {
           isLoading = false;
         });
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Error al generar la rutina. Revisa tu conexión.'),
+            content: Text('Error al generar la rutina. Revisa tu conexion.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -123,7 +122,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Error al conectar con el backend. Revisa que el servidor está encendido.',
+            'Error al conectar con el backend. Revisa que el servidor este encendido.',
           ),
           backgroundColor: Colors.red,
         ),
@@ -167,7 +166,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                           const SizedBox(height: 18),
 
                           _buildMetricCard(
-                            title: 'Calidad de sueño',
+                            title: 'Calidad de sueno',
                             subtitle: '1 = muy mala | 5 = excelente',
                             icon: Icons.bedtime_outlined,
                             value: sleep,
