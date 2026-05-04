@@ -163,7 +163,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                           const SizedBox(height: 18),
 
                           _buildMetricCard(
-                            title: 'Calidad de sue?o',
+                            title: 'Calidad de sueno',
                             subtitle: '1 = muy mala ¡¤ 5 = excelente',
                             icon: Icons.bedtime_outlined,
                             value: sleep,
@@ -190,7 +190,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                           ),
 
                           _buildMetricCard(
-                            title: 'Nivel de estr¨¦s',
+                            title: 'Nivel de estres',
                             subtitle: '1 = tranquilo ¡¤ 5 = muy estresado',
                             icon: Icons.psychology_alt_outlined,
                             value: stress,
@@ -199,7 +199,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                           ),
 
                           _buildMetricCard(
-                            title: 'Estado de ¨¢nimo',
+                            title: 'Estado de animo',
                             subtitle: '1 = bajo ¡¤ 5 = excelente',
                             icon: Icons.sentiment_satisfied_alt_outlined,
                             value: mood,
@@ -284,7 +284,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Eval¨²a tu estado actual',
+                  'Evalua tu estado actual',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
