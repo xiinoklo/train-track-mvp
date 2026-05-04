@@ -1,16 +1,25 @@
 const express = require("express");
 const cors = require("cors");
+const mongoSanitize = require("express-mongo-sanitize");
+const connectDB = require("./config/db");
 
+const authRoutes = require("./routes/authRoutes");
 const exerciseRoutes = require("./routes/exerciseRoutes");
 const workoutRoutes = require("./routes/workoutRoutes");
 const wellnessRoutes = require("./routes/wellnessRoutes");
 
-const app = express();
+connectDB();
 
-const PORT = 3000;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+
+app.use(express.json({ limit: "10kb" }));
+
+app.use(mongoSanitize());
+
+app.use("/api/auth", authRoutes);
 
 app.get("/health", (req, res) => {
   res.json({
@@ -24,5 +33,5 @@ app.use("/api/workouts", workoutRoutes);
 app.use("/api/wellness", wellnessRoutes);
 
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`Servidor corriendo en el puerto ${PORT}`);
 });

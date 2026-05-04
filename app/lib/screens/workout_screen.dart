@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../services/api_service.dart';
+import 'dashboard_screen.dart';
 
 class WorkoutScreen extends StatefulWidget {
+  final String sessionId;
   final double loadFactor;
   final String recommendation;
   final String message;
@@ -10,6 +12,7 @@ class WorkoutScreen extends StatefulWidget {
 
   const WorkoutScreen({
     Key? key,
+    required this.sessionId,
     required this.loadFactor,
     required this.recommendation,
     required this.message,
@@ -78,12 +81,23 @@ class _WorkoutScreenState extends State<WorkoutScreen>
     return Icons.bolt_rounded;
   }
 
-  Future<void> _launchYoutubeVideo(String url) async {
-    final Uri uri = Uri.parse(url);
-
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      throw Exception('No se pudo abrir el video: $url');
+  void _showVideoModal(BuildContext context, String videoUrl) {
+    final videoId = YoutubePlayer.convertUrlToId(videoUrl);
+    
+    if (videoId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Video no disponible'), backgroundColor: Colors.red),
+      );
+      return;
     }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      // Ahora llamamos a un componente inteligente que controla su propia vida
+      builder: (context) => _VideoPlayerModal(videoUrl: videoUrl),
+    );
   }
 
   @override
@@ -512,23 +526,70 @@ class _WorkoutScreenState extends State<WorkoutScreen>
           ),
           const SizedBox(height: 16),
           if (videoUrl != null && videoUrl.isNotEmpty)
-            OutlinedButton.icon(
-              onPressed: () => _launchYoutubeVideo(videoUrl),
-              icon: const Icon(Icons.play_circle_fill_rounded),
-              label: const Text('Ver video de ejecución'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: dangerColor,
-                side: const BorderSide(
-                  color: dangerColor,
-                  width: 1.3,
-                ),
-                padding: const EdgeInsets.symmetric(
-                  vertical: 14,
-                  horizontal: 16,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
+            GestureDetector(
+              onTap: () => _showVideoModal(context, videoUrl),
+              child: Column(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Magia: Sacamos la imagen directo de YouTube sin usar Base de datos
+                        Image.network(
+                          YoutubePlayer.getThumbnail(videoId: YoutubePlayer.convertUrlToId(videoUrl) ?? ''),
+                          width: double.infinity,
+                          height: 170,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            width: double.infinity,
+                            height: 170,
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.video_library_rounded, size: 50, color: Colors.grey),
+                          ),
+                        ),
+                        // Filtro oscuro para que el botón de play resalte
+                        Container(
+                          width: double.infinity,
+                          height: 170,
+                          color: Colors.black.withOpacity(0.35),
+                        ),
+                        // Botón de Play gigante
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: dangerColor.withOpacity(0.9),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.play_arrow_rounded, size: 48, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: dangerColor.withOpacity(0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.help_outline_rounded, size: 18, color: dangerColor),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        '¿Tienes dudas? Mira el tutorial',
+                        style: TextStyle(
+                          color: dangerColor,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
         ],
@@ -615,7 +676,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                           },
                   ),
                   Text(
-                    '1 = muy fácil · 10 = máximo esfuerzo',
+                    '1 = muy fácil | 10 = máximo esfuerzo',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
@@ -640,6 +701,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
 
                           try {
                             await ApiService.registerRpe(
+                              sessionId: widget.sessionId,
                               rpe: rpe.round(),
                             );
 
@@ -648,12 +710,20 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                             Navigator.pop(dialogContext);
 
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'RPE registrado en backend: ${rpe.round()}',
-                                ),
+                              const SnackBar(
+                                content: Text('Entrenamiento finalizado con éxito 🏆'),
+                                backgroundColor: Colors.green,
                               ),
                             );
+
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const DashboardScreen(),
+                              ),
+                              (route) => false,
+                            );
+                            
                           } catch (e) {
                             if (!mounted) return;
 
@@ -684,6 +754,89 @@ class _WorkoutScreenState extends State<WorkoutScreen>
           },
         );
       },
+    );
+  }
+}
+
+// --- NUEVO COMPONENTE AL FINAL DEL ARCHIVO ---
+class _VideoPlayerModal extends StatefulWidget {
+  final String videoUrl;
+  
+  const _VideoPlayerModal({required this.videoUrl});
+
+  @override
+  State<_VideoPlayerModal> createState() => _VideoPlayerModalState();
+}
+
+class _VideoPlayerModalState extends State<_VideoPlayerModal> {
+  late YoutubePlayerController _ytController;
+
+  @override
+  void initState() {
+    super.initState();
+    final videoId = YoutubePlayer.convertUrlToId(widget.videoUrl);
+    
+    _ytController = YoutubePlayerController(
+      initialVideoId: videoId ?? '',
+      flags: const YoutubePlayerFlags(
+        autoPlay: true,
+        mute: false,
+        hideThumbnail: true, // Para evitar doble carga visual
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    // Cuando el panel se cierra, pausamos el video y matamos el controlador ordenadamente
+    _ytController.pause();
+    _ytController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.7,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 16),
+            width: 50,
+            height: 5,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 16.0),
+            child: Text(
+              'Tutorial del Ejercicio',
+              // Usamos colores quemados para no depender del padre si no hereda el contexto completo
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)), 
+            ),
+          ),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: YoutubePlayer(
+                controller: _ytController,
+                showVideoProgressIndicator: true,
+                progressColors: const ProgressBarColors(
+                  playedColor: Color(0xFFEF4444),
+                  handleColor: Color(0xFFEF4444),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
     );
   }
 }

@@ -16,10 +16,16 @@
   "author": "Grupo 7",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "mongoose": "^8.5.1"
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^8.4.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongodb": "^7.2.0",
+    "mongoose": "^8.5.1",
+    "nodemailer": "^8.0.7"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"

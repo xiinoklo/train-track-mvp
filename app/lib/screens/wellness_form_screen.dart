@@ -67,49 +67,51 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
     });
 
     try {
-      final int sleepValue = sleep.round();
-      final int painValue = pain.round();
-      final int fatigueValue = fatigue.round();
-      final int stressValue = stress.round();
-      final int moodValue = mood.round();
+      final wellnessData = {
+        "sleep": sleep.round(),
+        "pain": pain.round(),
+        "fatigue": fatigue.round(),
+        "stress": stress.round(),
+        "mood": mood.round(),
+      };
 
-      await ApiService.saveWellness(
-        sleep: sleepValue,
-        pain: painValue,
-        fatigue: fatigueValue,
-        stress: stressValue,
-        mood: moodValue,
-      );
+      await ApiService.saveWellness(wellnessData);
 
-      final data = await ApiService.generateWorkout(
-        sleep: sleepValue,
-        pain: painValue,
-        fatigue: fatigueValue,
-        stress: stressValue,
-        mood: moodValue,
-      );
-
-      final double factorCalculado =
-          (data['loadFactor'] as num).toDouble();
-
-      final List<Map<String, dynamic>> exercises =
-          (data['exercises'] as List)
-              .map((item) => Map<String, dynamic>.from(item))
-              .toList();
+      final data = await ApiService.generateWorkout(wellnessData);
 
       if (!mounted) return;
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => WorkoutScreen(
-            loadFactor: factorCalculado,
-            recommendation: data['recommendation'],
-            message: data['message'],
-            exercises: exercises,
+      if (data != null) {
+        final double factorCalculado =
+            (data['loadFactor'] as num).toDouble();
+
+        final List<Map<String, dynamic>> exercises =
+            List<Map<String, dynamic>>.from(data['exercises']);
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WorkoutScreen(
+              sessionId: data['sessionId'],
+              loadFactor: factorCalculado,
+              recommendation: data['recommendation'],
+              message: data['message'] ?? '',
+              exercises: exercises,
+            ),
           ),
-        ),
-      );
+        );
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al generar la rutina. Revisa tu conexion.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
 
@@ -120,8 +122,9 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Error al conectar con el backend. Revisa que el servidor est└ encendido.',
+            'Error al conectar con el backend. Revisa que el servidor este encendido.',
           ),
+          backgroundColor: Colors.red,
         ),
       );
     }
@@ -164,7 +167,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
 
                           _buildMetricCard(
                             title: 'Calidad de sueno',
-                            subtitle: '1 = muy mala ， 5 = excelente',
+                            subtitle: '1 = muy mala | 5 = excelente',
                             icon: Icons.bedtime_outlined,
                             value: sleep,
                             inverseColor: false,
@@ -173,7 +176,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
 
                           _buildMetricCard(
                             title: 'Nivel de dolor',
-                            subtitle: '1 = sin dolor ， 5 = dolor alto',
+                            subtitle: '1 = sin dolor | 5 = dolor alto',
                             icon: Icons.healing_outlined,
                             value: pain,
                             inverseColor: true,
@@ -182,7 +185,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
 
                           _buildMetricCard(
                             title: 'Nivel de fatiga',
-                            subtitle: '1 = descansado ， 5 = agotado',
+                            subtitle: '1 = descansado | 5 = agotado',
                             icon: Icons.battery_2_bar_outlined,
                             value: fatigue,
                             inverseColor: true,
@@ -191,7 +194,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
 
                           _buildMetricCard(
                             title: 'Nivel de estres',
-                            subtitle: '1 = tranquilo ， 5 = muy estresado',
+                            subtitle: '1 = tranquilo | 5 = muy estresado',
                             icon: Icons.psychology_alt_outlined,
                             value: stress,
                             inverseColor: true,
@@ -200,7 +203,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
 
                           _buildMetricCard(
                             title: 'Estado de animo',
-                            subtitle: '1 = bajo ， 5 = excelente',
+                            subtitle: '1 = bajo | 5 = excelente',
                             icon: Icons.sentiment_satisfied_alt_outlined,
                             value: mood,
                             inverseColor: false,
