@@ -109,9 +109,7 @@ class ApiService {
     return prefs.getString('jwt_token');
   }
 
-  static Future<Map<String, dynamic>?> generateWorkout(
-    Map<String, int> wellnessData,
-  ) async {
+  static Future<Map<String, dynamic>?> generateWorkout(Map<String, dynamic> wellnessData) async {
     final token = await getToken();
 
     if (token == null) {

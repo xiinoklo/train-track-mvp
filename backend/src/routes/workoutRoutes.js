@@ -7,40 +7,127 @@ const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// Generar y GUARDAR la sesión
-router.post("/generate", protect, async (req, res) => {
-  // Simulación de usuario autenticado. Más adelante esto lo sacaremos del token JWT.
-  // IMPORTANTE: Asegúrate de tener un usuario creado en tu base de datos y pon su _id aquí para probar, 
-  // o usa un string temporal (aunque Mongoose se quejará si no es un ObjectId válido).
-  // Para pruebas iniciales, usaremos un ObjectId falso pero válido en formato.
-  const userId = req.user.id;
-  
-  const { sleep, pain, fatigue, stress, mood } = req.body;
+const upperBodyGroups = [
+  "pecho",
+  "espalda",
+  "hombros",
+  "brazos",
+  "biceps",
+  "triceps"
+];
 
-  // Lógica de carga
-  const result = await calculateLoadFactor({ sleep, pain, fatigue, stress, mood });
+const lowerBodyGroups = [
+  "piernas",
+  "gluteos",
+  "glúteos",
+  "cuadriceps",
+  "cuádriceps",
+  "isquios",
+  "femorales",
+  "pantorrillas"
+];
+
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function filterExercisesByTarget(exercises, targetMuscleGroup) {
+  const normalizedTarget = normalizeText(targetMuscleGroup || "full_body");
+
+  if (normalizedTarget === "full_body" || normalizedTarget === "full body") {
+    return exercises;
+  }
+
+  if (
+    normalizedTarget === "tren_superior" ||
+    normalizedTarget === "tren superior" ||
+    normalizedTarget === "upper"
+  ) {
+    return exercises.filter((exercise) =>
+      upperBodyGroups.includes(normalizeText(exercise.muscleGroup))
+    );
+  }
+
+  if (
+    normalizedTarget === "tren_inferior" ||
+    normalizedTarget === "tren inferior" ||
+    normalizedTarget === "lower"
+  ) {
+    return exercises.filter((exercise) =>
+      lowerBodyGroups.includes(normalizeText(exercise.muscleGroup))
+    );
+  }
+
+  return exercises.filter(
+    (exercise) => normalizeText(exercise.muscleGroup) === normalizedTarget
+  );
+}
+
+// Generar y guardar la sesión
+router.post("/generate", protect, async (req, res) => {
+  const userId = req.user.id;
+
+  const {
+    sleep,
+    pain,
+    fatigue,
+    stress,
+    mood,
+    targetMuscleGroup = "full_body"
+  } = req.body;
+
+  const result = await calculateLoadFactor({
+    sleep,
+    pain,
+    fatigue,
+    stress,
+    mood
+  });
 
   let workoutExercises = [];
+  let trainedMuscleGroups = [];
+
   if (result.factor > 0) {
     const sets = result.factor === 1 ? 4 : 2;
-    
-    // OBTENEMOS LOS EJERCICIOS ACTIVOS DIRECTAMENTE DE LA BASE DE DATOS
+
     const dbExercises = await Exercise.find({ isActive: true });
-    
-    workoutExercises = dbExercises.map((exercise) => ({
+
+    let filteredExercises = filterExercisesByTarget(
+      dbExercises,
+      targetMuscleGroup
+    );
+
+    // Si no hay ejercicios para ese grupo, usamos full body como respaldo
+    if (filteredExercises.length === 0) {
+      filteredExercises = dbExercises;
+    }
+
+    workoutExercises = filteredExercises.map((exercise) => ({
       exerciseId: exercise._id,
       name: exercise.name,
+      muscleGroup: exercise.muscleGroup,
       sets: sets,
       reps: "10-12",
       videoUrl: exercise.videoUrl,
       instructions: exercise.instructions
     }));
+
+    trainedMuscleGroups = [
+      ...new Set(
+        workoutExercises.map((exercise) => exercise.muscleGroup)
+      )
+    ];
   }
 
   try {
-    // Persistir la sesión en la base de datos
     const newSession = await WorkoutSession.create({
       userId,
+      targetMuscleGroup,
+      trainedMuscleGroups,
       loadFactor: result.factor,
       recommendationLabel: result.label,
       exercises: workoutExercises
@@ -48,9 +135,11 @@ router.post("/generate", protect, async (req, res) => {
 
     res.status(201).json({
       message: result.message,
-      sessionId: newSession._id, // Entregamos el ID de la sesión al frontend
+      sessionId: newSession._id,
       loadFactor: result.factor,
       recommendation: result.label,
+      targetMuscleGroup,
+      trainedMuscleGroups,
       exercises: workoutExercises
     });
   } catch (error) {
@@ -59,28 +148,31 @@ router.post("/generate", protect, async (req, res) => {
   }
 });
 
-// Registrar el RPE asociado a una SESIÓN ESPECÍFICA
+// Registrar el RPE asociado a una sesión específica
 router.post("/:sessionId/rpe", protect, async (req, res) => {
   const { sessionId } = req.params;
   const { rpe } = req.body;
 
   if (!rpe || rpe < 1 || rpe > 10) {
-    return res.status(400).json({ message: "El RPE debe estar entre 1 y 10" });
+    return res.status(400).json({
+      message: "El RPE debe estar entre 1 y 10"
+    });
   }
 
   try {
-    // Buscamos la sesión y la actualizamos con el RPE y la fecha de completado
     const updatedSession = await WorkoutSession.findByIdAndUpdate(
       sessionId,
-      { 
+      {
         rpe: rpe,
         completedAt: new Date()
       },
-      { new: true } // Devuelve el documento actualizado
+      { new: true }
     );
 
     if (!updatedSession) {
-      return res.status(404).json({ message: "Sesión de entrenamiento no encontrada" });
+      return res.status(404).json({
+        message: "Sesión de entrenamiento no encontrada"
+      });
     }
 
     res.json({
@@ -89,7 +181,9 @@ router.post("/:sessionId/rpe", protect, async (req, res) => {
     });
   } catch (error) {
     console.error("Error al registrar RPE:", error);
-    res.status(500).json({ message: "Error interno al actualizar la sesión" });
+    res.status(500).json({
+      message: "Error interno al actualizar la sesión"
+    });
   }
 });
 

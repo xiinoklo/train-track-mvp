@@ -17,6 +17,8 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
   double stress = 3;
   double mood = 3;
 
+  String targetMuscleGroup = 'full_body';
+
   bool isLoading = false;
 
   late AnimationController _controller;
@@ -27,6 +29,18 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
   static const Color secondaryColor = Color(0xFF22C55E);
   static const Color backgroundColor = Color(0xFFF8FAFC);
   static const Color darkText = Color(0xFF0F172A);
+
+  static const List<Map<String, String>> targetOptions = [
+    {'label': 'Full body', 'value': 'full_body'},
+    {'label': 'Tren superior', 'value': 'tren_superior'},
+    {'label': 'Tren inferior', 'value': 'tren_inferior'},
+    {'label': 'Pecho', 'value': 'pecho'},
+    {'label': 'Espalda', 'value': 'espalda'},
+    {'label': 'Piernas', 'value': 'piernas'},
+    {'label': 'Hombros', 'value': 'hombros'},
+    {'label': 'Brazos', 'value': 'brazos'},
+    {'label': 'Core', 'value': 'core'},
+  ];
 
   @override
   void initState() {
@@ -67,7 +81,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
     });
 
     try {
-      final wellnessData = {
+      final wellnessData = <String, int>{
         "sleep": sleep.round(),
         "pain": pain.round(),
         "fatigue": fatigue.round(),
@@ -75,9 +89,14 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
         "mood": mood.round(),
       };
 
+      final workoutData = <String, dynamic>{
+        ...wellnessData,
+        "targetMuscleGroup": targetMuscleGroup,
+      };
+
       await ApiService.saveWellness(wellnessData);
 
-      final data = await ApiService.generateWorkout(wellnessData);
+      final data = await ApiService.generateWorkout(workoutData);
 
       if (!mounted) return;
 
@@ -162,6 +181,10 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _buildIntroCard(),
+
+                          const SizedBox(height: 18),
+
+                          _buildTargetMuscleCard(),
 
                           const SizedBox(height: 18),
 
@@ -296,7 +319,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                 ),
                 SizedBox(height: 6),
                 Text(
-                  'Usa una escala del 1 al 5 para ajustar tu entrenamiento de hoy.',
+                  'Usa una escala del 1 al 5 y elige que quieres entrenar hoy.',
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.35,
@@ -306,6 +329,117 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTargetMuscleCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.045),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(11),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.fitness_center_rounded,
+                  color: primaryColor,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Objetivo de hoy',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: darkText,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Elige que grupo quieres entrenar.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          Wrap(
+  spacing: 10,
+  runSpacing: 10,
+  children: targetOptions.map((option) {
+    final bool isSelected = targetMuscleGroup == option['value'];
+
+    return SizedBox(
+      width: 120,
+      child: ChoiceChip(
+        showCheckmark: false,
+        label: Center(
+          child: Text(
+            option['label']!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        selected: isSelected,
+        selectedColor: primaryColor,
+        backgroundColor: const Color(0xFFF1F5F9),
+        labelStyle: TextStyle(
+          color: isSelected ? Colors.white : darkText,
+          fontWeight: FontWeight.w800,
+          fontSize: 13,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 8,
+          vertical: 10,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(999),
+          side: BorderSide(
+            color: isSelected
+                ? primaryColor
+                : const Color(0xFFE2E8F0),
+          ),
+        ),
+        onSelected: (_) {
+          setState(() {
+            targetMuscleGroup = option['value']!;
+          });
+        },
+      ),
+    );
+  }).toList(),
+),
         ],
       ),
     );

@@ -4,9 +4,18 @@ const workoutSessionSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true
     },
+    targetMuscleGroup: {
+      type: String,
+      default: "full_body"
+    },
+    trainedMuscleGroups: [
+      {
+        type: String
+      }
+    ],
     loadFactor: {
       type: Number,
       required: true
@@ -19,16 +28,18 @@ const workoutSessionSchema = new mongoose.Schema(
       {
         exerciseId: String,
         name: String,
+        muscleGroup: String,
         sets: Number,
-        reps: String
+        reps: String,
+        videoUrl: String,
+        instructions: String
       }
     ],
-    // El RPE empieza nulo hasta que el usuario termina la sesión (RF-08)
     rpe: {
       type: Number,
       min: 1,
       max: 10,
-      default: null 
+      default: null
     },
     completedAt: {
       type: Date,
