@@ -17,3 +17,4 @@ backend/.env
 .DS_Store
 .vscode/
 .idea/
+app/lib/services/api_service.dart
