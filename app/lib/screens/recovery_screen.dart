@@ -64,6 +64,12 @@ class _RecoveryScreenState extends State<RecoveryScreen>
     });
   }
 
+  int _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return 0;
+  }
+
   Color _getStatusColor(String status, int remainingHours) {
     if (status == 'ready' || remainingHours == 0) {
       return secondaryColor;
@@ -100,22 +106,40 @@ class _RecoveryScreenState extends State<RecoveryScreen>
     return value[0].toUpperCase() + value.substring(1);
   }
 
-  String _formatDate(dynamic rawDate) {
-    if (rawDate == null) return 'Sin entrenamientos recientes';
-
-    try {
-      final date = DateTime.parse(rawDate.toString()).toLocal();
-
-      final day = date.day.toString().padLeft(2, '0');
-      final month = date.month.toString().padLeft(2, '0');
-      final year = date.year.toString();
-      final hour = date.hour.toString().padLeft(2, '0');
-      final minute = date.minute.toString().padLeft(2, '0');
-
-      return '$day/$month/$year · $hour:$minute';
-    } catch (_) {
-      return rawDate.toString();
+  Map<String, dynamic> _recoveryItemFor(List recovery, String muscleGroup) {
+    for (final item in recovery) {
+      if (item is Map && item['muscleGroup'] == muscleGroup) {
+        return Map<String, dynamic>.from(item);
+      }
     }
+
+    return {
+      'muscleGroup': muscleGroup,
+      'status': 'ready',
+      'message': 'Listo para entrenar',
+      'remainingHours': 0,
+      'lastTrainedAt': null,
+      'lastRpe': null,
+    };
+  }
+
+  String _statusText(String status, int remainingHours) {
+    if (status == 'ready' || remainingHours == 0) {
+      return 'Listo';
+    }
+
+    if (remainingHours <= 24) {
+      return 'Casi listo';
+    }
+
+    return 'Descanso';
+  }
+
+  double _recoveryProgress(int remainingHours) {
+    if (remainingHours <= 0) return 1;
+    if (remainingHours >= 72) return 0;
+
+    return 1 - (remainingHours / 72);
   }
 
   @override
@@ -175,9 +199,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                             children: [
                               _buildSummaryCard(recovery),
                               const SizedBox(height: 18),
-                              ...recovery.map(
-                                (item) => _buildRecoveryCard(item),
-                              ),
+                              _buildMuscleDashboard(recovery),
                             ],
                           ),
                         );
@@ -222,7 +244,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
 
   Widget _buildSummaryCard(List recovery) {
     final int readyCount = recovery.where((item) {
-      final int remainingHours = item['remainingHours'] ?? 0;
+      final int remainingHours = _asInt(item['remainingHours']);
       final String status = item['status'] ?? '';
       return status == 'ready' || remainingHours == 0;
     }).length;
@@ -262,7 +284,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Estado de recuperación',
+                  'Estado de recuperacion',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
@@ -286,26 +308,21 @@ class _RecoveryScreenState extends State<RecoveryScreen>
     );
   }
 
-  Widget _buildRecoveryCard(dynamic item) {
-    final String muscleGroup = item['muscleGroup'] ?? 'grupo';
-    final String status = item['status'] ?? 'ready';
-    final String message = item['message'] ?? '';
-    final int remainingHours = item['remainingHours'] ?? 0;
-    final dynamic lastTrainedAt = item['lastTrainedAt'];
-    final dynamic lastRpe = item['lastRpe'];
-
-    final Color statusColor = _getStatusColor(status, remainingHours);
+  Widget _buildMuscleDashboard(List recovery) {
+    final groups = [
+      'pecho',
+      'espalda',
+      'piernas',
+      'hombros',
+      'brazos',
+      'core',
+    ];
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(
-          color: statusColor.withOpacity(0.18),
-          width: 1.2,
-        ),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.045),
@@ -314,86 +331,217 @@ class _RecoveryScreenState extends State<RecoveryScreen>
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(13),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Icon(
-              _getMuscleIcon(muscleGroup),
-              color: statusColor,
-              size: 30,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _capitalize(muscleGroup),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    color: darkText,
-                  ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 5),
-                Text(
-                  message,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: statusColor,
-                  ),
+                child: const Icon(
+                  Icons.dashboard_customize_rounded,
+                  color: primaryColor,
+                  size: 28,
                 ),
-                const SizedBox(height: 5),
-                Text(
-                  'Último entrenamiento: ${_formatDate(lastTrainedAt)}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                if (lastRpe != null)
-                  Text(
-                    'Último RPE: $lastRpe',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey[600],
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Panel muscular',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: darkText,
+                      ),
                     ),
-                  ),
-              ],
-            ),
-          ),
-          Container(
-            width: 44,
-            height: 44,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: remainingHours == 0
-                ? Icon(
-                    Icons.check_rounded,
-                    color: statusColor,
-                    size: 26,
-                  )
-                : Text(
-                    '${remainingHours}h',
-                    style: TextStyle(
-                      color: statusColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
+                    SizedBox(height: 4),
+                    Text(
+                      'Vista rapida por grupo muscular.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
                     ),
-                  ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          Row(
+            children: [
+              _buildLegendItem(secondaryColor, 'Listo'),
+              const SizedBox(width: 10),
+              _buildLegendItem(warningColor, '< 24h'),
+              const SizedBox(width: 10),
+              _buildLegendItem(dangerColor, '+24h'),
+            ],
+          ),
+
+          const SizedBox(height: 18),
+
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: groups.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 14,
+              crossAxisSpacing: 14,
+              childAspectRatio: 1.28,
+            ),
+            itemBuilder: (context, index) {
+              final group = groups[index];
+              final item = _recoveryItemFor(recovery, group);
+              return _buildMuscleTile(item);
+            },
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMuscleTile(Map<String, dynamic> item) {
+    final String muscleGroup = item['muscleGroup'] ?? 'grupo';
+    final String status = item['status'] ?? 'ready';
+    final int remainingHours = _asInt(item['remainingHours']);
+    final dynamic lastRpe = item['lastRpe'];
+
+    final Color statusColor = _getStatusColor(status, remainingHours);
+    final double progress = _recoveryProgress(remainingHours);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: statusColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: statusColor.withOpacity(0.35),
+          width: 1.4,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.14),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Icon(
+                  _getMuscleIcon(muscleGroup),
+                  color: statusColor,
+                  size: 24,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 9,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  remainingHours == 0 ? 'OK' : '${remainingHours}h',
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const Spacer(),
+
+          Text(
+            _capitalize(muscleGroup),
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+              color: darkText,
+            ),
+          ),
+
+          const SizedBox(height: 4),
+
+          Text(
+            _statusText(status, remainingHours),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: statusColor,
+            ),
+          ),
+
+          const SizedBox(height: 9),
+
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 7,
+              backgroundColor: Colors.white.withOpacity(0.8),
+              valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+            ),
+          ),
+
+          if (lastRpe != null) ...[
+            const SizedBox(height: 7),
+            Text(
+              'Ultimo RPE: $lastRpe',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 11,
+          height: 11,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(999),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey[700],
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 
@@ -424,7 +572,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
               ),
               SizedBox(height: 18),
               Text(
-                'Sin datos de recuperación',
+                'Sin datos de recuperacion',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
@@ -433,7 +581,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
               ),
               SizedBox(height: 10),
               Text(
-                'Cuando finalices entrenamientos y registres RPE, aparecerá aquí tu descanso muscular.',
+                'Cuando finalices entrenamientos y registres RPE, aparecera aqui tu descanso muscular.',
                 textAlign: TextAlign.center,
               ),
             ],
@@ -466,7 +614,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
               ),
               const SizedBox(height: 18),
               const Text(
-                'Error al cargar recuperación',
+                'Error al cargar recuperacion',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w900,

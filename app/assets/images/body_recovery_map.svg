@@ -1,0 +1,161 @@
+<svg width="440" height="620" viewBox="0 0 440 620" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="440" height="620" rx="28" fill="#F8FAFC"/>
+
+  <style>
+    .title { font-family: Arial, sans-serif; font-size: 18px; font-weight: 700; fill: #0F172A; }
+    .label { font-family: Arial, sans-serif; font-size: 11px; font-weight: 700; fill: #475569; }
+    .base { fill: #D9E1EA; stroke: #64748B; stroke-width: 1.5; }
+    .muscle { fill: #F8FAFC; stroke-width: 4; stroke-linejoin: round; stroke-linecap: round; }
+    .line { stroke: #94A3B8; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+    .soft { stroke: #CBD5E1; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+
+  <rect x="18" y="18" width="404" height="584" rx="24" fill="#FFFFFF"/>
+  <text x="115" y="48" text-anchor="middle" class="title">Frente</text>
+  <text x="325" y="48" text-anchor="middle" class="title">Espalda</text>
+
+  <!-- ================= FRONT ================= -->
+  <g transform="translate(0,0)">
+    <!-- head -->
+    <ellipse cx="115" cy="92" rx="24" ry="29" class="base"/>
+    <path d="M103 91C108 97 122 97 127 91" class="soft"/>
+    <circle cx="108" cy="85" r="1.8" fill="#64748B"/>
+    <circle cx="122" cy="85" r="1.8" fill="#64748B"/>
+
+    <!-- neck -->
+    <path d="M104 118C108 124 122 124 126 118V140H104V118Z" class="base"/>
+
+    <!-- shoulder group -->
+    <path d="M68 150C77 132 95 124 115 124C135 124 153 132 162 150C166 158 163 166 154 170C144 174 133 170 126 160C121 153 109 153 104 160C97 170 86 174 76 170C67 166 64 158 68 150Z"
+          class="muscle" stroke="{{HOMBROS_COLOR}}"/>
+
+    <!-- torso outline -->
+    <path d="M78 156C87 148 101 143 115 143C129 143 143 148 152 156C158 171 159 191 153 214C147 240 142 262 138 286C133 304 125 315 115 315C105 315 97 304 92 286C88 262 83 240 77 214C71 191 72 171 78 156Z"
+          fill="#E6ECF2" stroke="#64748B" stroke-width="1.8"/>
+
+    <!-- chest -->
+    <path d="M84 170C92 159 104 156 115 162C111 184 100 199 84 205C79 193 79 180 84 170Z"
+          class="muscle" stroke="{{PECHO_COLOR}}"/>
+    <path d="M146 170C138 159 126 156 115 162C119 184 130 199 146 205C151 193 151 180 146 170Z"
+          class="muscle" stroke="{{PECHO_COLOR}}"/>
+
+    <!-- chest lines -->
+    <path d="M115 161V213" class="line"/>
+    <path d="M87 181C96 177 105 176 115 178" class="soft"/>
+    <path d="M143 181C134 177 125 176 115 178" class="soft"/>
+    <path d="M84 194C95 190 105 189 115 191" class="soft"/>
+    <path d="M146 194C135 190 125 189 115 191" class="soft"/>
+
+    <!-- core -->
+    <path d="M96 212C102 218 108 221 115 221C122 221 128 218 134 212C138 231 138 252 133 276C128 294 122 304 115 304C108 304 102 294 97 276C92 252 92 231 96 212Z"
+          class="muscle" stroke="{{CORE_COLOR}}"/>
+    <path d="M115 221V303" class="line"/>
+    <path d="M99 234H131" class="soft"/>
+    <path d="M98 250H132" class="soft"/>
+    <path d="M100 266H130" class="soft"/>
+    <path d="M102 282H128" class="soft"/>
+
+    <!-- left arm -->
+    <path d="M71 177C61 180 55 189 54 202L50 285C49 303 58 316 71 315C82 314 88 300 86 285L81 206C80 193 79 180 71 177Z"
+          class="muscle" stroke="{{BRAZOS_COLOR}}"/>
+    <path d="M68 194C74 221 74 248 69 286" class="soft"/>
+    <path d="M78 200C82 227 82 255 78 300" class="soft"/>
+
+    <!-- right arm -->
+    <path d="M159 177C169 180 175 189 176 202L180 285C181 303 172 316 159 315C148 314 142 300 144 285L149 206C150 193 151 180 159 177Z"
+          class="muscle" stroke="{{BRAZOS_COLOR}}"/>
+    <path d="M162 194C156 221 156 248 161 286" class="soft"/>
+    <path d="M152 200C148 227 148 255 152 300" class="soft"/>
+
+    <!-- pelvis -->
+    <path d="M95 304C101 312 129 312 135 304L131 334C125 340 105 340 99 334L95 304Z" class="base"/>
+
+    <!-- left leg -->
+    <path d="M98 334C105 340 110 341 115 337C113 371 109 409 103 469C101 484 92 493 82 491C71 489 64 480 67 466L79 363C82 350 88 339 98 334Z"
+          class="muscle" stroke="{{PIERNAS_COLOR}}"/>
+    <path d="M100 352C92 378 88 406 89 438" class="soft"/>
+    <path d="M110 345C108 384 104 425 99 472" class="soft"/>
+
+    <!-- right leg -->
+    <path d="M132 334C125 340 120 341 115 337C117 371 121 409 127 469C129 484 138 493 148 491C159 489 166 480 163 466L151 363C148 350 142 339 132 334Z"
+          class="muscle" stroke="{{PIERNAS_COLOR}}"/>
+    <path d="M130 352C138 378 142 406 141 438" class="soft"/>
+    <path d="M120 345C122 384 126 425 131 472" class="soft"/>
+
+    <!-- feet -->
+    <path d="M68 488C79 493 90 494 101 488C102 498 96 504 81 504C68 504 62 498 68 488Z" class="base"/>
+    <path d="M162 488C151 493 140 494 129 488C128 498 134 504 149 504C162 504 168 498 162 488Z" class="base"/>
+  </g>
+
+  <!-- ================= BACK ================= -->
+  <g transform="translate(210,0)">
+    <!-- head -->
+    <ellipse cx="115" cy="92" rx="24" ry="29" class="base"/>
+    <path d="M106 73C111 76 119 76 124 73" class="soft"/>
+    <path d="M115 66V117" class="soft"/>
+
+    <!-- neck -->
+    <path d="M104 118C108 124 122 124 126 118V140H104V118Z" class="base"/>
+
+    <!-- shoulders -->
+    <path d="M68 150C77 132 95 124 115 124C135 124 153 132 162 150C166 158 163 166 154 170C144 174 133 170 126 160C121 153 109 153 104 160C97 170 86 174 76 170C67 166 64 158 68 150Z"
+          class="muscle" stroke="{{HOMBROS_COLOR}}"/>
+
+    <!-- torso outline -->
+    <path d="M78 156C87 148 101 143 115 143C129 143 143 148 152 156C158 171 159 191 153 214C147 240 142 262 138 286C133 304 125 315 115 315C105 315 97 304 92 286C88 262 83 240 77 214C71 191 72 171 78 156Z"
+          fill="#E6ECF2" stroke="#64748B" stroke-width="1.8"/>
+
+    <!-- back -->
+    <path d="M88 163C95 153 105 149 115 149C125 149 135 153 142 163C146 184 141 208 132 235C127 252 121 267 115 278C109 267 103 252 98 235C89 208 84 184 88 163Z"
+          class="muscle" stroke="{{ESPALDA_COLOR}}"/>
+    <path d="M115 149V278" class="line"/>
+    <path d="M115 158C104 172 96 188 91 209" class="soft"/>
+    <path d="M115 158C126 172 134 188 139 209" class="soft"/>
+    <path d="M95 182C107 190 123 190 135 182" class="soft"/>
+    <path d="M92 208C105 218 125 218 138 208" class="soft"/>
+    <path d="M98 236C108 244 122 244 132 236" class="soft"/>
+
+    <!-- back arms -->
+    <path d="M71 177C61 180 55 189 54 202L50 285C49 303 58 316 71 315C82 314 88 300 86 285L81 206C80 193 79 180 71 177Z"
+          class="muscle" stroke="{{BRAZOS_COLOR}}"/>
+    <path d="M68 194C74 221 74 248 69 286" class="soft"/>
+    <path d="M159 177C169 180 175 189 176 202L180 285C181 303 172 316 159 315C148 314 142 300 144 285L149 206C150 193 151 180 159 177Z"
+          class="muscle" stroke="{{BRAZOS_COLOR}}"/>
+    <path d="M162 194C156 221 156 248 161 286" class="soft"/>
+
+    <!-- pelvis -->
+    <path d="M95 304C101 312 129 312 135 304L131 334C125 340 105 340 99 334L95 304Z" class="base"/>
+
+    <!-- left leg -->
+    <path d="M98 334C105 340 110 341 115 337C113 371 109 409 103 469C101 484 92 493 82 491C71 489 64 480 67 466L79 363C82 350 88 339 98 334Z"
+          class="muscle" stroke="{{PIERNAS_COLOR}}"/>
+    <path d="M100 352C92 378 88 406 89 438" class="soft"/>
+    <path d="M110 345C108 384 104 425 99 472" class="soft"/>
+
+    <!-- right leg -->
+    <path d="M132 334C125 340 120 341 115 337C117 371 121 409 127 469C129 484 138 493 148 491C159 489 166 480 163 466L151 363C148 350 142 339 132 334Z"
+          class="muscle" stroke="{{PIERNAS_COLOR}}"/>
+    <path d="M130 352C138 378 142 406 141 438" class="soft"/>
+    <path d="M120 345C122 384 126 425 131 472" class="soft"/>
+
+    <!-- feet -->
+    <path d="M68 488C79 493 90 494 101 488C102 498 96 504 81 504C68 504 62 498 68 488Z" class="base"/>
+    <path d="M162 488C151 493 140 494 129 488C128 498 134 504 149 504C162 504 168 498 162 488Z" class="base"/>
+  </g>
+
+  <!-- LEGEND -->
+  <g>
+    <rect x="72" y="545" width="296" height="34" rx="17" fill="#F8FAFC" stroke="#E2E8F0"/>
+    <circle cx="95" cy="562" r="6" fill="{{PECHO_COLOR}}"/>
+    <text x="107" y="566" class="label">Pecho</text>
+
+    <circle cx="155" cy="562" r="6" fill="{{ESPALDA_COLOR}}"/>
+    <text x="167" y="566" class="label">Espalda</text>
+
+    <circle cx="239" cy="562" r="6" fill="{{HOMBROS_COLOR}}"/>
+    <text x="251" y="566" class="label">Hombros</text>
+
+    <circle cx="335" cy="562" r="6" fill="{{BRAZOS_COLOR}}"/>
+    <text x="347" y="566" class="label">Brazos</text>
+  </g>
+</svg>
