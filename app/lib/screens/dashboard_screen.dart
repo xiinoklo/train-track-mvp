@@ -18,6 +18,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   late Animation<double> _scaleAnimation;
   late Animation<Offset> _slideAnimation;
 
+  static const Color primaryColor = Color(0xFF1E3A8A);
+  static const Color secondaryColor = Color(0xFF22C55E);
+  static const Color warningColor = Color(0xFFF59E0B);
+  static const Color darkText = Color(0xFF0F172A);
+
   @override
   void initState() {
     super.initState();
@@ -99,11 +104,6 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF1E3A8A);
-    const Color secondaryColor = Color(0xFF22C55E);
-    const Color warningColor = Color(0xFFF59E0B);
-    const Color darkText = Color(0xFF0F172A);
-
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -128,41 +128,17 @@ class _DashboardScreenState extends State<DashboardScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
 
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'TrainTrack',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        Container(
-                          width: 46,
-                          height: 46,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.16),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.22),
-                            ),
-                          ),
-                          child: IconButton(
-                            onPressed: _goToProfile,
-                            icon: const Icon(Icons.person_rounded),
-                            color: Colors.white,
-                            tooltip: 'Mi perfil',
-                          ),
-                        ),
+                        _buildLogoBadge(),
+                        const Spacer(),
+                        _buildProfileButton(),
                       ],
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 28),
 
                     const Text(
                       'Entrena inteligente,\nno más fuerte.',
@@ -263,6 +239,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(18),
                                 ),
+                                elevation: 0,
                               ),
                             ),
 
@@ -348,6 +325,60 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+Widget _buildLogoBadge() {
+  return Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.16),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.22),
+          ),
+        ),
+        child: const Icon(
+          Icons.fitness_center_rounded,
+          color: Colors.white,
+          size: 26,
+        ),
+      ),
+      const SizedBox(width: 12),
+      const Text(
+        'TrainTrack',
+        style: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
+          letterSpacing: -0.6,
+        ),
+      ),
+    ],
+  );
+}
+
+  Widget _buildProfileButton() {
+    return Container(
+      width: 46,
+      height: 46,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.22),
+        ),
+      ),
+      child: IconButton(
+        onPressed: _goToProfile,
+        icon: const Icon(Icons.person_rounded),
+        color: Colors.white,
+        tooltip: 'Mi perfil',
       ),
     );
   }
