@@ -11,6 +11,7 @@ const exerciseRoutes = require("./routes/exerciseRoutes");
 const workoutRoutes = require("./routes/workoutRoutes");
 const wellnessRoutes = require("./routes/wellnessRoutes");
 const recoveryRoutes = require("./routes/recoveryRoutes");
+const profileRoutes = require("./routes/profileRoutes");
 
 connectDB();
 
@@ -36,6 +37,7 @@ app.use("/api/exercises", exerciseRoutes);
 app.use("/api/workouts", workoutRoutes);
 app.use("/api/wellness", wellnessRoutes);
 app.use("/api/recovery", recoveryRoutes);
+app.use("/api/profile", profileRoutes);
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);

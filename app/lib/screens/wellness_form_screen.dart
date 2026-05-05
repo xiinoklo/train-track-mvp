@@ -75,6 +75,8 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
     super.dispose();
   }
 
+  
+
   Future<void> _generateWorkout() async {
     setState(() {
       isLoading = true;
@@ -251,7 +253,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 20, 18),
+      padding: const EdgeInsets.fromLTRB(12, 8, 14, 18),
       child: Row(
         children: [
           IconButton(
@@ -395,51 +397,51 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
           const SizedBox(height: 16),
 
           Wrap(
-  spacing: 10,
-  runSpacing: 10,
-  children: targetOptions.map((option) {
-    final bool isSelected = targetMuscleGroup == option['value'];
+            spacing: 10,
+            runSpacing: 10,
+            children: targetOptions.map((option) {
+              final bool isSelected = targetMuscleGroup == option['value'];
 
-    return SizedBox(
-      width: 120,
-      child: ChoiceChip(
-        showCheckmark: false,
-        label: Center(
-          child: Text(
-            option['label']!,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+              return SizedBox(
+                width: 120,
+                child: ChoiceChip(
+                  showCheckmark: false,
+                  label: Center(
+                    child: Text(
+                      option['label']!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  selected: isSelected,
+                  selectedColor: primaryColor,
+                  backgroundColor: const Color(0xFFF1F5F9),
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : darkText,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                    side: BorderSide(
+                      color: isSelected
+                          ? primaryColor
+                          : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  onSelected: (_) {
+                    setState(() {
+                      targetMuscleGroup = option['value']!;
+                    });
+                  },
+                ),
+              );
+            }).toList(),
           ),
-        ),
-        selected: isSelected,
-        selectedColor: primaryColor,
-        backgroundColor: const Color(0xFFF1F5F9),
-        labelStyle: TextStyle(
-          color: isSelected ? Colors.white : darkText,
-          fontWeight: FontWeight.w800,
-          fontSize: 13,
-        ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 10,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(999),
-          side: BorderSide(
-            color: isSelected
-                ? primaryColor
-                : const Color(0xFFE2E8F0),
-          ),
-        ),
-        onSelected: (_) {
-          setState(() {
-            targetMuscleGroup = option['value']!;
-          });
-        },
-      ),
-    );
-  }).toList(),
-),
         ],
       ),
     );

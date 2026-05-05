@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  // Backend desplegado en Render.
   static const String baseUrl = 'https://train-track-mvp.onrender.com/api';
 
   static Future<bool> registerUser({
@@ -107,6 +106,73 @@ class ApiService {
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('jwt_token');
+  }
+
+  static Future<Map<String, dynamic>?> getProfile() async {
+    final token = await getToken();
+
+    if (token == null) {
+      return null;
+    }
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/profile/me'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    print('[ERROR] Error al obtener perfil: ${response.statusCode} - ${response.body}');
+    return null;
+  }
+
+  static Future<bool> updateProfile({
+    String? username,
+    String? avatar,
+  }) async {
+    final token = await getToken();
+
+    if (token == null) {
+      print('[ERROR] No autorizado para actualizar perfil');
+      return false;
+    }
+
+    final body = <String, dynamic>{};
+
+    if (username != null) {
+      body['username'] = username;
+    }
+
+    if (avatar != null) {
+      body['avatar'] = avatar;
+    }
+
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/profile/me'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        print('[+] Perfil actualizado correctamente');
+        return true;
+      }
+
+      print('[ERROR] Error al actualizar perfil: ${response.statusCode} - ${response.body}');
+      return false;
+    } catch (e) {
+      print('[ERROR] Excepcion al actualizar perfil: $e');
+      return false;
+    }
   }
 
   static Future<Map<String, dynamic>?> generateWorkout(

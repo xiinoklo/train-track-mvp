@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'wellness_form_screen.dart';
 import 'history_screen.dart';
 import 'recovery_screen.dart';
+import 'profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -87,6 +88,15 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
+  void _goToProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ProfileScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const Color primaryColor = Color(0xFF1E3A8A);
@@ -133,14 +143,20 @@ class _DashboardScreenState extends State<DashboardScreen>
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.all(10),
+                          width: 46,
+                          height: 46,
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.16),
                             borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.22),
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.fitness_center,
+                          child: IconButton(
+                            onPressed: _goToProfile,
+                            icon: const Icon(Icons.person_rounded),
                             color: Colors.white,
+                            tooltip: 'Mi perfil',
                           ),
                         ),
                       ],
