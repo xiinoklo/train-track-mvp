@@ -1,7 +1,3 @@
-======================================================================
-CONTENIDO PARA EL ARCHIVO README.MD
-======================================================================
-
 # TrainTrack MVP
 
 TrainTrack es una aplicación móvil (Flutter) con un backend (Node.js/Express) diseñada para registrar el bienestar diario, ajustar rutinas de entrenamiento dinámicamente según el estado físico (RPE, fatiga, sueño) y llevar un control del descanso muscular.
