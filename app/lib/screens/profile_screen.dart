@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // NECESARIO PARA BORRAR EL TOKEN
 import '../services/api_service.dart';
+import 'login_screen.dart'; // NECESARIO PARA REDIRIGIR AL USUARIO
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -11,7 +13,6 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen>
     with SingleTickerProviderStateMixin {
   late Future<Map<String, dynamic>?> profileFuture;
-
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -26,17 +27,14 @@ class _ProfileScreenState extends State<ProfileScreen>
     super.initState();
 
     profileFuture = ApiService.getProfile();
-
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 650),
     );
-
     _fadeAnimation = CurvedAnimation(
       parent: _controller,
       curve: Curves.easeOut,
     );
-
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.08),
       end: Offset.zero,
@@ -46,7 +44,6 @@ class _ProfileScreenState extends State<ProfileScreen>
         curve: Curves.easeOut,
       ),
     );
-
     _controller.forward();
   }
 
@@ -70,7 +67,6 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   String _displayValue(dynamic value, String fallback) {
     if (value == null) return fallback;
-
     final text = value.toString().trim();
 
     if (text.isEmpty || text == 'null') {
@@ -109,8 +105,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     child: FutureBuilder<Map<String, dynamic>?>(
                       future: profileFuture,
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
                           return const Center(
                             child: CircularProgressIndicator(
                               color: Colors.white,
@@ -123,9 +118,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                         }
 
                         final Map<String, dynamic> response = snapshot.data!;
-                        final Map<String, dynamic> user =
-                            Map<String, dynamic>.from(response['user'] ?? {});
-
+                        final Map<String, dynamic> user = Map<String, dynamic>.from(response['user'] ?? {});
+                        
                         return ListView(
                           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                           children: [
@@ -134,6 +128,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                             _buildProgressCard(user),
                             const SizedBox(height: 18),
                             _buildUserInfoCard(user),
+                            const SizedBox(height: 24),
+                            // NUEVO: Botón de cerrar sesión al final de la lista
+                            _buildLogoutButton(context), 
                           ],
                         );
                       },
@@ -184,7 +181,6 @@ class _ProfileScreenState extends State<ProfileScreen>
       user['rank'],
       _getRankFromLevel(level),
     );
-
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -266,11 +262,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     final int xpInCurrentLevel = user['xpInCurrentLevel'] != null
         ? _asInt(user['xpInCurrentLevel'])
         : xp % xpGoal;
-
-    final double progress = xpGoal == 0
-        ? 0
-        : (xpInCurrentLevel / xpGoal).clamp(0.0, 1.0);
-
+    final double progress = xpGoal == 0 ? 0 : (xpInCurrentLevel / xpGoal).clamp(0.0, 1.0);
     final int remainingXp = (xpGoal - xpInCurrentLevel).clamp(0, xpGoal);
 
     return Container(
@@ -333,21 +325,9 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildUserInfoCard(Map<String, dynamic> user) {
-    final String experienceLevel = _displayValue(
-      user['experienceLevel'],
-      'Sin definir',
-    );
-
-    final String mainGoal = _displayValue(
-      user['mainGoal'],
-      'Sin definir',
-    );
-
-    final String gender = _displayValue(
-      user['gender'],
-      'Sin definir',
-    );
-
+    final String experienceLevel = _displayValue(user['experienceLevel'], 'Sin definir');
+    final String mainGoal = _displayValue(user['mainGoal'], 'Sin definir');
+    final String gender = _displayValue(user['gender'], 'Sin definir');
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
@@ -431,6 +411,45 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
+  // IMPLEMENTACIÓN IMPERMEABLE DEL BOTÓN DE LOGOUT
+  Widget _buildLogoutButton(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () async {
+        // 1. Instanciar SharedPreferences y purgar el JWT de memoria
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('jwt_token');
+
+        if (!context.mounted) return;
+
+        // 2. Seguridad Crítica: Purgar el árbol de navegación completo (route => false)
+        // Esto evita que al presionar 'atrás' en el celular se vuelva a entrar.
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+      },
+      icon: const Icon(Icons.logout_rounded, color: Colors.white),
+      label: const Text(
+        'CERRAR SESIÓN',
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.8,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFFEF4444), // Rojo Danger
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        elevation: 0,
+      ),
+    );
+  }
+
   Widget _buildErrorState() {
     return Center(
       child: Padding(
@@ -508,7 +527,6 @@ class _StatRow extends StatelessWidget {
   Widget build(BuildContext context) {
     const Color primaryColor = Color(0xFF1E3A8A);
     const Color darkText = Color(0xFF0F172A);
-
     return Row(
       children: [
         Container(

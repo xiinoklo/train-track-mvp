@@ -58,7 +58,8 @@ router.patch("/me", protect, async (req, res) => {
     const updates = {};
 
     if (username !== undefined) {
-      const cleanUsername = username.trim().toLowerCase();
+      // 1. Quitamos el .toLowerCase()
+      const cleanUsername = username.trim(); 
 
       if (cleanUsername.length < 3 || cleanUsername.length > 20) {
         return res.status(400).json({
@@ -72,8 +73,9 @@ router.patch("/me", protect, async (req, res) => {
         });
       }
 
+      // 2. REGLA CRÍTICA: Búsqueda case-insensitive para evitar duplicados
       const usernameExists = await User.findOne({
-        username: cleanUsername,
+        username: { $regex: new RegExp(`^${cleanUsername}$`, "i") }, 
         _id: { $ne: req.user.id }
       });
 
