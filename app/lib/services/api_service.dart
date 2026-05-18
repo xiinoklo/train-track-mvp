@@ -57,9 +57,13 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['token'];
+        final role = data['role'] ?? 'user';
+        final isAdmin = data['isAdmin'] == true || role == 'admin';
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('jwt_token', token);
+        await prefs.setString('user_role', role);
+        await prefs.setBool('is_admin', isAdmin);
 
         print('[+] Verificacion exitosa. Token guardado.');
         return true;
@@ -87,59 +91,26 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['token'];
+        final role = data['role'] ?? 'user';
+        final isAdmin = data['isAdmin'] == true || role == 'admin';
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('jwt_token', token);
+        await prefs.setString('user_role', role);
+        await prefs.setBool('is_admin', isAdmin);
 
         print('[+] Login exitoso. Token guardado.');
-        return true;
-      } else {
-        print('[ERROR] Login fallido: ${response.statusCode} - ${response.body}');
-        return false;
-      }
-    } catch (e) {
-      print('[ERROR] Excepcion de red: $e');
-      return false;
-    }
-  }
+        print('[+] Rol: $role | Admin: $isAdmin');
 
-  static Future<bool> adminLogin(String email, String password) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/admin/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
-      );
-
-      print('[ADMIN LOGIN] URL: $baseUrl/admin/login');
-      print('[ADMIN LOGIN] Status: ${response.statusCode}');
-      print('[ADMIN LOGIN] Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final token = data['token'];
-
-        if (token == null || token.toString().isEmpty) {
-          print('[ERROR] Login admin sin token');
-          return false;
-        }
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('admin_jwt_token', token);
-
-        print('[+] Login admin exitoso. Token admin guardado.');
         return true;
       } else {
         print(
-          '[ERROR] Login admin fallido: ${response.statusCode} - ${response.body}',
+          '[ERROR] Login fallido: ${response.statusCode} - ${response.body}',
         );
         return false;
       }
     } catch (e) {
-      print('[ERROR] Excepcion de red en login admin: $e');
+      print('[ERROR] Excepcion de red: $e');
       return false;
     }
   }
@@ -149,14 +120,22 @@ class ApiService {
     return prefs.getString('jwt_token');
   }
 
-  static Future<String?> getAdminToken() async {
+  static Future<String?> getUserRole() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('admin_jwt_token');
+    return prefs.getString('user_role');
+  }
+
+  static Future<bool> isAdmin() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('is_admin') ?? false;
+  }
+
+  static Future<String?> getAdminToken() async {
+    return getToken();
   }
 
   static Future<void> adminLogout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('admin_jwt_token');
+    return;
   }
 
   static Future<Map<String, dynamic>?> getProfile() async {

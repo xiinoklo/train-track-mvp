@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 import 'wellness_form_screen.dart';
 import 'history_screen.dart';
 import 'recovery_screen.dart';
 import 'profile_screen.dart';
+import 'admin_panel_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -18,9 +20,12 @@ class _DashboardScreenState extends State<DashboardScreen>
   late Animation<double> _scaleAnimation;
   late Animation<Offset> _slideAnimation;
 
+  bool _isAdmin = false;
+
   static const Color primaryColor = Color(0xFF1E3A8A);
   static const Color secondaryColor = Color(0xFF22C55E);
   static const Color warningColor = Color(0xFFF59E0B);
+  static const Color adminColor = Color(0xFF7C3AED);
   static const Color darkText = Color(0xFF0F172A);
 
   @override
@@ -58,6 +63,17 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
 
     _controller.forward();
+    _loadAdminState();
+  }
+
+  Future<void> _loadAdminState() async {
+    final admin = await ApiService.isAdmin();
+
+    if (!mounted) return;
+
+    setState(() {
+      _isAdmin = admin;
+    });
   }
 
   @override
@@ -102,6 +118,15 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
+  void _goToAdminPanel() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AdminPanelScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,7 +154,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 8),
-
                     Row(
                       children: [
                         _buildLogoBadge(),
@@ -137,9 +161,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         _buildProfileButton(),
                       ],
                     ),
-
                     const SizedBox(height: 28),
-
                     const Text(
                       'Entrena inteligente,\nno más fuerte.',
                       style: TextStyle(
@@ -150,9 +172,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         letterSpacing: -1,
                       ),
                     ),
-
                     const SizedBox(height: 12),
-
                     Text(
                       'Registra tu bienestar diario, genera rutinas ajustadas y controla tu recuperación muscular.',
                       style: TextStyle(
@@ -161,9 +181,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         color: Colors.white.withOpacity(0.9),
                       ),
                     ),
-
                     const SizedBox(height: 34),
-
                     ScaleTransition(
                       scale: _scaleAnimation,
                       child: Container(
@@ -223,9 +241,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 26),
-
                             ElevatedButton.icon(
                               onPressed: _goToWellnessForm,
                               icon: const Icon(Icons.add_circle_outline),
@@ -242,9 +258,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 elevation: 0,
                               ),
                             ),
-
                             const SizedBox(height: 14),
-
                             OutlinedButton.icon(
                               onPressed: _goToHistory,
                               icon: const Icon(Icons.history),
@@ -263,9 +277,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 14),
-
                             OutlinedButton.icon(
                               onPressed: _goToRecovery,
                               icon: const Icon(Icons.health_and_safety_rounded),
@@ -284,13 +296,34 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 ),
                               ),
                             ),
+                            if (_isAdmin) ...[
+                              const SizedBox(height: 14),
+                              OutlinedButton.icon(
+                                onPressed: _goToAdminPanel,
+                                icon: const Icon(
+                                  Icons.admin_panel_settings_rounded,
+                                ),
+                                label: const Text('Panel Admin'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: adminColor,
+                                  side: const BorderSide(
+                                    color: adminColor,
+                                    width: 1.4,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 18,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
                     ),
-
                     const Spacer(),
-
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -317,7 +350,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 8),
                   ],
                 ),

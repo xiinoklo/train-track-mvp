@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'dashboard_screen.dart';
 import 'register_screen.dart';
-import 'admin_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,6 +17,11 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _isPasswordHidden = true;
 
+  static const Color primaryColor = Color(0xFF1E3A8A);
+  static const Color secondaryColor = Color(0xFF22C55E);
+  static const Color backgroundColor = Color(0xFFF8FAFC);
+  static const Color darkText = Color(0xFF0F172A);
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -26,19 +30,24 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _doLogin() async {
+    FocusScope.of(context).unfocus();
+
     final email = _emailController.text.trim();
     final pass = _passwordController.text.trim();
 
     if (email.isEmpty || pass.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingresa email y contraseña')),
+        const SnackBar(
+          content: Text('Ingresa email y contraseña'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
 
     setState(() => _isLoading = true);
 
-    bool success = await ApiService.login(email, pass);
+    final success = await ApiService.login(email, pass);
 
     if (!mounted) return;
 
@@ -47,7 +56,9 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        MaterialPageRoute(
+          builder: (context) => const DashboardScreen(),
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -60,6 +71,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _goToRegister() {
+    if (_isLoading) return;
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -68,75 +81,92 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _goToAdminLogin() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const AdminLoginScreen(),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backgroundColor,
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
               Color(0xFF1E3A8A),
               Color(0xFF2563EB),
+              Color(0xFFF8FAFC),
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
+            stops: [0.0, 0.55, 1.0],
           ),
         ),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32.0),
+              padding: const EdgeInsets.all(28),
               child: Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(26),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 20,
+                      color: Colors.black.withOpacity(0.16),
+                      blurRadius: 24,
+                      offset: const Offset(0, 12),
                     ),
                   ],
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.fitness_center,
-                      size: 60,
-                      color: Color(0xFF1E3A8A),
+                    Container(
+                      width: 82,
+                      height: 82,
+                      decoration: BoxDecoration(
+                        color: primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: const Icon(
+                        Icons.fitness_center_rounded,
+                        size: 46,
+                        color: primaryColor,
+                      ),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
 
                     const Text(
                       'TrainTrack',
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: 30,
                         fontWeight: FontWeight.w900,
+                        color: darkText,
+                        letterSpacing: -0.6,
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 8),
+
+                    Text(
+                      'Inicia sesión para continuar',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
 
                     TextField(
                       controller: _emailController,
+                      enabled: !_isLoading,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
-                        labelText: 'Correo Electrónico',
+                        labelText: 'Correo electrónico',
                         prefixIcon: const Icon(Icons.email_outlined),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                     ),
@@ -145,6 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     TextField(
                       controller: _passwordController,
+                      enabled: !_isLoading,
                       obscureText: _isPasswordHidden,
                       textInputAction: TextInputAction.done,
                       onSubmitted: (_) => _doLogin(),
@@ -154,51 +185,55 @@ class _LoginScreenState extends State<LoginScreen> {
                         suffixIcon: IconButton(
                           icon: Icon(
                             _isPasswordHidden
-                                ? Icons.visibility_off
-                                : Icons.visibility,
+                                ? Icons.visibility_off_rounded
+                                : Icons.visibility_rounded,
                             color: Colors.grey,
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _isPasswordHidden = !_isPasswordHidden;
-                            });
-                          },
+                          onPressed: _isLoading
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _isPasswordHidden = !_isPasswordHidden;
+                                  });
+                                },
                         ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 28),
 
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _doLogin,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF22C55E),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: secondaryColor,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor:
+                              secondaryColor.withOpacity(0.55),
+                          padding: const EdgeInsets.symmetric(vertical: 17),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(18),
                           ),
                           elevation: 0,
                         ),
                         child: _isLoading
                             ? const SizedBox(
-                                width: 20,
-                                height: 20,
+                                width: 22,
+                                height: 22,
                                 child: CircularProgressIndicator(
                                   color: Colors.white,
-                                  strokeWidth: 2,
+                                  strokeWidth: 2.5,
                                 ),
                               )
                             : const Text(
                                 'INICIAR SESIÓN',
                                 style: TextStyle(
-                                  color: Colors.white,
                                   fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w900,
                                 ),
                               ),
                       ),
@@ -207,18 +242,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 16),
 
                     TextButton(
-                      onPressed: _goToRegister,
-                      child: const Text('¿No tienes cuenta? Regístrate aquí'),
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    TextButton.icon(
-                      onPressed: _goToAdminLogin,
-                      icon: const Icon(Icons.admin_panel_settings_rounded),
-                      label: const Text('Entrar como administrador'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF1E3A8A),
+                      onPressed: _isLoading ? null : _goToRegister,
+                      child: const Text(
+                        '¿No tienes cuenta? Regístrate aquí',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: primaryColor,
+                        ),
                       ),
                     ),
                   ],
