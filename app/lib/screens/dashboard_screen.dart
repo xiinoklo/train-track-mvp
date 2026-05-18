@@ -329,39 +329,39 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-Widget _buildLogoBadge() {
-  return Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Container(
-        width: 46,
-        height: 46,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.16),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.22),
+  Widget _buildLogoBadge() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.16),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.22),
+            ),
+          ),
+          child: const Icon(
+            Icons.fitness_center_rounded,
+            color: Colors.white,
+            size: 26,
           ),
         ),
-        child: const Icon(
-          Icons.fitness_center_rounded,
-          color: Colors.white,
-          size: 26,
+        const SizedBox(width: 12),
+        const Text(
+          'TrainTrack',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            letterSpacing: -0.6,
+          ),
         ),
-      ),
-      const SizedBox(width: 12),
-      const Text(
-        'TrainTrack',
-        style: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.w900,
-          color: Colors.white,
-          letterSpacing: -0.6,
-        ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
   Widget _buildProfileButton() {
     return Container(

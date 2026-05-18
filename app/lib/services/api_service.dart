@@ -103,9 +103,54 @@ class ApiService {
     }
   }
 
+  static Future<bool> adminLogin(String email, String password) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/admin/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final prefs = await SharedPreferences.getInstance();
+
+        if (response.body.isNotEmpty) {
+          final data = jsonDecode(response.body);
+          final token = data['token'];
+
+          if (token != null && token.toString().isNotEmpty) {
+            await prefs.setString('admin_jwt_token', token);
+          }
+        }
+
+        print('[+] Login admin exitoso.');
+        return true;
+      } else {
+        print('[ERROR] Login admin fallido: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('[ERROR] Excepcion de red en login admin: $e');
+      return false;
+    }
+  }
+
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('jwt_token');
+  }
+
+  static Future<String?> getAdminToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('admin_jwt_token');
+  }
+
+  static Future<void> adminLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('admin_jwt_token');
   }
 
   static Future<Map<String, dynamic>?> getProfile() async {

@@ -85,22 +85,62 @@ router.post("/verify", async (req, res) => {
 });
 
 // 3. POST /api/auth/login (Bloquea a los no verificados)
+// 3. POST /api/auth/login (Bloquea a los no verificados y a los admin)
 router.post("/login", loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
 
-    if (!user) return res.status(400).json({ message: "Credenciales inválidas" });
-    if (!user.isVerified) return res.status(403).json({ message: "Cuenta no verificada. Por favor regístrate de nuevo si el código expiró." });
+    const user = await User.findOne({
+      email: email.toLowerCase().trim()
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Credenciales inválidas"
+      });
+    }
+
+    if (!user.isVerified) {
+      return res.status(403).json({
+        message: "Cuenta no verificada. Por favor regístrate de nuevo si el código expiró."
+      });
+    }
+
+    if (user.role === "admin") {
+      return res.status(403).json({
+        message: "Esta cuenta es de administrador. Usa el modo administrador."
+      });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Credenciales inválidas" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "30d" });
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Credenciales inválidas"
+      });
+    }
 
-    res.json({ token, userId: user._id, email: user.email });
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role || "user"
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "30d"
+      }
+    );
+
+    res.json({
+      token,
+      userId: user._id,
+      email: user.email,
+      role: user.role || "user"
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error en el servidor" });
+    res.status(500).json({
+      message: "Error en el servidor"
+    });
   }
 });
 

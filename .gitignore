@@ -18,3 +18,12 @@ backend/.env
 .vscode/
 .idea/
 app/lib/services/api_service.dart
+# Documentos de entrega / archivos pesados
+*.pdf
+*.docx
+*.pptx
+
+# Evitar documentos metidos por error en assets
+app/assets/images/*.pdf
+app/assets/images/*.docx
+app/assets/images/*.pptx

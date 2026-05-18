@@ -1,30 +1,65 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
 const protect = (req, res, next) => {
   let token;
 
-  // El token debe venir en el header "Authorization" con el formato "Bearer <token>"
-  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
     try {
-      // Extraer solo el token, omitiendo la palabra "Bearer "
       token = req.headers.authorization.split(" ")[1];
 
-      // Decodificar y verificar con nuestro secreto
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Inyectar la información decodificada (que contiene el ID) en req.user
       req.user = decoded;
-      
-      // Permitir que la petición continúe hacia la ruta final
+
       next();
     } catch (error) {
-      return res.status(401).json({ message: "No autorizado, token fallido o expirado" });
+      return res.status(401).json({
+        message: "No autorizado, token fallido o expirado"
+      });
     }
   }
 
   if (!token) {
-    return res.status(401).json({ message: "No autorizado, se requiere token" });
+    return res.status(401).json({
+      message: "No autorizado, se requiere token"
+    });
   }
 };
 
-module.exports = { protect };
+const requireAdmin = async (req, res, next) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        message: "No autorizado"
+      });
+    }
+
+    const user = await User.findById(req.user.id).select("role email");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Usuario no encontrado"
+      });
+    }
+
+    if (user.role !== "admin") {
+      return res.status(403).json({
+        message: "Acceso denegado. Se requiere rol administrador"
+      });
+    }
+
+    req.admin = user;
+
+    next();
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error validando permisos de administrador"
+    });
+  }
+};
+
+module.exports = { protect, requireAdmin };
