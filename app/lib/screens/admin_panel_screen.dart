@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   const AdminPanelScreen({super.key});
@@ -10,12 +11,35 @@ class AdminPanelScreen extends StatefulWidget {
 class _AdminPanelScreenState extends State<AdminPanelScreen> {
   int selectedTab = 0;
 
+  late Future<List<Map<String, dynamic>>> _usersFuture;
+  String _userSearch = '';
+
   static const Color primaryColor = Color(0xFF1E3A8A);
   static const Color secondaryColor = Color(0xFF22C55E);
   static const Color warningColor = Color(0xFFF59E0B);
   static const Color dangerColor = Color(0xFFEF4444);
   static const Color backgroundColor = Color(0xFFF8FAFC);
   static const Color darkText = Color(0xFF0F172A);
+
+  @override
+  void initState() {
+    super.initState();
+    _usersFuture = ApiService.getAdminUsers();
+  }
+
+  void _refreshUsers() {
+    setState(() {
+      _usersFuture = ApiService.getAdminUsers();
+    });
+  }
+
+  Future<void> _logoutAdmin() async {
+    await ApiService.adminLogout();
+
+    if (!mounted) return;
+
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,15 +63,23 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             children: [
               _buildHeader(),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                  children: [
-                    _buildMainCard(),
-                    const SizedBox(height: 18),
-                    selectedTab == 0
-                        ? _buildUsersSection()
-                        : _buildExercisesSection(),
-                  ],
+                child: RefreshIndicator(
+                  color: primaryColor,
+                  onRefresh: () async {
+                    if (selectedTab == 0) {
+                      _refreshUsers();
+                    }
+                  },
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                    children: [
+                      _buildMainCard(),
+                      const SizedBox(height: 18),
+                      selectedTab == 0
+                          ? _buildUsersSection()
+                          : _buildExercisesSection(),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -80,9 +112,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             ),
           ),
           IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            onPressed: _logoutAdmin,
             icon: const Icon(Icons.logout_rounded),
             color: Colors.white,
             tooltip: 'Salir',
@@ -148,9 +178,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 22),
-
           Row(
             children: [
               Expanded(
@@ -223,27 +251,17 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   }
 
   Widget _buildUsersSection() {
-    final users = [
-      {
-        'name': 'Benjamín Gómez',
-        'email': 'bgomezm@utem.cl',
-      },
-      {
-        'name': 'María Soto',
-        'email': 'maria.soto@email.com',
-      },
-      {
-        'name': 'Juan Rojas',
-        'email': 'juan.rojas@email.com',
-      },
-    ];
-
     return _AdminSectionCard(
       title: 'Usuarios',
       subtitle: 'Lista de usuarios registrados',
       child: Column(
         children: [
           TextField(
+            onChanged: (value) {
+              setState(() {
+                _userSearch = value.trim().toLowerCase();
+              });
+            },
             decoration: InputDecoration(
               hintText: 'Buscar usuario...',
               prefixIcon: const Icon(Icons.search_rounded),
@@ -256,11 +274,119 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             ),
           ),
           const SizedBox(height: 18),
-          ...users.map(
-            (user) => _buildUserItem(
-              name: user['name']!,
-              email: user['email']!,
-            ),
+          FutureBuilder<List<Map<String, dynamic>>>(
+            future: _usersFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: primaryColor,
+                    ),
+                  ),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: dangerColor.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: dangerColor.withOpacity(0.2),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(
+                        Icons.error_outline_rounded,
+                        color: dangerColor,
+                        size: 40,
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'No se pudieron cargar los usuarios',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: darkText,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        snapshot.error.toString(),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: _refreshUsers,
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Reintentar'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final users = snapshot.data ?? [];
+
+              final filteredUsers = users.where((user) {
+                final email = (user['email'] ?? '').toString().toLowerCase();
+                final username =
+                    (user['username'] ?? '').toString().toLowerCase();
+
+                if (_userSearch.isEmpty) return true;
+
+                return email.contains(_userSearch) ||
+                    username.contains(_userSearch);
+              }).toList();
+
+              if (filteredUsers.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Text(
+                    'No hay usuarios para mostrar.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                );
+              }
+
+              return Column(
+                children: filteredUsers.map((user) {
+                  final id = (user['_id'] ?? user['id'] ?? '').toString();
+                  final email = (user['email'] ?? 'Sin correo').toString();
+                  final username = (user['username'] ?? '').toString();
+                  final role = (user['role'] ?? 'user').toString();
+
+                  final name = username.isNotEmpty ? username : email;
+
+                  return _buildUserItem(
+                    userId: id,
+                    name: name,
+                    email: email,
+                    role: role,
+                  );
+                }).toList(),
+              );
+            },
           ),
         ],
       ),
@@ -268,9 +394,13 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   }
 
   Widget _buildUserItem({
+    required String userId,
     required String name,
     required String email,
+    required String role,
   }) {
+    final bool isAdmin = role == 'admin';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -283,11 +413,14 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       ),
       child: Row(
         children: [
-          const CircleAvatar(
-            backgroundColor: Color(0xFFDBEAFE),
+          CircleAvatar(
+            backgroundColor:
+                isAdmin ? warningColor.withOpacity(0.15) : const Color(0xFFDBEAFE),
             child: Icon(
-              Icons.person_rounded,
-              color: primaryColor,
+              isAdmin
+                  ? Icons.admin_panel_settings_rounded
+                  : Icons.person_rounded,
+              color: isAdmin ? warningColor : primaryColor,
             ),
           ),
           const SizedBox(width: 12),
@@ -295,16 +428,47 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    color: darkText,
-                    fontWeight: FontWeight.w900,
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: darkText,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    if (isAdmin) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: warningColor.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: const Text(
+                          'ADMIN',
+                          style: TextStyle(
+                            color: warningColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 3),
                 Text(
                   email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 12,
@@ -315,12 +479,19 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             ),
           ),
           IconButton(
-            onPressed: () {
-              _confirmDeleteUser(name);
-            },
+            onPressed: isAdmin || userId.isEmpty
+                ? null
+                : () {
+                    _confirmDeleteUser(
+                      userId: userId,
+                      name: name,
+                    );
+                  },
             icon: const Icon(Icons.delete_outline_rounded),
-            color: dangerColor,
-            tooltip: 'Eliminar usuario',
+            color: isAdmin ? Colors.grey : dangerColor,
+            tooltip: isAdmin
+                ? 'No puedes eliminar un admin desde aquí'
+                : 'Eliminar usuario',
           ),
         ],
       ),
@@ -353,7 +524,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ElevatedButton.icon(
-            onPressed: _openExerciseForm,
+            onPressed: () => _openExerciseForm(),
             icon: const Icon(Icons.add_rounded),
             label: const Text(
               'AGREGAR EJERCICIO',
@@ -461,65 +632,117 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     );
   }
 
-  void _confirmDeleteUser(String name) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Eliminar usuario'),
-          content: Text(
-            '¿Seguro que quieres eliminar a $name?\n\nTambién se eliminará su historial y datos asociados.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
+  void _confirmDeleteUser({
+    required String userId,
+    required String name,
+  }) {
+    final parentContext = context;
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('$name eliminado en modo demo'),
-                    backgroundColor: dangerColor,
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: dangerColor,
-                foregroundColor: Colors.white,
+    showDialog(
+      context: parentContext,
+      builder: (dialogContext) {
+        bool isDeleting = false;
+
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              title: const Text('Eliminar usuario'),
+              content: Text(
+                '¿Seguro que quieres eliminar a $name?\n\nTambién se eliminará su historial y datos asociados.',
               ),
-              child: const Text('Eliminar'),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: isDeleting
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: isDeleting
+                      ? null
+                      : () async {
+                          setDialogState(() {
+                            isDeleting = true;
+                          });
+
+                          final success =
+                              await ApiService.deleteAdminUser(userId);
+
+                          if (!mounted) return;
+
+                          Navigator.of(dialogContext).pop();
+
+                          if (success) {
+                            _refreshUsers();
+
+                            ScaffoldMessenger.of(parentContext).showSnackBar(
+                              SnackBar(
+                                content: Text('$name eliminado correctamente'),
+                                backgroundColor: secondaryColor,
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(parentContext).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'No se pudo eliminar el usuario',
+                                ),
+                                backgroundColor: dangerColor,
+                              ),
+                            );
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: dangerColor,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: isDeleting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Eliminar'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
 
   void _confirmDeleteExercise(String name) {
+    final parentContext = context;
+
     showDialog(
-      context: context,
-      builder: (context) {
+      context: parentContext,
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Eliminar ejercicio'),
           content: Text('¿Seguro que quieres eliminar "$name"?'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Cancelar'),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.of(dialogContext).pop();
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('$name eliminado en modo demo'),
-                    backgroundColor: dangerColor,
-                  ),
-                );
+                Future.delayed(const Duration(milliseconds: 120), () {
+                  if (!mounted) return;
+
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
+                    SnackBar(
+                      content: Text('$name eliminado en modo demo'),
+                      backgroundColor: dangerColor,
+                    ),
+                  );
+                });
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: dangerColor,
@@ -533,204 +756,275 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     );
   }
 
-  void _openExerciseForm({
+  Future<void> _openExerciseForm({
     String? name,
     String? muscle,
-  }) {
-    final nameController = TextEditingController(text: name ?? '');
-    final descriptionController = TextEditingController();
-    final repsController = TextEditingController();
-    final videoController = TextEditingController();
-
-    String selectedMuscle = muscle ?? 'piernas';
-
-    showModalBottomSheet(
+  }) async {
+    final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Container(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                18,
-                20,
-                MediaQuery.of(context).viewInsets.bottom + 24,
-              ),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(28),
-                ),
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 48,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    Text(
-                      name == null ? 'Agregar ejercicio' : 'Editar ejercicio',
-                      style: const TextStyle(
-                        color: darkText,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    TextField(
-                      controller: nameController,
-                      decoration: InputDecoration(
-                        labelText: 'Nombre',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    TextField(
-                      controller: descriptionController,
-                      minLines: 2,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        labelText: 'Descripción',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    TextField(
-                      controller: repsController,
-                      decoration: InputDecoration(
-                        labelText: 'Repeticiones',
-                        hintText: 'Ej: 10-12',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    DropdownButtonFormField<String>(
-                      value: selectedMuscle,
-                      decoration: InputDecoration(
-                        labelText: 'Grupo muscular',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'pecho',
-                          child: Text('Pecho'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'espalda',
-                          child: Text('Espalda'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'piernas',
-                          child: Text('Piernas'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'hombros',
-                          child: Text('Hombros'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'brazos',
-                          child: Text('Brazos'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'core',
-                          child: Text('Core'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value == null) return;
-
-                        setModalState(() {
-                          selectedMuscle = value;
-                        });
-                      },
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    TextField(
-                      controller: videoController,
-                      decoration: InputDecoration(
-                        labelText: 'URL video YouTube',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 22),
-
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              name == null
-                                  ? 'Ejercicio agregado en modo demo'
-                                  : 'Ejercicio editado en modo demo',
-                            ),
-                            backgroundColor: secondaryColor,
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.save_rounded),
-                      label: const Text(
-                        'GUARDAR',
-                        style: TextStyle(fontWeight: FontWeight.w900),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 17),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
+      builder: (modalContext) {
+        return _ExerciseFormSheet(
+          name: name,
+          muscle: muscle,
         );
       },
-    ).whenComplete(() {
-      nameController.dispose();
-      descriptionController.dispose();
-      repsController.dispose();
-      videoController.dispose();
-    });
+    );
+
+    if (!mounted) return;
+
+    if (saved == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            name == null
+                ? 'Ejercicio agregado en modo demo'
+                : 'Ejercicio editado en modo demo',
+          ),
+          backgroundColor: secondaryColor,
+        ),
+      );
+    }
+  }
+}
+
+class _ExerciseFormSheet extends StatefulWidget {
+  final String? name;
+  final String? muscle;
+
+  const _ExerciseFormSheet({
+    this.name,
+    this.muscle,
+  });
+
+  @override
+  State<_ExerciseFormSheet> createState() => _ExerciseFormSheetState();
+}
+
+class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
+  late final TextEditingController nameController;
+  late final TextEditingController descriptionController;
+  late final TextEditingController repsController;
+  late final TextEditingController videoController;
+
+  late String selectedMuscle;
+
+  static const Color primaryColor = Color(0xFF1E3A8A);
+  static const Color secondaryColor = Color(0xFF22C55E);
+  static const Color darkText = Color(0xFF0F172A);
+
+  @override
+  void initState() {
+    super.initState();
+
+    nameController = TextEditingController(text: widget.name ?? '');
+    descriptionController = TextEditingController();
+    repsController = TextEditingController();
+    videoController = TextEditingController();
+
+    selectedMuscle = _normalizeMuscleValue(widget.muscle);
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    descriptionController.dispose();
+    repsController.dispose();
+    videoController.dispose();
+    super.dispose();
+  }
+
+  String _normalizeMuscleValue(String? value) {
+    final text = (value ?? 'piernas')
+        .toLowerCase()
+        .trim()
+        .replaceAll('á', 'a')
+        .replaceAll('é', 'e')
+        .replaceAll('í', 'i')
+        .replaceAll('ó', 'o')
+        .replaceAll('ú', 'u');
+
+    switch (text) {
+      case 'pecho':
+        return 'pecho';
+      case 'espalda':
+        return 'espalda';
+      case 'piernas':
+        return 'piernas';
+      case 'hombros':
+        return 'hombros';
+      case 'brazos':
+        return 'brazos';
+      case 'core':
+        return 'core';
+      default:
+        return 'piernas';
+    }
+  }
+
+  void _save() {
+    final name = nameController.text.trim();
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ingresa el nombre del ejercicio'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).pop(true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        18,
+        20,
+        MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(28),
+        ),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 48,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              widget.name == null ? 'Agregar ejercicio' : 'Editar ejercicio',
+              style: const TextStyle(
+                color: darkText,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 18),
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(
+                labelText: 'Nombre',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: descriptionController,
+              minLines: 2,
+              maxLines: 3,
+              decoration: InputDecoration(
+                labelText: 'Descripción',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: repsController,
+              decoration: InputDecoration(
+                labelText: 'Repeticiones',
+                hintText: 'Ej: 10-12',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            DropdownButtonFormField<String>(
+              value: selectedMuscle,
+              decoration: InputDecoration(
+                labelText: 'Grupo muscular',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              items: const [
+                DropdownMenuItem(
+                  value: 'pecho',
+                  child: Text('Pecho'),
+                ),
+                DropdownMenuItem(
+                  value: 'espalda',
+                  child: Text('Espalda'),
+                ),
+                DropdownMenuItem(
+                  value: 'piernas',
+                  child: Text('Piernas'),
+                ),
+                DropdownMenuItem(
+                  value: 'hombros',
+                  child: Text('Hombros'),
+                ),
+                DropdownMenuItem(
+                  value: 'brazos',
+                  child: Text('Brazos'),
+                ),
+                DropdownMenuItem(
+                  value: 'core',
+                  child: Text('Core'),
+                ),
+              ],
+              onChanged: (value) {
+                if (value == null) return;
+
+                setState(() {
+                  selectedMuscle = value;
+                });
+              },
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: videoController,
+              decoration: InputDecoration(
+                labelText: 'URL video YouTube',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+            const SizedBox(height: 22),
+            ElevatedButton.icon(
+              onPressed: _save,
+              icon: const Icon(Icons.save_rounded),
+              label: const Text(
+                'GUARDAR',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 17),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

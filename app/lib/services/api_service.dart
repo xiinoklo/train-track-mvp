@@ -94,7 +94,7 @@ class ApiService {
         print('[+] Login exitoso. Token guardado.');
         return true;
       } else {
-        print('[ERROR] Login fallido: ${response.body}');
+        print('[ERROR] Login fallido: ${response.statusCode} - ${response.body}');
         return false;
       }
     } catch (e) {
@@ -114,22 +114,28 @@ class ApiService {
         }),
       );
 
+      print('[ADMIN LOGIN] URL: $baseUrl/admin/login');
+      print('[ADMIN LOGIN] Status: ${response.statusCode}');
+      print('[ADMIN LOGIN] Body: ${response.body}');
+
       if (response.statusCode == 200) {
-        final prefs = await SharedPreferences.getInstance();
+        final data = jsonDecode(response.body);
+        final token = data['token'];
 
-        if (response.body.isNotEmpty) {
-          final data = jsonDecode(response.body);
-          final token = data['token'];
-
-          if (token != null && token.toString().isNotEmpty) {
-            await prefs.setString('admin_jwt_token', token);
-          }
+        if (token == null || token.toString().isEmpty) {
+          print('[ERROR] Login admin sin token');
+          return false;
         }
 
-        print('[+] Login admin exitoso.');
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('admin_jwt_token', token);
+
+        print('[+] Login admin exitoso. Token admin guardado.');
         return true;
       } else {
-        print('[ERROR] Login admin fallido: ${response.statusCode} - ${response.body}');
+        print(
+          '[ERROR] Login admin fallido: ${response.statusCode} - ${response.body}',
+        );
         return false;
       }
     } catch (e) {
@@ -172,7 +178,9 @@ class ApiService {
       return jsonDecode(response.body);
     }
 
-    print('[ERROR] Error al obtener perfil: ${response.statusCode} - ${response.body}');
+    print(
+      '[ERROR] Error al obtener perfil: ${response.statusCode} - ${response.body}',
+    );
     return null;
   }
 
@@ -212,7 +220,9 @@ class ApiService {
         return true;
       }
 
-      print('[ERROR] Error al actualizar perfil: ${response.statusCode} - ${response.body}');
+      print(
+        '[ERROR] Error al actualizar perfil: ${response.statusCode} - ${response.body}',
+      );
       return false;
     } catch (e) {
       print('[ERROR] Excepcion al actualizar perfil: $e');
@@ -348,6 +358,209 @@ class ApiService {
       throw Exception(
         'Error al obtener recuperacion muscular: ${response.statusCode}',
       );
+    }
+  }
+
+  // =========================
+  // ADMIN - USUARIOS
+  // =========================
+
+  static Future<List<Map<String, dynamic>>> getAdminUsers() async {
+    final token = await getAdminToken();
+
+    if (token == null) {
+      throw Exception('No hay token admin');
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/users'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('[ADMIN USERS] Status: ${response.statusCode}');
+      print('[ADMIN USERS] Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final users = data['users'] ?? [];
+
+        return List<Map<String, dynamic>>.from(users);
+      }
+
+      throw Exception('Error al cargar usuarios admin');
+    } catch (e) {
+      print('[ADMIN USERS] Error: $e');
+      rethrow;
+    }
+  }
+
+  static Future<bool> deleteAdminUser(String userId) async {
+    final token = await getAdminToken();
+
+    if (token == null) {
+      print('[ADMIN DELETE USER] No hay token admin');
+      return false;
+    }
+
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/admin/users/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('[ADMIN DELETE USER] Status: ${response.statusCode}');
+      print('[ADMIN DELETE USER] Body: ${response.body}');
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('[ADMIN DELETE USER] Error: $e');
+      return false;
+    }
+  }
+
+  // =========================
+  // ADMIN - EJERCICIOS
+  // =========================
+
+  static Future<List<Map<String, dynamic>>> getAdminExercises() async {
+    final token = await getAdminToken();
+
+    if (token == null) {
+      throw Exception('No hay token admin');
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/exercises'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('[ADMIN EXERCISES] Status: ${response.statusCode}');
+      print('[ADMIN EXERCISES] Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final exercises = data['exercises'] ?? [];
+
+        return List<Map<String, dynamic>>.from(exercises);
+      }
+
+      throw Exception('Error al cargar ejercicios admin');
+    } catch (e) {
+      print('[ADMIN EXERCISES] Error: $e');
+      rethrow;
+    }
+  }
+
+  static Future<bool> createAdminExercise({
+    required String name,
+    required String muscleGroup,
+    required String description,
+    required String instructions,
+    required String level,
+    String videoUrl = '',
+    bool isActive = true,
+  }) async {
+    final token = await getAdminToken();
+
+    if (token == null) {
+      print('[ADMIN CREATE EXERCISE] No hay token admin');
+      return false;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/admin/exercises'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'name': name,
+          'muscleGroup': muscleGroup,
+          'description': description,
+          'instructions': instructions,
+          'level': level,
+          'videoUrl': videoUrl,
+          'isActive': isActive,
+        }),
+      );
+
+      print('[ADMIN CREATE EXERCISE] Status: ${response.statusCode}');
+      print('[ADMIN CREATE EXERCISE] Body: ${response.body}');
+
+      return response.statusCode == 201;
+    } catch (e) {
+      print('[ADMIN CREATE EXERCISE] Error: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> updateAdminExercise({
+    required String exerciseId,
+    required Map<String, dynamic> updates,
+  }) async {
+    final token = await getAdminToken();
+
+    if (token == null) {
+      print('[ADMIN UPDATE EXERCISE] No hay token admin');
+      return false;
+    }
+
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/admin/exercises/$exerciseId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(updates),
+      );
+
+      print('[ADMIN UPDATE EXERCISE] Status: ${response.statusCode}');
+      print('[ADMIN UPDATE EXERCISE] Body: ${response.body}');
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('[ADMIN UPDATE EXERCISE] Error: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> deleteAdminExercise(String exerciseId) async {
+    final token = await getAdminToken();
+
+    if (token == null) {
+      print('[ADMIN DELETE EXERCISE] No hay token admin');
+      return false;
+    }
+
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/admin/exercises/$exerciseId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('[ADMIN DELETE EXERCISE] Status: ${response.statusCode}');
+      print('[ADMIN DELETE EXERCISE] Body: ${response.body}');
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('[ADMIN DELETE EXERCISE] Error: $e');
+      return false;
     }
   }
 }
