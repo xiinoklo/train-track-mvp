@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../services/api_service.dart';
+import '../theme/app_theme_controller.dart';
 import 'dashboard_screen.dart';
 
 class WorkoutScreen extends StatefulWidget {
@@ -33,7 +34,9 @@ class _WorkoutScreenState extends State<WorkoutScreen>
   static const Color secondaryColor = Color(0xFF22C55E);
   static const Color warningColor = Color(0xFFF59E0B);
   static const Color dangerColor = Color(0xFFEF4444);
-  static const Color backgroundColor = Color(0xFFF8FAFC);
+  static const Color lightBackground = Color(0xFFF8FAFC);
+  static const Color darkBackground = Color(0xFF020617);
+  static const Color darkCard = Color(0xFF0F172A);
   static const Color darkText = Color(0xFF0F172A);
 
   @override
@@ -69,6 +72,12 @@ class _WorkoutScreenState extends State<WorkoutScreen>
     super.dispose();
   }
 
+  int _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return 0;
+  }
+
   Color get _sessionColor {
     if (widget.loadFactor == 0) return dangerColor;
     if (widget.loadFactor == 0.5) return warningColor;
@@ -83,10 +92,13 @@ class _WorkoutScreenState extends State<WorkoutScreen>
 
   void _showVideoModal(BuildContext context, String videoUrl) {
     final videoId = YoutubePlayer.convertUrlToId(videoUrl);
-    
+
     if (videoId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Video no disponible'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Video no disponible'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -95,7 +107,6 @@ class _WorkoutScreenState extends State<WorkoutScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      // Ahora llamamos a un componente inteligente que controla su propia vida
       builder: (context) => _VideoPlayerModal(videoUrl: videoUrl),
     );
   }
@@ -104,64 +115,115 @@ class _WorkoutScreenState extends State<WorkoutScreen>
   Widget build(BuildContext context) {
     final bool isRestDay = widget.exercises.isEmpty;
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF1E3A8A),
-              Color(0xFF2563EB),
-              Color(0xFFF8FAFC),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0.0, 0.34, 0.34],
-          ),
-        ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: Column(
-                children: [
-                  _buildHeader(context),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildRecommendationCard(),
-                          const SizedBox(height: 18),
-                          if (isRestDay)
-                            _buildRestMessage()
-                          else ...[
-                            _buildWorkoutSummary(),
-                            const SizedBox(height: 18),
-                            ...widget.exercises.map(
-                              (exercise) => _buildExerciseCard(exercise),
-                            ),
-                            const SizedBox(height: 10),
-                            _buildFinishButton(context),
-                          ],
-                        ],
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppThemeController.themeMode,
+      builder: (context, mode, _) {
+        final bool isDark = mode == ThemeMode.dark;
+
+        final Color pageBackground =
+            isDark ? darkBackground : lightBackground;
+
+        final Color cardColor = isDark ? darkCard : Colors.white;
+
+        final Color titleColor = isDark ? Colors.white : darkText;
+
+        final Color subtitleColor =
+            isDark ? Colors.white70 : Colors.grey[700]!;
+
+        final Color borderColor =
+            isDark ? Colors.white.withOpacity(0.08) : Colors.transparent;
+
+        return Scaffold(
+          backgroundColor: pageBackground,
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? const [
+                        Color(0xFF020617),
+                        Color(0xFF1E3A8A),
+                        Color(0xFF020617),
+                      ]
+                    : const [
+                        Color(0xFF1E3A8A),
+                        Color(0xFF2563EB),
+                        Color(0xFFF8FAFC),
+                      ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.34, 0.34],
+              ),
+            ),
+            child: SafeArea(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Column(
+                    children: [
+                      _buildHeader(context, isDark),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildRecommendationCard(
+                                isDark: isDark,
+                                cardColor: cardColor,
+                                titleColor: titleColor,
+                                subtitleColor: subtitleColor,
+                                borderColor: borderColor,
+                              ),
+                              const SizedBox(height: 18),
+                              if (isRestDay)
+                                _buildRestMessage(
+                                  isDark: isDark,
+                                  cardColor: cardColor,
+                                  titleColor: titleColor,
+                                  subtitleColor: subtitleColor,
+                                  borderColor: borderColor,
+                                )
+                              else ...[
+                                _buildWorkoutSummary(
+                                  isDark: isDark,
+                                  cardColor: cardColor,
+                                  titleColor: titleColor,
+                                  subtitleColor: subtitleColor,
+                                  borderColor: borderColor,
+                                ),
+                                const SizedBox(height: 18),
+                                ...widget.exercises.map(
+                                  (exercise) => _buildExerciseCard(
+                                    exercise: exercise,
+                                    isDark: isDark,
+                                    cardColor: cardColor,
+                                    titleColor: titleColor,
+                                    subtitleColor: subtitleColor,
+                                    borderColor: borderColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                _buildFinishButton(context),
+                              ],
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 20, 18),
+      padding: const EdgeInsets.fromLTRB(12, 8, 18, 18),
       child: Row(
         children: [
           IconButton(
@@ -181,22 +243,30 @@ class _WorkoutScreenState extends State<WorkoutScreen>
               ),
             ),
           ),
+          _buildThemeButton(isDark),
         ],
       ),
     );
   }
 
-  Widget _buildRecommendationCard() {
+  Widget _buildRecommendationCard({
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+  }) {
     final Color color = _sessionColor;
 
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withOpacity(isDark ? 0.35 : 0.12),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -207,7 +277,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withOpacity(isDark ? 0.20 : 0.12),
               borderRadius: BorderRadius.circular(18),
             ),
             child: Icon(
@@ -223,10 +293,10 @@ class _WorkoutScreenState extends State<WorkoutScreen>
               children: [
                 Text(
                   widget.recommendation,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
-                    color: darkText,
+                    color: titleColor,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -235,7 +305,8 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.35,
-                    color: Colors.grey[700],
+                    color: subtitleColor,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -246,11 +317,17 @@ class _WorkoutScreenState extends State<WorkoutScreen>
     );
   }
 
-  Widget _buildWorkoutSummary() {
+  Widget _buildWorkoutSummary({
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+  }) {
     final int totalExercises = widget.exercises.length;
     final int totalSets = widget.exercises.fold<int>(
       0,
-      (sum, exercise) => sum + ((exercise['sets'] ?? 0) as int),
+      (sum, exercise) => sum + _asInt(exercise['sets']),
     );
 
     return Row(
@@ -261,6 +338,11 @@ class _WorkoutScreenState extends State<WorkoutScreen>
             label: 'Ejercicios',
             value: totalExercises.toString(),
             color: primaryColor,
+            isDark: isDark,
+            cardColor: cardColor,
+            titleColor: titleColor,
+            subtitleColor: subtitleColor,
+            borderColor: borderColor,
           ),
         ),
         const SizedBox(width: 12),
@@ -270,6 +352,11 @@ class _WorkoutScreenState extends State<WorkoutScreen>
             label: 'Series',
             value: totalSets.toString(),
             color: secondaryColor,
+            isDark: isDark,
+            cardColor: cardColor,
+            titleColor: titleColor,
+            subtitleColor: subtitleColor,
+            borderColor: borderColor,
           ),
         ),
         const SizedBox(width: 12),
@@ -279,6 +366,11 @@ class _WorkoutScreenState extends State<WorkoutScreen>
             label: 'Carga',
             value: widget.loadFactor == 1 ? '100%' : '50%',
             color: _sessionColor,
+            isDark: isDark,
+            cardColor: cardColor,
+            titleColor: titleColor,
+            subtitleColor: subtitleColor,
+            borderColor: borderColor,
           ),
         ),
       ],
@@ -290,15 +382,21 @@ class _WorkoutScreenState extends State<WorkoutScreen>
     required String label,
     required String value,
     required Color color,
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
   }) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.045),
+            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -310,10 +408,10 @@ class _WorkoutScreenState extends State<WorkoutScreen>
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w900,
-              color: darkText,
+              color: titleColor,
             ),
           ),
           const SizedBox(height: 2),
@@ -321,7 +419,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
             label,
             style: TextStyle(
               fontSize: 11,
-              color: Colors.grey[600],
+              color: subtitleColor,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -330,19 +428,25 @@ class _WorkoutScreenState extends State<WorkoutScreen>
     );
   }
 
-  Widget _buildRestMessage() {
+  Widget _buildRestMessage({
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+  }) {
     return Container(
       padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: dangerColor.withOpacity(0.18),
+          color: dangerColor.withOpacity(isDark ? 0.35 : 0.18),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.045),
+            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -353,7 +457,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: dangerColor.withOpacity(0.12),
+              color: dangerColor.withOpacity(isDark ? 0.20 : 0.12),
               borderRadius: BorderRadius.circular(24),
             ),
             child: const Icon(
@@ -363,12 +467,12 @@ class _WorkoutScreenState extends State<WorkoutScreen>
             ),
           ),
           const SizedBox(height: 18),
-          const Text(
+          Text(
             'Descanso activo / recuperación',
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w900,
-              color: darkText,
+              color: titleColor,
             ),
             textAlign: TextAlign.center,
           ),
@@ -378,7 +482,8 @@ class _WorkoutScreenState extends State<WorkoutScreen>
             style: TextStyle(
               fontSize: 14,
               height: 1.4,
-              color: Colors.grey[700],
+              color: subtitleColor,
+              fontWeight: FontWeight.w600,
             ),
             textAlign: TextAlign.center,
           ),
@@ -388,8 +493,11 @@ class _WorkoutScreenState extends State<WorkoutScreen>
             icon: const Icon(Icons.home_rounded),
             label: const Text('Volver al inicio'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: primaryColor,
-              side: const BorderSide(color: primaryColor, width: 1.4),
+              foregroundColor: isDark ? Colors.white : primaryColor,
+              side: BorderSide(
+                color: isDark ? Colors.white70 : primaryColor,
+                width: 1.4,
+              ),
               padding: const EdgeInsets.symmetric(
                 vertical: 16,
                 horizontal: 18,
@@ -404,11 +512,18 @@ class _WorkoutScreenState extends State<WorkoutScreen>
     );
   }
 
-  Widget _buildExerciseCard(Map<String, dynamic> exercise) {
+  Widget _buildExerciseCard({
+    required Map<String, dynamic> exercise,
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+  }) {
     final String name = exercise['name'] ?? 'Ejercicio';
     final String muscleGroup = exercise['muscleGroup'] ?? 'General';
-    final int sets = exercise['sets'] ?? 0;
-    final String reps = exercise['reps'] ?? '-';
+    final int sets = _asInt(exercise['sets']);
+    final String reps = exercise['reps']?.toString() ?? '-';
     final String instructions = exercise['instructions'] ?? '';
     final String? videoUrl = exercise['videoUrl'];
 
@@ -416,11 +531,12 @@ class _WorkoutScreenState extends State<WorkoutScreen>
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.045),
+            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -434,7 +550,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
               Container(
                 padding: const EdgeInsets.all(11),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
+                  color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
@@ -447,10 +563,10 @@ class _WorkoutScreenState extends State<WorkoutScreen>
               Expanded(
                 child: Text(
                   name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
-                    color: darkText,
+                    color: titleColor,
                   ),
                 ),
               ),
@@ -460,13 +576,13 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                   vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.08),
+                  color: primaryColor.withOpacity(isDark ? 0.20 : 0.08),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   muscleGroup,
-                  style: const TextStyle(
-                    color: primaryColor,
+                  style: TextStyle(
+                    color: isDark ? Colors.white : primaryColor,
                     fontWeight: FontWeight.w800,
                     fontSize: 12,
                   ),
@@ -478,8 +594,13 @@ class _WorkoutScreenState extends State<WorkoutScreen>
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: backgroundColor,
+              color: isDark ? const Color(0xFF111827) : lightBackground,
               borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withOpacity(0.08)
+                    : const Color(0xFFE2E8F0),
+              ),
             ),
             child: Row(
               children: [
@@ -491,16 +612,18 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                 const SizedBox(width: 10),
                 Text(
                   '$sets series',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w900,
-                    color: darkText,
+                    color: titleColor,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Container(
                   width: 1,
                   height: 18,
-                  color: Colors.grey[300],
+                  color: isDark
+                      ? Colors.white.withOpacity(0.16)
+                      : Colors.grey[300],
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -508,7 +631,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                     '$reps reps',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey[700],
+                      color: subtitleColor,
                     ),
                   ),
                 ),
@@ -519,7 +642,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
           Text(
             instructions,
             style: TextStyle(
-              color: Colors.grey[700],
+              color: subtitleColor,
               fontStyle: FontStyle.italic,
               height: 1.35,
             ),
@@ -535,33 +658,44 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        // Magia: Sacamos la imagen directo de YouTube sin usar Base de datos
                         Image.network(
-                          YoutubePlayer.getThumbnail(videoId: YoutubePlayer.convertUrlToId(videoUrl) ?? ''),
+                          YoutubePlayer.getThumbnail(
+                            videoId:
+                                YoutubePlayer.convertUrlToId(videoUrl) ?? '',
+                          ),
                           width: double.infinity,
                           height: 170,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
                             width: double.infinity,
                             height: 170,
-                            color: Colors.grey[200],
-                            child: const Icon(Icons.video_library_rounded, size: 50, color: Colors.grey),
+                            color: isDark
+                                ? const Color(0xFF111827)
+                                : Colors.grey[200],
+                            child: Icon(
+                              Icons.video_library_rounded,
+                              size: 50,
+                              color: isDark ? Colors.white54 : Colors.grey,
+                            ),
                           ),
                         ),
-                        // Filtro oscuro para que el botón de play resalte
                         Container(
                           width: double.infinity,
                           height: 170,
                           color: Colors.black.withOpacity(0.35),
                         ),
-                        // Botón de Play gigante
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: dangerColor.withOpacity(0.9),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.play_arrow_rounded, size: 48, color: Colors.white),
+                          child: const Icon(
+                            Icons.play_arrow_rounded,
+                            size: 48,
+                            color: Colors.white,
+                          ),
                         ),
                       ],
                     ),
@@ -573,10 +707,14 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: dangerColor.withOpacity(0.12),
+                          color: dangerColor.withOpacity(isDark ? 0.20 : 0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.help_outline_rounded, size: 18, color: dangerColor),
+                        child: const Icon(
+                          Icons.help_outline_rounded,
+                          size: 18,
+                          color: dangerColor,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       const Text(
@@ -601,7 +739,12 @@ class _WorkoutScreenState extends State<WorkoutScreen>
     return ElevatedButton.icon(
       onPressed: () => _mostrarDialogoRPE(context),
       icon: const Icon(Icons.check_circle_outline_rounded),
-      label: const Text('FINALIZAR ENTRENAMIENTO'),
+      label: const Text(
+        'FINALIZAR ENTRENAMIENTO',
+        style: TextStyle(
+          fontWeight: FontWeight.w900,
+        ),
+      ),
       style: ElevatedButton.styleFrom(
         backgroundColor: secondaryColor,
         foregroundColor: Colors.white,
@@ -618,28 +761,39 @@ class _WorkoutScreenState extends State<WorkoutScreen>
     double rpe = 5;
     bool isSaving = false;
 
+    final bool isDark = AppThemeController.themeMode.value == ThemeMode.dark;
+
+    final Color dialogColor = isDark ? darkCard : Colors.white;
+    final Color titleColor = isDark ? Colors.white : darkText;
+    final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[700]!;
+
     showDialog(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
             return AlertDialog(
+              backgroundColor: dialogColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(26),
               ),
-              title: const Text(
+              title: Text(
                 'Registrar RPE',
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
-                  color: darkText,
+                  color: titleColor,
                 ),
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     '¿Qué tan exigente fue el entrenamiento?',
                     textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: subtitleColor,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 18),
                   Container(
@@ -647,15 +801,15 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                     height: 72,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.1),
+                      color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Text(
                       rpe.round().toString(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 34,
                         fontWeight: FontWeight.w900,
-                        color: primaryColor,
+                        color: isDark ? Colors.white : primaryColor,
                       ),
                     ),
                   ),
@@ -680,7 +834,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: subtitleColor,
                     ),
                   ),
                 ],
@@ -689,7 +843,12 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                 TextButton(
                   onPressed:
                       isSaving ? null : () => Navigator.pop(dialogContext),
-                  child: const Text('Cancelar'),
+                  child: Text(
+                    'Cancelar',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : primaryColor,
+                    ),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: isSaving
@@ -711,7 +870,9 @@ class _WorkoutScreenState extends State<WorkoutScreen>
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Entrenamiento finalizado con éxito 🏆'),
+                                content: Text(
+                                  'Entrenamiento finalizado con éxito 🏆',
+                                ),
                                 backgroundColor: Colors.green,
                               ),
                             );
@@ -723,7 +884,6 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                               ),
                               (route) => false,
                             );
-                            
                           } catch (e) {
                             if (!mounted) return;
 
@@ -734,10 +894,15 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                                 content: Text(
                                   'Error al guardar RPE en el backend.',
                                 ),
+                                backgroundColor: Colors.red,
                               ),
                             );
                           }
                         },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
                   child: isSaving
                       ? const SizedBox(
                           width: 18,
@@ -756,12 +921,33 @@ class _WorkoutScreenState extends State<WorkoutScreen>
       },
     );
   }
+
+  Widget _buildThemeButton(bool isDark) {
+    return Container(
+      width: 46,
+      height: 46,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.22),
+        ),
+      ),
+      child: IconButton(
+        onPressed: AppThemeController.toggleTheme,
+        icon: Icon(
+          isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+        ),
+        color: Colors.white,
+        tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
+      ),
+    );
+  }
 }
 
-// --- NUEVO COMPONENTE AL FINAL DEL ARCHIVO ---
 class _VideoPlayerModal extends StatefulWidget {
   final String videoUrl;
-  
+
   const _VideoPlayerModal({required this.videoUrl});
 
   @override
@@ -771,24 +957,28 @@ class _VideoPlayerModal extends StatefulWidget {
 class _VideoPlayerModalState extends State<_VideoPlayerModal> {
   late YoutubePlayerController _ytController;
 
+  static const Color dangerColor = Color(0xFFEF4444);
+  static const Color darkCard = Color(0xFF0F172A);
+  static const Color darkText = Color(0xFF0F172A);
+
   @override
   void initState() {
     super.initState();
+
     final videoId = YoutubePlayer.convertUrlToId(widget.videoUrl);
-    
+
     _ytController = YoutubePlayerController(
       initialVideoId: videoId ?? '',
       flags: const YoutubePlayerFlags(
         autoPlay: true,
         mute: false,
-        hideThumbnail: true, // Para evitar doble carga visual
+        hideThumbnail: true,
       ),
     );
   }
 
   @override
   void dispose() {
-    // Cuando el panel se cierra, pausamos el video y matamos el controlador ordenadamente
     _ytController.pause();
     _ytController.dispose();
     super.dispose();
@@ -796,47 +986,66 @@ class _VideoPlayerModalState extends State<_VideoPlayerModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 16),
-            width: 50,
-            height: 5,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(10),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppThemeController.themeMode,
+      builder: (context, mode, _) {
+        final bool isDark = mode == ThemeMode.dark;
+
+        final Color modalColor = isDark ? darkCard : Colors.white;
+        final Color titleColor = isDark ? Colors.white : darkText;
+        final Color handleColor =
+            isDark ? Colors.white.withOpacity(0.18) : Colors.grey[300]!;
+
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          decoration: BoxDecoration(
+            color: modalColor,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(28),
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.only(bottom: 16.0),
-            child: Text(
-              'Tutorial del Ejercicio',
-              // Usamos colores quemados para no depender del padre si no hereda el contexto completo
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)), 
-            ),
-          ),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              child: YoutubePlayer(
-                controller: _ytController,
-                showVideoProgressIndicator: true,
-                progressColors: const ProgressBarColors(
-                  playedColor: Color(0xFFEF4444),
-                  handleColor: Color(0xFFEF4444),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 16),
+                width: 50,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: handleColor,
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-            ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Text(
+                  'Tutorial del Ejercicio',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: titleColor,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
+                  child: YoutubePlayer(
+                    controller: _ytController,
+                    showVideoProgressIndicator: true,
+                    progressColors: const ProgressBarColors(
+                      playedColor: dangerColor,
+                      handleColor: dangerColor,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
           ),
-          const SizedBox(height: 20),
-        ],
-      ),
+        );
+      },
     );
   }
 }

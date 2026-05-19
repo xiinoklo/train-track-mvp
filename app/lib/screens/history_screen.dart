@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../theme/app_theme_controller.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({Key? key}) : super(key: key);
@@ -20,7 +21,9 @@ class _HistoryScreenState extends State<HistoryScreen>
   static const Color secondaryColor = Color(0xFF22C55E);
   static const Color warningColor = Color(0xFFF59E0B);
   static const Color dangerColor = Color(0xFFEF4444);
-  static const Color backgroundColor = Color(0xFFF8FAFC);
+  static const Color lightBackground = Color(0xFFF8FAFC);
+  static const Color darkBackground = Color(0xFF020617);
+  static const Color darkCard = Color(0xFF0F172A);
   static const Color darkText = Color(0xFF0F172A);
 
   @override
@@ -64,6 +67,12 @@ class _HistoryScreenState extends State<HistoryScreen>
     });
   }
 
+  int _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return 0;
+  }
+
   Color _getMetricColor(String key, int value) {
     final bool inverse = key == 'pain' || key == 'fatigue' || key == 'stress';
 
@@ -101,7 +110,7 @@ class _HistoryScreenState extends State<HistoryScreen>
 
     final total = entries.fold<int>(
       0,
-      (sum, entry) => sum + ((entry[key] ?? 0) as int),
+      (sum, entry) => sum + _asInt(entry[key]),
     );
 
     return total / entries.length;
@@ -109,82 +118,136 @@ class _HistoryScreenState extends State<HistoryScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF1E3A8A),
-              Color(0xFF2563EB),
-              Color(0xFFF8FAFC),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0.0, 0.34, 0.34],
-          ),
-        ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: Column(
-                children: [
-                  _buildHeader(context),
-                  Expanded(
-                    child: FutureBuilder<Map<String, dynamic>>(
-                      future: historyFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                            ),
-                          );
-                        }
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppThemeController.themeMode,
+      builder: (context, mode, _) {
+        final bool isDark = mode == ThemeMode.dark;
 
-                        if (snapshot.hasError) {
-                          return _buildErrorState(snapshot.error.toString());
-                        }
+        final Color pageBackground =
+            isDark ? darkBackground : lightBackground;
 
-                        final data = snapshot.data;
-                        final List entries = data?['wellnessEntries'] ?? [];
+        final Color cardColor = isDark ? darkCard : Colors.white;
 
-                        if (entries.isEmpty) {
-                          return _buildEmptyState();
-                        }
+        final Color titleColor = isDark ? Colors.white : darkText;
 
-                        return RefreshIndicator(
-                          onRefresh: _refreshHistory,
-                          color: primaryColor,
-                          child: ListView(
-                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                            children: [
-                              _buildSummaryCard(entries),
-                              const SizedBox(height: 18),
-                              ...entries.reversed.map(
-                                (entry) => _buildHistoryCard(entry),
+        final Color subtitleColor =
+            isDark ? Colors.white70 : Colors.grey[700]!;
+
+        final Color borderColor =
+            isDark ? Colors.white.withOpacity(0.08) : Colors.transparent;
+
+        return Scaffold(
+          backgroundColor: pageBackground,
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? const [
+                        Color(0xFF020617),
+                        Color(0xFF1E3A8A),
+                        Color(0xFF020617),
+                      ]
+                    : const [
+                        Color(0xFF1E3A8A),
+                        Color(0xFF2563EB),
+                        Color(0xFFF8FAFC),
+                      ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.34, 0.34],
+              ),
+            ),
+            child: SafeArea(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Column(
+                    children: [
+                      _buildHeader(context, isDark),
+                      Expanded(
+                        child: FutureBuilder<Map<String, dynamic>>(
+                          future: historyFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
+                              );
+                            }
+
+                            if (snapshot.hasError) {
+                              return _buildErrorState(
+                                error: snapshot.error.toString(),
+                                isDark: isDark,
+                                cardColor: cardColor,
+                                titleColor: titleColor,
+                                subtitleColor: subtitleColor,
+                                borderColor: borderColor,
+                              );
+                            }
+
+                            final data = snapshot.data;
+                            final List entries = data?['wellnessEntries'] ?? [];
+
+                            if (entries.isEmpty) {
+                              return _buildEmptyState(
+                                isDark: isDark,
+                                cardColor: cardColor,
+                                titleColor: titleColor,
+                                subtitleColor: subtitleColor,
+                                borderColor: borderColor,
+                              );
+                            }
+
+                            return RefreshIndicator(
+                              onRefresh: _refreshHistory,
+                              color: primaryColor,
+                              child: ListView(
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                                children: [
+                                  _buildSummaryCard(
+                                    entries: entries,
+                                    isDark: isDark,
+                                    cardColor: cardColor,
+                                    titleColor: titleColor,
+                                    subtitleColor: subtitleColor,
+                                    borderColor: borderColor,
+                                  ),
+                                  const SizedBox(height: 18),
+                                  ...entries.reversed.map(
+                                    (entry) => _buildHistoryCard(
+                                      entry: entry,
+                                      isDark: isDark,
+                                      cardColor: cardColor,
+                                      titleColor: titleColor,
+                                      subtitleColor: subtitleColor,
+                                      borderColor: borderColor,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 20, 18),
+      padding: const EdgeInsets.fromLTRB(12, 8, 18, 18),
       child: Row(
         children: [
           IconButton(
@@ -204,12 +267,20 @@ class _HistoryScreenState extends State<HistoryScreen>
               ),
             ),
           ),
+          _buildThemeButton(isDark),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryCard(List entries) {
+  Widget _buildSummaryCard({
+    required List entries,
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+  }) {
     final double sleepAverage = _calculateAverage(entries, 'sleep');
     final double painAverage = _calculateAverage(entries, 'pain');
     final double fatigueAverage = _calculateAverage(entries, 'fatigue');
@@ -217,11 +288,12 @@ class _HistoryScreenState extends State<HistoryScreen>
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withOpacity(isDark ? 0.35 : 0.12),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -235,7 +307,7 @@ class _HistoryScreenState extends State<HistoryScreen>
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
+                  color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: const Icon(
@@ -251,10 +323,10 @@ class _HistoryScreenState extends State<HistoryScreen>
                   children: [
                     Text(
                       '${entries.length} registros guardados',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
-                        color: darkText,
+                        color: titleColor,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -263,7 +335,8 @@ class _HistoryScreenState extends State<HistoryScreen>
                       style: TextStyle(
                         fontSize: 13,
                         height: 1.35,
-                        color: Colors.grey[700],
+                        color: subtitleColor,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -280,6 +353,8 @@ class _HistoryScreenState extends State<HistoryScreen>
                   value: sleepAverage,
                   icon: Icons.bedtime_outlined,
                   color: _getMetricColor('sleep', sleepAverage.round()),
+                  isDark: isDark,
+                  subtitleColor: subtitleColor,
                 ),
               ),
               const SizedBox(width: 12),
@@ -289,6 +364,8 @@ class _HistoryScreenState extends State<HistoryScreen>
                   value: painAverage,
                   icon: Icons.healing_outlined,
                   color: _getMetricColor('pain', painAverage.round()),
+                  isDark: isDark,
+                  subtitleColor: subtitleColor,
                 ),
               ),
               const SizedBox(width: 12),
@@ -298,6 +375,8 @@ class _HistoryScreenState extends State<HistoryScreen>
                   value: fatigueAverage,
                   icon: Icons.battery_2_bar_outlined,
                   color: _getMetricColor('fatigue', fatigueAverage.round()),
+                  isDark: isDark,
+                  subtitleColor: subtitleColor,
                 ),
               ),
             ],
@@ -312,12 +391,19 @@ class _HistoryScreenState extends State<HistoryScreen>
     required double value,
     required IconData icon,
     required Color color,
+    required bool isDark,
+    required Color subtitleColor,
   }) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: isDark ? const Color(0xFF111827) : lightBackground,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.08)
+              : const Color(0xFFE2E8F0),
+        ),
       ),
       child: Column(
         children: [
@@ -341,7 +427,7 @@ class _HistoryScreenState extends State<HistoryScreen>
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: Colors.grey[600],
+              color: subtitleColor,
             ),
           ),
         ],
@@ -349,22 +435,30 @@ class _HistoryScreenState extends State<HistoryScreen>
     );
   }
 
-  Widget _buildHistoryCard(dynamic entry) {
-    final int sleep = entry['sleep'] ?? 0;
-    final int pain = entry['pain'] ?? 0;
-    final int fatigue = entry['fatigue'] ?? 0;
-    final int stress = entry['stress'] ?? 0;
-    final int mood = entry['mood'] ?? 0;
+  Widget _buildHistoryCard({
+    required dynamic entry,
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+  }) {
+    final int sleep = _asInt(entry['sleep']);
+    final int pain = _asInt(entry['pain']);
+    final int fatigue = _asInt(entry['fatigue']);
+    final int stress = _asInt(entry['stress']);
+    final int mood = _asInt(entry['mood']);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.045),
+            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -378,7 +472,7 @@ class _HistoryScreenState extends State<HistoryScreen>
               Container(
                 padding: const EdgeInsets.all(11),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
+                  color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
@@ -388,13 +482,13 @@ class _HistoryScreenState extends State<HistoryScreen>
                 ),
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Registro diario',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
-                    color: darkText,
+                    color: titleColor,
                   ),
                 ),
               ),
@@ -405,7 +499,7 @@ class _HistoryScreenState extends State<HistoryScreen>
             _formatDate(entry['createdAt']),
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey[600],
+              color: subtitleColor,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -415,30 +509,40 @@ class _HistoryScreenState extends State<HistoryScreen>
             value: sleep,
             icon: Icons.bedtime_outlined,
             color: _getMetricColor('sleep', sleep),
+            isDark: isDark,
+            titleColor: titleColor,
           ),
           _buildMetricRow(
             label: 'Dolor',
             value: pain,
             icon: Icons.healing_outlined,
             color: _getMetricColor('pain', pain),
+            isDark: isDark,
+            titleColor: titleColor,
           ),
           _buildMetricRow(
             label: 'Fatiga',
             value: fatigue,
             icon: Icons.battery_2_bar_outlined,
             color: _getMetricColor('fatigue', fatigue),
+            isDark: isDark,
+            titleColor: titleColor,
           ),
           _buildMetricRow(
             label: 'Estrés',
             value: stress,
             icon: Icons.psychology_alt_outlined,
             color: _getMetricColor('stress', stress),
+            isDark: isDark,
+            titleColor: titleColor,
           ),
           _buildMetricRow(
             label: 'Ánimo',
             value: mood,
             icon: Icons.sentiment_satisfied_alt_outlined,
             color: _getMetricColor('mood', mood),
+            isDark: isDark,
+            titleColor: titleColor,
           ),
         ],
       ),
@@ -450,6 +554,8 @@ class _HistoryScreenState extends State<HistoryScreen>
     required int value,
     required IconData icon,
     required Color color,
+    required bool isDark,
+    required Color titleColor,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 13),
@@ -465,9 +571,9 @@ class _HistoryScreenState extends State<HistoryScreen>
             width: 70,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w800,
-                color: darkText,
+                color: titleColor,
               ),
             ),
           ),
@@ -477,7 +583,8 @@ class _HistoryScreenState extends State<HistoryScreen>
               child: LinearProgressIndicator(
                 value: value / 5,
                 minHeight: 8,
-                backgroundColor: const Color(0xFFE2E8F0),
+                backgroundColor:
+                    isDark ? Colors.white.withOpacity(0.12) : const Color(0xFFE2E8F0),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
               ),
             ),
@@ -488,7 +595,7 @@ class _HistoryScreenState extends State<HistoryScreen>
             height: 34,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withOpacity(isDark ? 0.20 : 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -504,18 +611,25 @@ class _HistoryScreenState extends State<HistoryScreen>
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState({
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+  }) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Container(
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: borderColor),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withOpacity(isDark ? 0.30 : 0.08),
                 blurRadius: 22,
                 offset: const Offset(0, 10),
               ),
@@ -527,7 +641,7 @@ class _HistoryScreenState extends State<HistoryScreen>
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
+                  color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: const Icon(
@@ -537,12 +651,13 @@ class _HistoryScreenState extends State<HistoryScreen>
                 ),
               ),
               const SizedBox(height: 18),
-              const Text(
+              Text(
                 'Aún no hay registros',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
-                  color: darkText,
+                  color: titleColor,
                 ),
               ),
               const SizedBox(height: 10),
@@ -552,7 +667,8 @@ class _HistoryScreenState extends State<HistoryScreen>
                 style: TextStyle(
                   fontSize: 14,
                   height: 1.4,
-                  color: Colors.grey[700],
+                  color: subtitleColor,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -562,17 +678,26 @@ class _HistoryScreenState extends State<HistoryScreen>
     );
   }
 
-  Widget _buildErrorState(String error) {
+  Widget _buildErrorState({
+    required String error,
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+  }) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Container(
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(28),
             border: Border.all(
-              color: dangerColor.withOpacity(0.2),
+              color: isDark
+                  ? Colors.white.withOpacity(0.08)
+                  : dangerColor.withOpacity(0.2),
             ),
           ),
           child: Column(
@@ -584,12 +709,13 @@ class _HistoryScreenState extends State<HistoryScreen>
                 color: dangerColor,
               ),
               const SizedBox(height: 18),
-              const Text(
+              Text(
                 'Error al cargar historial',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
-                  color: darkText,
+                  color: titleColor,
                 ),
               ),
               const SizedBox(height: 10),
@@ -598,7 +724,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
-                  color: Colors.grey[700],
+                  color: subtitleColor,
                 ),
               ),
               const SizedBox(height: 18),
@@ -614,6 +740,28 @@ class _HistoryScreenState extends State<HistoryScreen>
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildThemeButton(bool isDark) {
+    return Container(
+      width: 46,
+      height: 46,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.22),
+        ),
+      ),
+      child: IconButton(
+        onPressed: AppThemeController.toggleTheme,
+        icon: Icon(
+          isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+        ),
+        color: Colors.white,
+        tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
       ),
     );
   }

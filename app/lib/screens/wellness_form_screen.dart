@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../theme/app_theme_controller.dart';
 import 'workout_screen.dart';
 
 class WellnessFormScreen extends StatefulWidget {
@@ -27,7 +28,11 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
 
   static const Color primaryColor = Color(0xFF1E3A8A);
   static const Color secondaryColor = Color(0xFF22C55E);
-  static const Color backgroundColor = Color(0xFFF8FAFC);
+  static const Color warningColor = Color(0xFFF59E0B);
+  static const Color dangerColor = Color(0xFFEF4444);
+  static const Color lightBackground = Color(0xFFF8FAFC);
+  static const Color darkBackground = Color(0xFF020617);
+  static const Color darkCard = Color(0xFF0F172A);
   static const Color darkText = Color(0xFF0F172A);
 
   static const List<Map<String, String>> targetOptions = [
@@ -74,8 +79,6 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
     _controller.dispose();
     super.dispose();
   }
-
-  
 
   Future<void> _generateWorkout() async {
     setState(() {
@@ -153,111 +156,171 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF1E3A8A),
-              Color(0xFF2563EB),
-              Color(0xFFF8FAFC),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0.0, 0.34, 0.34],
-          ),
-        ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: Column(
-                children: [
-                  _buildHeader(context),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildIntroCard(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppThemeController.themeMode,
+      builder: (context, mode, _) {
+        final bool isDark = mode == ThemeMode.dark;
 
-                          const SizedBox(height: 18),
+        final Color pageBackground =
+            isDark ? darkBackground : lightBackground;
 
-                          _buildTargetMuscleCard(),
+        final Color cardColor = isDark ? darkCard : Colors.white;
 
-                          const SizedBox(height: 18),
+        final Color titleColor = isDark ? Colors.white : darkText;
 
-                          _buildMetricCard(
-                            title: 'Calidad de sueno',
-                            subtitle: '1 = muy mala | 5 = excelente',
-                            icon: Icons.bedtime_outlined,
-                            value: sleep,
-                            inverseColor: false,
-                            onChanged: (val) => setState(() => sleep = val),
+        final Color subtitleColor =
+            isDark ? Colors.white70 : Colors.grey[600]!;
+
+        final Color borderColor =
+            isDark ? Colors.white.withOpacity(0.08) : Colors.transparent;
+
+        return Scaffold(
+          backgroundColor: pageBackground,
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? const [
+                        Color(0xFF020617),
+                        Color(0xFF1E3A8A),
+                        Color(0xFF020617),
+                      ]
+                    : const [
+                        Color(0xFF1E3A8A),
+                        Color(0xFF2563EB),
+                        Color(0xFFF8FAFC),
+                      ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.34, 0.34],
+              ),
+            ),
+            child: SafeArea(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Column(
+                    children: [
+                      _buildHeader(context, isDark),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildIntroCard(
+                                isDark: isDark,
+                                cardColor: cardColor,
+                                titleColor: titleColor,
+                                subtitleColor: subtitleColor,
+                                borderColor: borderColor,
+                              ),
+
+                              const SizedBox(height: 18),
+
+                              _buildTargetMuscleCard(
+                                isDark: isDark,
+                                cardColor: cardColor,
+                                titleColor: titleColor,
+                                subtitleColor: subtitleColor,
+                                borderColor: borderColor,
+                              ),
+
+                              const SizedBox(height: 18),
+
+                              _buildMetricCard(
+                                title: 'Calidad de sueno',
+                                subtitle: '1 = muy mala | 5 = excelente',
+                                icon: Icons.bedtime_outlined,
+                                value: sleep,
+                                inverseColor: false,
+                                isDark: isDark,
+                                cardColor: cardColor,
+                                titleColor: titleColor,
+                                subtitleColor: subtitleColor,
+                                onChanged: (val) => setState(() => sleep = val),
+                              ),
+
+                              _buildMetricCard(
+                                title: 'Nivel de dolor',
+                                subtitle: '1 = sin dolor | 5 = dolor alto',
+                                icon: Icons.healing_outlined,
+                                value: pain,
+                                inverseColor: true,
+                                isDark: isDark,
+                                cardColor: cardColor,
+                                titleColor: titleColor,
+                                subtitleColor: subtitleColor,
+                                onChanged: (val) => setState(() => pain = val),
+                              ),
+
+                              _buildMetricCard(
+                                title: 'Nivel de fatiga',
+                                subtitle: '1 = descansado | 5 = agotado',
+                                icon: Icons.battery_2_bar_outlined,
+                                value: fatigue,
+                                inverseColor: true,
+                                isDark: isDark,
+                                cardColor: cardColor,
+                                titleColor: titleColor,
+                                subtitleColor: subtitleColor,
+                                onChanged: (val) =>
+                                    setState(() => fatigue = val),
+                              ),
+
+                              _buildMetricCard(
+                                title: 'Nivel de estres',
+                                subtitle: '1 = tranquilo | 5 = muy estresado',
+                                icon: Icons.psychology_alt_outlined,
+                                value: stress,
+                                inverseColor: true,
+                                isDark: isDark,
+                                cardColor: cardColor,
+                                titleColor: titleColor,
+                                subtitleColor: subtitleColor,
+                                onChanged: (val) =>
+                                    setState(() => stress = val),
+                              ),
+
+                              _buildMetricCard(
+                                title: 'Estado de animo',
+                                subtitle: '1 = bajo | 5 = excelente',
+                                icon: Icons.sentiment_satisfied_alt_outlined,
+                                value: mood,
+                                inverseColor: false,
+                                isDark: isDark,
+                                cardColor: cardColor,
+                                titleColor: titleColor,
+                                subtitleColor: subtitleColor,
+                                onChanged: (val) => setState(() => mood = val),
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              _buildGenerateButton(),
+                            ],
                           ),
-
-                          _buildMetricCard(
-                            title: 'Nivel de dolor',
-                            subtitle: '1 = sin dolor | 5 = dolor alto',
-                            icon: Icons.healing_outlined,
-                            value: pain,
-                            inverseColor: true,
-                            onChanged: (val) => setState(() => pain = val),
-                          ),
-
-                          _buildMetricCard(
-                            title: 'Nivel de fatiga',
-                            subtitle: '1 = descansado | 5 = agotado',
-                            icon: Icons.battery_2_bar_outlined,
-                            value: fatigue,
-                            inverseColor: true,
-                            onChanged: (val) => setState(() => fatigue = val),
-                          ),
-
-                          _buildMetricCard(
-                            title: 'Nivel de estres',
-                            subtitle: '1 = tranquilo | 5 = muy estresado',
-                            icon: Icons.psychology_alt_outlined,
-                            value: stress,
-                            inverseColor: true,
-                            onChanged: (val) => setState(() => stress = val),
-                          ),
-
-                          _buildMetricCard(
-                            title: 'Estado de animo',
-                            subtitle: '1 = bajo | 5 = excelente',
-                            icon: Icons.sentiment_satisfied_alt_outlined,
-                            value: mood,
-                            inverseColor: false,
-                            onChanged: (val) => setState(() => mood = val),
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          _buildGenerateButton(),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 14, 18),
       child: Row(
         children: [
           IconButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: isLoading ? null : () => Navigator.pop(context),
             icon: const Icon(Icons.arrow_back_rounded),
             color: Colors.white,
           ),
@@ -273,20 +336,28 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
               ),
             ),
           ),
+          _buildThemeButton(isDark),
         ],
       ),
     );
   }
 
-  Widget _buildIntroCard() {
+  Widget _buildIntroCard({
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+  }) {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withOpacity(isDark ? 0.35 : 0.12),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -297,7 +368,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: secondaryColor.withOpacity(0.12),
+              color: secondaryColor.withOpacity(isDark ? 0.20 : 0.12),
               borderRadius: BorderRadius.circular(18),
             ),
             child: const Icon(
@@ -307,7 +378,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
             ),
           ),
           const SizedBox(width: 14),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -316,16 +387,16 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
-                    color: darkText,
+                    color: titleColor,
                   ),
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 Text(
                   'Usa una escala del 1 al 5 y elige que quieres entrenar hoy.',
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.35,
-                    color: Colors.grey,
+                    color: subtitleColor,
                   ),
                 ),
               ],
@@ -336,15 +407,22 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
     );
   }
 
-  Widget _buildTargetMuscleCard() {
+  Widget _buildTargetMuscleCard({
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+  }) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.045),
+            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -358,7 +436,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
               Container(
                 padding: const EdgeInsets.all(11),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
+                  color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
@@ -368,7 +446,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                 ),
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -377,15 +455,15 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
-                        color: darkText,
+                        color: titleColor,
                       ),
                     ),
-                    SizedBox(height: 3),
+                    const SizedBox(height: 3),
                     Text(
                       'Elige que grupo quieres entrenar.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey,
+                        color: subtitleColor,
                       ),
                     ),
                   ],
@@ -415,9 +493,10 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                   ),
                   selected: isSelected,
                   selectedColor: primaryColor,
-                  backgroundColor: const Color(0xFFF1F5F9),
+                  backgroundColor:
+                      isDark ? const Color(0xFF111827) : const Color(0xFFF1F5F9),
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : darkText,
+                    color: isSelected ? Colors.white : titleColor,
                     fontWeight: FontWeight.w800,
                     fontSize: 13,
                   ),
@@ -430,14 +509,18 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                     side: BorderSide(
                       color: isSelected
                           ? primaryColor
-                          : const Color(0xFFE2E8F0),
+                          : isDark
+                              ? Colors.white.withOpacity(0.14)
+                              : const Color(0xFFE2E8F0),
                     ),
                   ),
-                  onSelected: (_) {
-                    setState(() {
-                      targetMuscleGroup = option['value']!;
-                    });
-                  },
+                  onSelected: isLoading
+                      ? null
+                      : (_) {
+                          setState(() {
+                            targetMuscleGroup = option['value']!;
+                          });
+                        },
                 ),
               );
             }).toList(),
@@ -453,6 +536,10 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
     required IconData icon,
     required double value,
     required bool inverseColor,
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
     required Function(double) onChanged,
   }) {
     final Color metricColor = _getDynamicColor(value, inverseColor);
@@ -461,15 +548,15 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: metricColor.withOpacity(0.18),
+          color: metricColor.withOpacity(isDark ? 0.30 : 0.18),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.045),
+            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -482,7 +569,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
               Container(
                 padding: const EdgeInsets.all(11),
                 decoration: BoxDecoration(
-                  color: metricColor.withOpacity(0.12),
+                  color: metricColor.withOpacity(isDark ? 0.18 : 0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(
@@ -498,10 +585,10 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
-                        color: darkText,
+                        color: titleColor,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -509,7 +596,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                       subtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: subtitleColor,
                       ),
                     ),
                   ],
@@ -520,7 +607,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                 height: 42,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: metricColor.withOpacity(0.12),
+                  color: metricColor.withOpacity(isDark ? 0.18 : 0.12),
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Text(
@@ -540,7 +627,8 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
               activeTrackColor: metricColor,
-              inactiveTrackColor: const Color(0xFFE2E8F0),
+              inactiveTrackColor:
+                  isDark ? Colors.white.withOpacity(0.14) : const Color(0xFFE2E8F0),
               thumbColor: metricColor,
               overlayColor: metricColor.withOpacity(0.15),
               trackHeight: 5,
@@ -554,7 +642,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
               max: 5,
               divisions: 4,
               label: value.round().toString(),
-              onChanged: onChanged,
+              onChanged: isLoading ? null : onChanged,
             ),
           ),
         ],
@@ -568,7 +656,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        disabledBackgroundColor: Colors.grey[400],
+        disabledBackgroundColor: Colors.grey[500],
         padding: const EdgeInsets.symmetric(vertical: 19),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
@@ -602,15 +690,37 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
     );
   }
 
+  Widget _buildThemeButton(bool isDark) {
+    return Container(
+      width: 46,
+      height: 46,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.22),
+        ),
+      ),
+      child: IconButton(
+        onPressed: AppThemeController.toggleTheme,
+        icon: Icon(
+          isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+        ),
+        color: Colors.white,
+        tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
+      ),
+    );
+  }
+
   Color _getDynamicColor(double value, bool inverse) {
     if (inverse) {
-      if (value <= 2) return const Color(0xFF22C55E);
-      if (value == 3) return const Color(0xFFF59E0B);
-      return const Color(0xFFEF4444);
+      if (value <= 2) return secondaryColor;
+      if (value == 3) return warningColor;
+      return dangerColor;
     } else {
-      if (value >= 4) return const Color(0xFF22C55E);
-      if (value == 3) return const Color(0xFFF59E0B);
-      return const Color(0xFFEF4444);
+      if (value >= 4) return secondaryColor;
+      if (value == 3) return warningColor;
+      return dangerColor;
     }
   }
 }

@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'services/api_service.dart';
+import 'theme/app_theme_controller.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AppThemeController.loadTheme();
+
   runApp(const TrainTrackApp());
 }
 
@@ -12,29 +16,48 @@ class TrainTrackApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'TrainTrack MVP',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        fontFamily: 'Roboto',
-      ),
-      // En lugar de ir ciego al Login, evaluamos si hay token
-      home: const AuthWrapper(), 
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppThemeController.themeMode,
+      builder: (context, themeMode, _) {
+        return MaterialApp(
+          title: 'TrainTrack MVP',
+          debugShowCheckedModeBanner: false,
+          themeMode: themeMode,
+          theme: ThemeData(
+            useMaterial3: true,
+            brightness: Brightness.light,
+            fontFamily: 'Roboto',
+            scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF1E3A8A),
+              brightness: Brightness.light,
+            ),
+          ),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            brightness: Brightness.dark,
+            fontFamily: 'Roboto',
+            scaffoldBackgroundColor: const Color(0xFF020617),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF2563EB),
+              brightness: Brightness.dark,
+            ),
+          ),
+          home: const AuthWrapper(),
+        );
+      },
     );
   }
 }
 
-// Pantalla de carga inteligente que decide a dónde ir
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<String?>(
-      future: ApiService.getToken(), // Leemos el SharedPreferences
+      future: ApiService.getToken(),
       builder: (context, snapshot) {
-        // Mientras lee la memoria, mostramos una pantalla de carga sutil
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             backgroundColor: Color(0xFF1E3A8A),
@@ -44,8 +67,8 @@ class AuthWrapper extends StatelessWidget {
           );
         }
 
-        // Si tiene token, directo al panel. Si no, a loguearse.
         final token = snapshot.data;
+
         if (token != null && token.isNotEmpty) {
           return const DashboardScreen();
         } else {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../theme/app_theme_controller.dart';
 import 'dashboard_screen.dart';
 import 'register_screen.dart';
 
@@ -19,7 +20,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   static const Color primaryColor = Color(0xFF1E3A8A);
   static const Color secondaryColor = Color(0xFF22C55E);
-  static const Color backgroundColor = Color(0xFFF8FAFC);
+  static const Color lightBackground = Color(0xFFF8FAFC);
+  static const Color darkBackground = Color(0xFF020617);
+  static const Color darkCard = Color(0xFF0F172A);
   static const Color darkText = Color(0xFF0F172A);
 
   @override
@@ -83,180 +86,306 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF1E3A8A),
-              Color(0xFF2563EB),
-              Color(0xFFF8FAFC),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0.0, 0.55, 1.0],
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(28),
-              child: Container(
-                padding: const EdgeInsets.all(26),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.16),
-                      blurRadius: 24,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 82,
-                      height: 82,
-                      decoration: BoxDecoration(
-                        color: primaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: const Icon(
-                        Icons.fitness_center_rounded,
-                        size: 46,
-                        color: primaryColor,
-                      ),
-                    ),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppThemeController.themeMode,
+      builder: (context, mode, _) {
+        final bool isDark = mode == ThemeMode.dark;
 
-                    const SizedBox(height: 18),
+        final Color pageBackground =
+            isDark ? darkBackground : lightBackground;
 
-                    const Text(
-                      'TrainTrack',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w900,
-                        color: darkText,
-                        letterSpacing: -0.6,
-                      ),
-                    ),
+        final Color cardColor =
+            isDark ? darkCard : Colors.white;
 
-                    const SizedBox(height: 8),
+        final Color titleColor =
+            isDark ? Colors.white : darkText;
 
-                    Text(
-                      'Inicia sesión para continuar',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+        final Color subtitleColor =
+            isDark ? Colors.white70 : Colors.grey[600]!;
 
-                    const SizedBox(height: 30),
+        final Color inputFillColor =
+            isDark ? const Color(0xFF111827) : Colors.white;
 
-                    TextField(
-                      controller: _emailController,
-                      enabled: !_isLoading,
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                      decoration: InputDecoration(
-                        labelText: 'Correo electrónico',
-                        prefixIcon: const Icon(Icons.email_outlined),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
+        final Color inputBorderColor =
+            isDark ? Colors.white.withOpacity(0.18) : Colors.grey;
 
-                    const SizedBox(height: 16),
+        final Color iconColor =
+            isDark ? Colors.white70 : Colors.grey;
 
-                    TextField(
-                      controller: _passwordController,
-                      enabled: !_isLoading,
-                      obscureText: _isPasswordHidden,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _doLogin(),
-                      decoration: InputDecoration(
-                        labelText: 'Contraseña',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordHidden
-                                ? Icons.visibility_off_rounded
-                                : Icons.visibility_rounded,
-                            color: Colors.grey,
+        return Scaffold(
+          backgroundColor: pageBackground,
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? const [
+                        Color(0xFF020617),
+                        Color(0xFF1E3A8A),
+                        Color(0xFF020617),
+                      ]
+                    : const [
+                        Color(0xFF1E3A8A),
+                        Color(0xFF2563EB),
+                        Color(0xFFF8FAFC),
+                      ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.55, 1.0],
+              ),
+            ),
+            child: SafeArea(
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: 16,
+                    right: 18,
+                    child: _buildThemeButton(isDark),
+                  ),
+
+                  Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(28),
+                      child: Container(
+                        padding: const EdgeInsets.all(26),
+                        decoration: BoxDecoration(
+                          color: cardColor,
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withOpacity(0.08)
+                                : Colors.transparent,
                           ),
-                          onPressed: _isLoading
-                              ? null
-                              : () {
-                                  setState(() {
-                                    _isPasswordHidden = !_isPasswordHidden;
-                                  });
-                                },
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(
+                                isDark ? 0.35 : 0.16,
+                              ),
+                              blurRadius: 24,
+                              offset: const Offset(0, 12),
+                            ),
+                          ],
                         ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 82,
+                              height: 82,
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.08)
+                                    : primaryColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: const Icon(
+                                Icons.fitness_center_rounded,
+                                size: 46,
+                                color: primaryColor,
+                              ),
+                            ),
 
-                    const SizedBox(height: 28),
+                            const SizedBox(height: 18),
 
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _doLogin,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: secondaryColor,
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor:
-                              secondaryColor.withOpacity(0.55),
-                          padding: const EdgeInsets.symmetric(vertical: 17),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2.5,
+                            Text(
+                              'TrainTrack',
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w900,
+                                color: titleColor,
+                                letterSpacing: -0.6,
+                              ),
+                            ),
+
+                            const SizedBox(height: 8),
+
+                            Text(
+                              'Inicia sesión para continuar',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: subtitleColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+
+                            const SizedBox(height: 30),
+
+                            TextField(
+                              controller: _emailController,
+                              enabled: !_isLoading,
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              style: TextStyle(color: titleColor),
+                              decoration: InputDecoration(
+                                labelText: 'Correo electrónico',
+                                labelStyle: TextStyle(color: subtitleColor),
+                                prefixIcon: Icon(
+                                  Icons.email_outlined,
+                                  color: iconColor,
                                 ),
-                              )
-                            : const Text(
-                                'INICIAR SESIÓN',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w900,
+                                filled: true,
+                                fillColor: inputFillColor,
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(
+                                    color: inputBorderColor,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: const BorderSide(
+                                    color: primaryColor,
+                                    width: 1.8,
+                                  ),
+                                ),
+                                disabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(
+                                    color: inputBorderColor,
+                                  ),
                                 ),
                               ),
-                      ),
-                    ),
+                            ),
 
-                    const SizedBox(height: 16),
+                            const SizedBox(height: 16),
 
-                    TextButton(
-                      onPressed: _isLoading ? null : _goToRegister,
-                      child: const Text(
-                        '¿No tienes cuenta? Regístrate aquí',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: primaryColor,
+                            TextField(
+                              controller: _passwordController,
+                              enabled: !_isLoading,
+                              obscureText: _isPasswordHidden,
+                              textInputAction: TextInputAction.done,
+                              onSubmitted: (_) => _doLogin(),
+                              style: TextStyle(color: titleColor),
+                              decoration: InputDecoration(
+                                labelText: 'Contraseña',
+                                labelStyle: TextStyle(color: subtitleColor),
+                                prefixIcon: Icon(
+                                  Icons.lock_outline,
+                                  color: iconColor,
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _isPasswordHidden
+                                        ? Icons.visibility_off_rounded
+                                        : Icons.visibility_rounded,
+                                    color: iconColor,
+                                  ),
+                                  onPressed: _isLoading
+                                      ? null
+                                      : () {
+                                          setState(() {
+                                            _isPasswordHidden =
+                                                !_isPasswordHidden;
+                                          });
+                                        },
+                                ),
+                                filled: true,
+                                fillColor: inputFillColor,
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(
+                                    color: inputBorderColor,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: const BorderSide(
+                                    color: primaryColor,
+                                    width: 1.8,
+                                  ),
+                                ),
+                                disabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(
+                                    color: inputBorderColor,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 28),
+
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _isLoading ? null : _doLogin,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: secondaryColor,
+                                  foregroundColor: Colors.white,
+                                  disabledBackgroundColor:
+                                      secondaryColor.withOpacity(0.55),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 17,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'INICIAR SESIÓN',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            TextButton(
+                              onPressed: _isLoading ? null : _goToRegister,
+                              child: Text(
+                                '¿No tienes cuenta? Regístrate aquí',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? Colors.white
+                                      : primaryColor,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildThemeButton(bool isDark) {
+    return Container(
+      width: 46,
+      height: 46,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.22),
         ),
+      ),
+      child: IconButton(
+        onPressed: AppThemeController.toggleTheme,
+        icon: Icon(
+          isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+        ),
+        color: Colors.white,
+        tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
       ),
     );
   }

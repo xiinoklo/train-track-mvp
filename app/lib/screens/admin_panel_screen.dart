@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../theme/app_theme_controller.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   const AdminPanelScreen({super.key});
@@ -18,7 +19,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   static const Color secondaryColor = Color(0xFF22C55E);
   static const Color warningColor = Color(0xFFF59E0B);
   static const Color dangerColor = Color(0xFFEF4444);
-  static const Color backgroundColor = Color(0xFFF8FAFC);
+  static const Color lightBackground = Color(0xFFF8FAFC);
+  static const Color darkBackground = Color(0xFF020617);
+  static const Color darkCard = Color(0xFF0F172A);
   static const Color darkText = Color(0xFF0F172A);
 
   @override
@@ -43,55 +46,111 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF1E3A8A),
-              Color(0xFF2563EB),
-              Color(0xFFF8FAFC),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0.0, 0.30, 0.30],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: RefreshIndicator(
-                  color: primaryColor,
-                  onRefresh: () async {
-                    if (selectedTab == 0) {
-                      _refreshUsers();
-                    }
-                  },
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                    children: [
-                      _buildMainCard(),
-                      const SizedBox(height: 18),
-                      selectedTab == 0
-                          ? _buildUsersSection()
-                          : _buildExercisesSection(),
-                    ],
-                  ),
-                ),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppThemeController.themeMode,
+      builder: (context, mode, _) {
+        final bool isDark = mode == ThemeMode.dark;
+
+        final Color pageBackground =
+            isDark ? darkBackground : lightBackground;
+
+        final Color cardColor = isDark ? darkCard : Colors.white;
+
+        final Color titleColor = isDark ? Colors.white : darkText;
+
+        final Color subtitleColor =
+            isDark ? Colors.white70 : Colors.grey[600]!;
+
+        final Color borderColor =
+            isDark ? Colors.white.withOpacity(0.08) : Colors.transparent;
+
+        final Color innerCardColor =
+            isDark ? const Color(0xFF111827) : const Color(0xFFF8FAFC);
+
+        final Color innerBorderColor =
+            isDark ? Colors.white.withOpacity(0.10) : const Color(0xFFE2E8F0);
+
+        return Scaffold(
+          backgroundColor: pageBackground,
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? const [
+                        Color(0xFF020617),
+                        Color(0xFF1E3A8A),
+                        Color(0xFF020617),
+                      ]
+                    : const [
+                        Color(0xFF1E3A8A),
+                        Color(0xFF2563EB),
+                        Color(0xFFF8FAFC),
+                      ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.30, 0.30],
               ),
-            ],
+            ),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  _buildHeader(isDark),
+                  Expanded(
+                    child: RefreshIndicator(
+                      color: primaryColor,
+                      onRefresh: () async {
+                        if (selectedTab == 0) {
+                          _refreshUsers();
+                        }
+                      },
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                        children: [
+                          _buildMainCard(
+                            isDark: isDark,
+                            cardColor: cardColor,
+                            titleColor: titleColor,
+                            subtitleColor: subtitleColor,
+                            borderColor: borderColor,
+                            innerCardColor: innerCardColor,
+                            innerBorderColor: innerBorderColor,
+                          ),
+                          const SizedBox(height: 18),
+                          selectedTab == 0
+                              ? _buildUsersSection(
+                                  isDark: isDark,
+                                  cardColor: cardColor,
+                                  titleColor: titleColor,
+                                  subtitleColor: subtitleColor,
+                                  borderColor: borderColor,
+                                  innerCardColor: innerCardColor,
+                                  innerBorderColor: innerBorderColor,
+                                )
+                              : _buildExercisesSection(
+                                  isDark: isDark,
+                                  cardColor: cardColor,
+                                  titleColor: titleColor,
+                                  subtitleColor: subtitleColor,
+                                  borderColor: borderColor,
+                                  innerCardColor: innerCardColor,
+                                  innerBorderColor: innerBorderColor,
+                                ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 20, 18),
+      padding: const EdgeInsets.fromLTRB(12, 8, 18, 18),
       child: Row(
         children: [
           IconButton(
@@ -111,6 +170,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               ),
             ),
           ),
+          _buildThemeButton(isDark),
+          const SizedBox(width: 8),
           IconButton(
             onPressed: _logoutAdmin,
             icon: const Icon(Icons.logout_rounded),
@@ -122,15 +183,24 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     );
   }
 
-  Widget _buildMainCard() {
+  Widget _buildMainCard({
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+    required Color innerCardColor,
+    required Color innerBorderColor,
+  }) {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withOpacity(isDark ? 0.35 : 0.12),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -143,7 +213,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
+                  color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: const Icon(
@@ -153,7 +223,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 ),
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -162,15 +232,16 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
-                        color: darkText,
+                        color: titleColor,
                       ),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     Text(
                       'Gestiona usuarios, ejercicios y videos.',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.grey,
+                        color: subtitleColor,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -186,6 +257,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   label: 'Usuarios',
                   icon: Icons.people_alt_rounded,
                   active: selectedTab == 0,
+                  isDark: isDark,
+                  innerCardColor: innerCardColor,
+                  innerBorderColor: innerBorderColor,
                   onTap: () {
                     setState(() {
                       selectedTab = 0;
@@ -199,6 +273,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   label: 'Ejercicios',
                   icon: Icons.fitness_center_rounded,
                   active: selectedTab == 1,
+                  isDark: isDark,
+                  innerCardColor: innerCardColor,
+                  innerBorderColor: innerBorderColor,
                   onTap: () {
                     setState(() {
                       selectedTab = 1;
@@ -217,29 +294,46 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     required String label,
     required IconData icon,
     required bool active,
+    required bool isDark,
+    required Color innerCardColor,
+    required Color innerBorderColor,
     required VoidCallback onTap,
   }) {
     return Material(
-      color: active ? primaryColor : const Color(0xFFF1F5F9),
+      color: active ? primaryColor : innerCardColor,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: onTap,
-        child: Padding(
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: active ? primaryColor : innerBorderColor,
+            ),
+          ),
           padding: const EdgeInsets.symmetric(vertical: 15),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 icon,
-                color: active ? Colors.white : primaryColor,
+                color: active
+                    ? Colors.white
+                    : isDark
+                        ? Colors.white
+                        : primaryColor,
                 size: 20,
               ),
               const SizedBox(width: 8),
               Text(
                 label,
                 style: TextStyle(
-                  color: active ? Colors.white : primaryColor,
+                  color: active
+                      ? Colors.white
+                      : isDark
+                          ? Colors.white
+                          : primaryColor,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -250,13 +344,27 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     );
   }
 
-  Widget _buildUsersSection() {
+  Widget _buildUsersSection({
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+    required Color innerCardColor,
+    required Color innerBorderColor,
+  }) {
     return _AdminSectionCard(
       title: 'Usuarios',
       subtitle: 'Lista de usuarios registrados',
+      isDark: isDark,
+      cardColor: cardColor,
+      titleColor: titleColor,
+      subtitleColor: subtitleColor,
+      borderColor: borderColor,
       child: Column(
         children: [
           TextField(
+            style: TextStyle(color: titleColor),
             onChanged: (value) {
               setState(() {
                 _userSearch = value.trim().toLowerCase();
@@ -264,12 +372,26 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             },
             decoration: InputDecoration(
               hintText: 'Buscar usuario...',
-              prefixIcon: const Icon(Icons.search_rounded),
+              hintStyle: TextStyle(color: subtitleColor),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: subtitleColor,
+              ),
               filled: true,
-              fillColor: const Color(0xFFF8FAFC),
+              fillColor: innerCardColor,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: BorderSide(color: innerBorderColor),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: const BorderSide(
+                  color: primaryColor,
+                  width: 1.6,
+                ),
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide.none,
               ),
             ),
           ),
@@ -292,10 +414,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 return Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: dangerColor.withOpacity(0.08),
+                    color: dangerColor.withOpacity(isDark ? 0.16 : 0.08),
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: dangerColor.withOpacity(0.2),
+                      color: dangerColor.withOpacity(isDark ? 0.35 : 0.2),
                     ),
                   ),
                   child: Column(
@@ -306,11 +428,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         size: 40,
                       ),
                       const SizedBox(height: 10),
-                      const Text(
+                      Text(
                         'No se pudieron cargar los usuarios',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: darkText,
+                          color: titleColor,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -319,7 +441,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         snapshot.error.toString(),
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: subtitleColor,
                           fontSize: 12,
                         ),
                       ),
@@ -355,14 +477,15 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 return Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: innerCardColor,
                     borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: innerBorderColor),
                   ),
-                  child: const Text(
+                  child: Text(
                     'No hay usuarios para mostrar.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.grey,
+                      color: subtitleColor,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -383,6 +506,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     name: name,
                     email: email,
                     role: role,
+                    isDark: isDark,
+                    titleColor: titleColor,
+                    subtitleColor: subtitleColor,
+                    innerCardColor: innerCardColor,
+                    innerBorderColor: innerBorderColor,
                   );
                 }).toList(),
               );
@@ -398,6 +526,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     required String name,
     required String email,
     required String role,
+    required bool isDark,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color innerCardColor,
+    required Color innerBorderColor,
   }) {
     final bool isAdmin = role == 'admin';
 
@@ -405,17 +538,18 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: innerCardColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFE2E8F0),
+          color: innerBorderColor,
         ),
       ),
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor:
-                isAdmin ? warningColor.withOpacity(0.15) : const Color(0xFFDBEAFE),
+            backgroundColor: isAdmin
+                ? warningColor.withOpacity(isDark ? 0.22 : 0.15)
+                : primaryColor.withOpacity(isDark ? 0.22 : 0.12),
             child: Icon(
               isAdmin
                   ? Icons.admin_panel_settings_rounded
@@ -435,8 +569,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: darkText,
+                        style: TextStyle(
+                          color: titleColor,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -449,7 +583,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: warningColor.withOpacity(0.12),
+                          color: warningColor.withOpacity(isDark ? 0.22 : 0.12),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: const Text(
@@ -470,7 +604,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.grey[600],
+                    color: subtitleColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -498,7 +632,15 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     );
   }
 
-  Widget _buildExercisesSection() {
+  Widget _buildExercisesSection({
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+    required Color innerCardColor,
+    required Color innerBorderColor,
+  }) {
     final exercises = [
       {
         'name': 'Sentadilla goblet',
@@ -520,6 +662,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     return _AdminSectionCard(
       title: 'Ejercicios',
       subtitle: 'Agrega, edita o elimina ejercicios',
+      isDark: isDark,
+      cardColor: cardColor,
+      titleColor: titleColor,
+      subtitleColor: subtitleColor,
+      borderColor: borderColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -546,6 +693,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               name: exercise['name']!,
               muscle: exercise['muscle']!,
               video: exercise['video']!,
+              isDark: isDark,
+              titleColor: titleColor,
+              subtitleColor: subtitleColor,
+              innerCardColor: innerCardColor,
+              innerBorderColor: innerBorderColor,
             ),
           ),
         ],
@@ -557,6 +709,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     required String name,
     required String muscle,
     required String video,
+    required bool isDark,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color innerCardColor,
+    required Color innerBorderColor,
   }) {
     final bool hasVideo = video == 'Con video';
 
@@ -564,10 +721,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: innerCardColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFE2E8F0),
+          color: innerBorderColor,
         ),
       ),
       child: Row(
@@ -576,7 +733,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: warningColor.withOpacity(0.12),
+              color: warningColor.withOpacity(isDark ? 0.22 : 0.12),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
@@ -591,8 +748,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               children: [
                 Text(
                   name,
-                  style: const TextStyle(
-                    color: darkText,
+                  style: TextStyle(
+                    color: titleColor,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -616,7 +773,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               );
             },
             icon: const Icon(Icons.edit_rounded),
-            color: primaryColor,
+            color: isDark ? Colors.white : primaryColor,
             tooltip: 'Editar ejercicio',
           ),
           IconButton(
@@ -638,6 +795,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   }) {
     final parentContext = context;
 
+    final bool isDark = AppThemeController.themeMode.value == ThemeMode.dark;
+    final Color dialogColor = isDark ? darkCard : Colors.white;
+    final Color titleColor = isDark ? Colors.white : darkText;
+    final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[700]!;
+
     showDialog(
       context: parentContext,
       builder: (dialogContext) {
@@ -646,16 +808,32 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
             return AlertDialog(
-              title: const Text('Eliminar usuario'),
+              backgroundColor: dialogColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              title: Text(
+                'Eliminar usuario',
+                style: TextStyle(
+                  color: titleColor,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
               content: Text(
                 '¿Seguro que quieres eliminar a $name?\n\nTambién se eliminará su historial y datos asociados.',
+                style: TextStyle(color: subtitleColor),
               ),
               actions: [
                 TextButton(
                   onPressed: isDeleting
                       ? null
                       : () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancelar'),
+                  child: Text(
+                    'Cancelar',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : primaryColor,
+                    ),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: isDeleting
@@ -718,16 +896,39 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   void _confirmDeleteExercise(String name) {
     final parentContext = context;
 
+    final bool isDark = AppThemeController.themeMode.value == ThemeMode.dark;
+    final Color dialogColor = isDark ? darkCard : Colors.white;
+    final Color titleColor = isDark ? Colors.white : darkText;
+    final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[700]!;
+
     showDialog(
       context: parentContext,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Eliminar ejercicio'),
-          content: Text('¿Seguro que quieres eliminar "$name"?'),
+          backgroundColor: dialogColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: Text(
+            'Eliminar ejercicio',
+            style: TextStyle(
+              color: titleColor,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          content: Text(
+            '¿Seguro que quieres eliminar "$name"?',
+            style: TextStyle(color: subtitleColor),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancelar'),
+              child: Text(
+                'Cancelar',
+                style: TextStyle(
+                  color: isDark ? Colors.white : primaryColor,
+                ),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -787,6 +988,28 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       );
     }
   }
+
+  Widget _buildThemeButton(bool isDark) {
+    return Container(
+      width: 46,
+      height: 46,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.22),
+        ),
+      ),
+      child: IconButton(
+        onPressed: AppThemeController.toggleTheme,
+        icon: Icon(
+          isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+        ),
+        color: Colors.white,
+        tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
+      ),
+    );
+  }
 }
 
 class _ExerciseFormSheet extends StatefulWidget {
@@ -812,6 +1035,7 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
 
   static const Color primaryColor = Color(0xFF1E3A8A);
   static const Color secondaryColor = Color(0xFF22C55E);
+  static const Color darkCard = Color(0xFF0F172A);
   static const Color darkText = Color(0xFF0F172A);
 
   @override
@@ -881,148 +1105,208 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        18,
-        20,
-        MediaQuery.of(context).viewInsets.bottom + 24,
-      ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(28),
-        ),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 48,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppThemeController.themeMode,
+      builder: (context, mode, _) {
+        final bool isDark = mode == ThemeMode.dark;
+
+        final Color sheetColor = isDark ? darkCard : Colors.white;
+        final Color titleColor = isDark ? Colors.white : darkText;
+        final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[600]!;
+        final Color inputFillColor =
+            isDark ? const Color(0xFF111827) : Colors.white;
+        final Color inputBorderColor =
+            isDark ? Colors.white.withOpacity(0.14) : const Color(0xFFCBD5E1);
+        final Color handleColor =
+            isDark ? Colors.white.withOpacity(0.18) : Colors.grey[300]!;
+
+        return Container(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            18,
+            20,
+            MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          decoration: BoxDecoration(
+            color: sheetColor,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(28),
             ),
-            const SizedBox(height: 18),
-            Text(
-              widget.name == null ? 'Agregar ejercicio' : 'Editar ejercicio',
-              style: const TextStyle(
-                color: darkText,
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 18),
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(
-                labelText: 'Nombre',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 48,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: handleColor,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: descriptionController,
-              minLines: 2,
-              maxLines: 3,
-              decoration: InputDecoration(
-                labelText: 'Descripción',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                const SizedBox(height: 18),
+                Text(
+                  widget.name == null ? 'Agregar ejercicio' : 'Editar ejercicio',
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: repsController,
-              decoration: InputDecoration(
-                labelText: 'Repeticiones',
-                hintText: 'Ej: 10-12',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                const SizedBox(height: 18),
+                TextField(
+                  controller: nameController,
+                  style: TextStyle(color: titleColor),
+                  decoration: _inputDecoration(
+                    label: 'Nombre',
+                    isDark: isDark,
+                    subtitleColor: subtitleColor,
+                    inputFillColor: inputFillColor,
+                    inputBorderColor: inputBorderColor,
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            DropdownButtonFormField<String>(
-              value: selectedMuscle,
-              decoration: InputDecoration(
-                labelText: 'Grupo muscular',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: descriptionController,
+                  minLines: 2,
+                  maxLines: 3,
+                  style: TextStyle(color: titleColor),
+                  decoration: _inputDecoration(
+                    label: 'Descripción',
+                    isDark: isDark,
+                    subtitleColor: subtitleColor,
+                    inputFillColor: inputFillColor,
+                    inputBorderColor: inputBorderColor,
+                  ),
                 ),
-              ),
-              items: const [
-                DropdownMenuItem(
-                  value: 'pecho',
-                  child: Text('Pecho'),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: repsController,
+                  style: TextStyle(color: titleColor),
+                  decoration: _inputDecoration(
+                    label: 'Repeticiones',
+                    hint: 'Ej: 10-12',
+                    isDark: isDark,
+                    subtitleColor: subtitleColor,
+                    inputFillColor: inputFillColor,
+                    inputBorderColor: inputBorderColor,
+                  ),
                 ),
-                DropdownMenuItem(
-                  value: 'espalda',
-                  child: Text('Espalda'),
+                const SizedBox(height: 14),
+                DropdownButtonFormField<String>(
+                  value: selectedMuscle,
+                  dropdownColor: sheetColor,
+                  style: TextStyle(color: titleColor),
+                  decoration: _inputDecoration(
+                    label: 'Grupo muscular',
+                    isDark: isDark,
+                    subtitleColor: subtitleColor,
+                    inputFillColor: inputFillColor,
+                    inputBorderColor: inputBorderColor,
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'pecho',
+                      child: Text('Pecho'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'espalda',
+                      child: Text('Espalda'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'piernas',
+                      child: Text('Piernas'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'hombros',
+                      child: Text('Hombros'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'brazos',
+                      child: Text('Brazos'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'core',
+                      child: Text('Core'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+
+                    setState(() {
+                      selectedMuscle = value;
+                    });
+                  },
                 ),
-                DropdownMenuItem(
-                  value: 'piernas',
-                  child: Text('Piernas'),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: videoController,
+                  style: TextStyle(color: titleColor),
+                  decoration: _inputDecoration(
+                    label: 'URL video YouTube',
+                    isDark: isDark,
+                    subtitleColor: subtitleColor,
+                    inputFillColor: inputFillColor,
+                    inputBorderColor: inputBorderColor,
+                  ),
                 ),
-                DropdownMenuItem(
-                  value: 'hombros',
-                  child: Text('Hombros'),
-                ),
-                DropdownMenuItem(
-                  value: 'brazos',
-                  child: Text('Brazos'),
-                ),
-                DropdownMenuItem(
-                  value: 'core',
-                  child: Text('Core'),
+                const SizedBox(height: 22),
+                ElevatedButton.icon(
+                  onPressed: _save,
+                  icon: const Icon(Icons.save_rounded),
+                  label: const Text(
+                    'GUARDAR',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 17),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
                 ),
               ],
-              onChanged: (value) {
-                if (value == null) return;
+            ),
+          ),
+        );
+      },
+    );
+  }
 
-                setState(() {
-                  selectedMuscle = value;
-                });
-              },
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: videoController,
-              decoration: InputDecoration(
-                labelText: 'URL video YouTube',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-            const SizedBox(height: 22),
-            ElevatedButton.icon(
-              onPressed: _save,
-              icon: const Icon(Icons.save_rounded),
-              label: const Text(
-                'GUARDAR',
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 17),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-              ),
-            ),
-          ],
+  InputDecoration _inputDecoration({
+    required String label,
+    required bool isDark,
+    required Color subtitleColor,
+    required Color inputFillColor,
+    required Color inputBorderColor,
+    String? hint,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      labelStyle: TextStyle(color: subtitleColor),
+      hintStyle: TextStyle(color: subtitleColor.withOpacity(0.7)),
+      filled: true,
+      fillColor: inputFillColor,
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: inputBorderColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(
+          color: primaryColor,
+          width: 1.7,
         ),
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
       ),
     );
   }
@@ -1032,25 +1316,34 @@ class _AdminSectionCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final Widget child;
+  final bool isDark;
+  final Color cardColor;
+  final Color titleColor;
+  final Color subtitleColor;
+  final Color borderColor;
 
   const _AdminSectionCard({
     required this.title,
     required this.subtitle,
     required this.child,
+    required this.isDark,
+    required this.cardColor,
+    required this.titleColor,
+    required this.subtitleColor,
+    required this.borderColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    const Color darkText = Color(0xFF0F172A);
-
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.045),
+            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -1061,8 +1354,8 @@ class _AdminSectionCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: darkText,
+            style: TextStyle(
+              color: titleColor,
               fontSize: 21,
               fontWeight: FontWeight.w900,
             ),
@@ -1071,7 +1364,7 @@ class _AdminSectionCard extends StatelessWidget {
           Text(
             subtitle,
             style: TextStyle(
-              color: Colors.grey[600],
+              color: subtitleColor,
               fontWeight: FontWeight.w600,
             ),
           ),

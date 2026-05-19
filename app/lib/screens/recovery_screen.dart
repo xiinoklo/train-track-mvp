@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../theme/app_theme_controller.dart';
 
 class RecoveryScreen extends StatefulWidget {
   const RecoveryScreen({Key? key}) : super(key: key);
@@ -20,7 +21,9 @@ class _RecoveryScreenState extends State<RecoveryScreen>
   static const Color secondaryColor = Color(0xFF22C55E);
   static const Color warningColor = Color(0xFFF59E0B);
   static const Color dangerColor = Color(0xFFEF4444);
-  static const Color backgroundColor = Color(0xFFF8FAFC);
+  static const Color lightBackground = Color(0xFFF8FAFC);
+  static const Color darkBackground = Color(0xFF020617);
+  static const Color darkCard = Color(0xFF0F172A);
   static const Color darkText = Color(0xFF0F172A);
 
   @override
@@ -144,80 +147,134 @@ class _RecoveryScreenState extends State<RecoveryScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF1E3A8A),
-              Color(0xFF2563EB),
-              Color(0xFFF8FAFC),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0.0, 0.34, 0.34],
-          ),
-        ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: Column(
-                children: [
-                  _buildHeader(context),
-                  Expanded(
-                    child: FutureBuilder<Map<String, dynamic>>(
-                      future: recoveryFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                            ),
-                          );
-                        }
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppThemeController.themeMode,
+      builder: (context, mode, _) {
+        final bool isDark = mode == ThemeMode.dark;
 
-                        if (snapshot.hasError) {
-                          return _buildErrorState(snapshot.error.toString());
-                        }
+        final Color pageBackground =
+            isDark ? darkBackground : lightBackground;
 
-                        final data = snapshot.data;
-                        final List recovery = data?['recovery'] ?? [];
+        final Color cardColor = isDark ? darkCard : Colors.white;
 
-                        if (recovery.isEmpty) {
-                          return _buildEmptyState();
-                        }
+        final Color titleColor = isDark ? Colors.white : darkText;
 
-                        return RefreshIndicator(
-                          onRefresh: _refreshRecovery,
-                          color: primaryColor,
-                          child: ListView(
-                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                            children: [
-                              _buildSummaryCard(recovery),
-                              const SizedBox(height: 18),
-                              _buildMuscleDashboard(recovery),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+        final Color subtitleColor =
+            isDark ? Colors.white70 : Colors.grey[700]!;
+
+        final Color borderColor =
+            isDark ? Colors.white.withOpacity(0.08) : Colors.transparent;
+
+        return Scaffold(
+          backgroundColor: pageBackground,
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? const [
+                        Color(0xFF020617),
+                        Color(0xFF1E3A8A),
+                        Color(0xFF020617),
+                      ]
+                    : const [
+                        Color(0xFF1E3A8A),
+                        Color(0xFF2563EB),
+                        Color(0xFFF8FAFC),
+                      ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.34, 0.34],
+              ),
+            ),
+            child: SafeArea(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Column(
+                    children: [
+                      _buildHeader(context, isDark),
+                      Expanded(
+                        child: FutureBuilder<Map<String, dynamic>>(
+                          future: recoveryFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
+                              );
+                            }
+
+                            if (snapshot.hasError) {
+                              return _buildErrorState(
+                                error: snapshot.error.toString(),
+                                isDark: isDark,
+                                cardColor: cardColor,
+                                titleColor: titleColor,
+                                subtitleColor: subtitleColor,
+                                borderColor: borderColor,
+                              );
+                            }
+
+                            final data = snapshot.data;
+                            final List recovery = data?['recovery'] ?? [];
+
+                            if (recovery.isEmpty) {
+                              return _buildEmptyState(
+                                isDark: isDark,
+                                cardColor: cardColor,
+                                titleColor: titleColor,
+                                subtitleColor: subtitleColor,
+                                borderColor: borderColor,
+                              );
+                            }
+
+                            return RefreshIndicator(
+                              onRefresh: _refreshRecovery,
+                              color: primaryColor,
+                              child: ListView(
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                                children: [
+                                  _buildSummaryCard(
+                                    recovery: recovery,
+                                    isDark: isDark,
+                                    cardColor: cardColor,
+                                    titleColor: titleColor,
+                                    subtitleColor: subtitleColor,
+                                    borderColor: borderColor,
+                                  ),
+                                  const SizedBox(height: 18),
+                                  _buildMuscleDashboard(
+                                    recovery: recovery,
+                                    isDark: isDark,
+                                    cardColor: cardColor,
+                                    titleColor: titleColor,
+                                    subtitleColor: subtitleColor,
+                                    borderColor: borderColor,
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 20, 18),
+      padding: const EdgeInsets.fromLTRB(12, 8, 18, 18),
       child: Row(
         children: [
           IconButton(
@@ -237,12 +294,20 @@ class _RecoveryScreenState extends State<RecoveryScreen>
               ),
             ),
           ),
+          _buildThemeButton(isDark),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryCard(List recovery) {
+  Widget _buildSummaryCard({
+    required List recovery,
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+  }) {
     final int readyCount = recovery.where((item) {
       final int remainingHours = _asInt(item['remainingHours']);
       final String status = item['status'] ?? '';
@@ -254,11 +319,12 @@ class _RecoveryScreenState extends State<RecoveryScreen>
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withOpacity(isDark ? 0.35 : 0.12),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -269,7 +335,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: secondaryColor.withOpacity(0.12),
+              color: secondaryColor.withOpacity(isDark ? 0.20 : 0.12),
               borderRadius: BorderRadius.circular(18),
             ),
             child: const Icon(
@@ -283,12 +349,12 @@ class _RecoveryScreenState extends State<RecoveryScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Estado de recuperacion',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
-                    color: darkText,
+                    color: titleColor,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -297,7 +363,8 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.35,
-                    color: Colors.grey[700],
+                    color: subtitleColor,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -308,7 +375,14 @@ class _RecoveryScreenState extends State<RecoveryScreen>
     );
   }
 
-  Widget _buildMuscleDashboard(List recovery) {
+  Widget _buildMuscleDashboard({
+    required List recovery,
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+  }) {
     final groups = [
       'pecho',
       'espalda',
@@ -321,11 +395,12 @@ class _RecoveryScreenState extends State<RecoveryScreen>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.045),
+            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -339,7 +414,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
+                  color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
@@ -349,7 +424,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -358,15 +433,16 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
-                        color: darkText,
+                        color: titleColor,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       'Vista rapida por grupo muscular.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey,
+                        color: subtitleColor,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -379,11 +455,11 @@ class _RecoveryScreenState extends State<RecoveryScreen>
 
           Row(
             children: [
-              _buildLegendItem(secondaryColor, 'Listo'),
+              _buildLegendItem(secondaryColor, 'Listo', subtitleColor),
               const SizedBox(width: 10),
-              _buildLegendItem(warningColor, '< 24h'),
+              _buildLegendItem(warningColor, '< 24h', subtitleColor),
               const SizedBox(width: 10),
-              _buildLegendItem(dangerColor, '+24h'),
+              _buildLegendItem(dangerColor, '+24h', subtitleColor),
             ],
           ),
 
@@ -402,7 +478,13 @@ class _RecoveryScreenState extends State<RecoveryScreen>
             itemBuilder: (context, index) {
               final group = groups[index];
               final item = _recoveryItemFor(recovery, group);
-              return _buildMuscleTile(item);
+
+              return _buildMuscleTile(
+                item: item,
+                isDark: isDark,
+                titleColor: titleColor,
+                subtitleColor: subtitleColor,
+              );
             },
           ),
         ],
@@ -410,7 +492,12 @@ class _RecoveryScreenState extends State<RecoveryScreen>
     );
   }
 
-  Widget _buildMuscleTile(Map<String, dynamic> item) {
+  Widget _buildMuscleTile({
+    required Map<String, dynamic> item,
+    required bool isDark,
+    required Color titleColor,
+    required Color subtitleColor,
+  }) {
     final String muscleGroup = item['muscleGroup'] ?? 'grupo';
     final String status = item['status'] ?? 'ready';
     final int remainingHours = _asInt(item['remainingHours']);
@@ -422,10 +509,12 @@ class _RecoveryScreenState extends State<RecoveryScreen>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.08),
+        color: isDark
+            ? statusColor.withOpacity(0.12)
+            : statusColor.withOpacity(0.08),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: statusColor.withOpacity(0.35),
+          color: statusColor.withOpacity(isDark ? 0.45 : 0.35),
           width: 1.4,
         ),
       ),
@@ -439,7 +528,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                 height: 42,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.14),
+                  color: statusColor.withOpacity(isDark ? 0.20 : 0.14),
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Icon(
@@ -455,7 +544,9 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: isDark
+                      ? const Color(0xFF020617).withOpacity(0.85)
+                      : Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -474,10 +565,10 @@ class _RecoveryScreenState extends State<RecoveryScreen>
 
           Text(
             _capitalize(muscleGroup),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w900,
-              color: darkText,
+              color: titleColor,
             ),
           ),
 
@@ -499,7 +590,9 @@ class _RecoveryScreenState extends State<RecoveryScreen>
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 7,
-              backgroundColor: Colors.white.withOpacity(0.8),
+              backgroundColor: isDark
+                  ? Colors.white.withOpacity(0.12)
+                  : Colors.white.withOpacity(0.8),
               valueColor: AlwaysStoppedAnimation<Color>(statusColor),
             ),
           ),
@@ -511,7 +604,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
-                color: Colors.grey[600],
+                color: subtitleColor,
               ),
             ),
           ],
@@ -520,7 +613,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
     );
   }
 
-  Widget _buildLegendItem(Color color, String label) {
+  Widget _buildLegendItem(Color color, String label, Color textColor) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -537,7 +630,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
           label,
           style: TextStyle(
             fontSize: 11,
-            color: Colors.grey[700],
+            color: textColor,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -545,44 +638,57 @@ class _RecoveryScreenState extends State<RecoveryScreen>
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState({
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+  }) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Container(
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: borderColor),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withOpacity(isDark ? 0.30 : 0.08),
                 blurRadius: 22,
                 offset: const Offset(0, 10),
               ),
             ],
           ),
-          child: const Column(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              const Icon(
                 Icons.health_and_safety_rounded,
                 size: 56,
                 color: primaryColor,
               ),
-              SizedBox(height: 18),
+              const SizedBox(height: 18),
               Text(
                 'Sin datos de recuperacion',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
-                  color: darkText,
+                  color: titleColor,
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text(
                 'Cuando finalices entrenamientos y registres RPE, aparecera aqui tu descanso muscular.',
                 textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: subtitleColor,
+                  height: 1.35,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -591,17 +697,26 @@ class _RecoveryScreenState extends State<RecoveryScreen>
     );
   }
 
-  Widget _buildErrorState(String error) {
+  Widget _buildErrorState({
+    required String error,
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+  }) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Container(
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(28),
             border: Border.all(
-              color: dangerColor.withOpacity(0.2),
+              color: isDark
+                  ? Colors.white.withOpacity(0.08)
+                  : dangerColor.withOpacity(0.2),
             ),
           ),
           child: Column(
@@ -613,12 +728,13 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                 color: dangerColor,
               ),
               const SizedBox(height: 18),
-              const Text(
+              Text(
                 'Error al cargar recuperacion',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
-                  color: darkText,
+                  color: titleColor,
                 ),
               ),
               const SizedBox(height: 10),
@@ -627,7 +743,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
-                  color: Colors.grey[700],
+                  color: subtitleColor,
                 ),
               ),
               const SizedBox(height: 18),
@@ -643,6 +759,28 @@ class _RecoveryScreenState extends State<RecoveryScreen>
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildThemeButton(bool isDark) {
+    return Container(
+      width: 46,
+      height: 46,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.22),
+        ),
+      ),
+      child: IconButton(
+        onPressed: AppThemeController.toggleTheme,
+        icon: Icon(
+          isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+        ),
+        color: Colors.white,
+        tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
       ),
     );
   }
