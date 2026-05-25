@@ -69,61 +69,60 @@ function filterExercisesByTarget(exercises, targetMuscleGroup) {
 
 // Generar y guardar la sesión
 router.post("/generate", protect, async (req, res) => {
-  const userId = req.user.id;
+  try {
+    const userId = req.user.id;
 
-  const {
-    sleep,
-    pain,
-    fatigue,
-    stress,
-    mood,
-    targetMuscleGroup = "full_body"
-  } = req.body;
+    const {
+      sleep,
+      pain,
+      fatigue,
+      stress,
+      mood,
+      targetMuscleGroup = "full_body"
+    } = req.body;
 
-  const result = await calculateLoadFactor({
-    sleep,
-    pain,
-    fatigue,
-    stress,
-    mood
-  });
+    const result = await calculateLoadFactor({
+      sleep,
+      pain,
+      fatigue,
+      stress,
+      mood
+    });
 
-  let workoutExercises = [];
-  let trainedMuscleGroups = [];
+    let workoutExercises = [];
+    let trainedMuscleGroups = [];
 
-  if (result.factor > 0) {
-    const sets = result.factor === 1 ? 4 : 2;
+    if (result.factor > 0) {
+      const sets = result.factor === 1 ? 4 : 2;
 
-    const dbExercises = await Exercise.find({ isActive: true });
+      const dbExercises = await Exercise.find({ isActive: true });
 
-    let filteredExercises = filterExercisesByTarget(
-      dbExercises,
-      targetMuscleGroup
-    );
+      let filteredExercises = filterExercisesByTarget(
+        dbExercises,
+        targetMuscleGroup
+      );
 
-    // Si no hay ejercicios para ese grupo, usamos full body como respaldo
-    if (filteredExercises.length === 0) {
-      filteredExercises = dbExercises;
+      if (filteredExercises.length === 0) {
+        filteredExercises = dbExercises;
+      }
+
+      workoutExercises = filteredExercises.map((exercise) => ({
+        exerciseId: exercise._id,
+        name: exercise.name,
+        muscleGroup: exercise.muscleGroup,
+        sets: sets,
+        reps: "10-12",
+        videoUrl: exercise.videoUrl,
+        instructions: exercise.instructions
+      }));
+
+      trainedMuscleGroups = [
+        ...new Set(
+          workoutExercises.map((exercise) => exercise.muscleGroup)
+        )
+      ];
     }
 
-    workoutExercises = filteredExercises.map((exercise) => ({
-      exerciseId: exercise._id,
-      name: exercise.name,
-      muscleGroup: exercise.muscleGroup,
-      sets: sets,
-      reps: "10-12",
-      videoUrl: exercise.videoUrl,
-      instructions: exercise.instructions
-    }));
-
-    trainedMuscleGroups = [
-      ...new Set(
-        workoutExercises.map((exercise) => exercise.muscleGroup)
-      )
-    ];
-  }
-
-  try {
     const newSession = await WorkoutSession.create({
       userId,
       targetMuscleGroup,
@@ -143,7 +142,7 @@ router.post("/generate", protect, async (req, res) => {
       exercises: workoutExercises
     });
   } catch (error) {
-    console.error("Error al guardar la sesión:", error);
+    console.error("Error al generar la sesión:", error);
     res.status(500).json({ message: "Error interno del servidor" });
   }
 });
