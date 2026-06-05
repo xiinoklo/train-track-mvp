@@ -1,5 +1,6 @@
 const express = require("express");
 const Exercise = require("../models/Exercise");
+const { protect, requireAdmin } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -14,17 +15,17 @@ router.get("/", async (req, res) => {
 });
 
 // GET: Obtener TODOS los ejercicios (Para el Administrador)
-router.get("/admin", async (req, res) => {
+router.get("/admin", protect, requireAdmin, async (req, res) => {
   try {
     const exercises = await Exercise.find();
     res.json({ total: exercises.length, exercises });
   } catch (error) {
-    res.status(500).json({ message: "Error al obtener catálogo" });
+    res.status(500).json({ message: "Error al obtener catalogo" });
   }
 });
 
 // POST: Crear un nuevo ejercicio (Administrador)
-router.post("/", async (req, res) => {
+router.post("/", protect, requireAdmin, async (req, res) => {
   try {
     const newExercise = await Exercise.create(req.body);
     res.status(201).json(newExercise);
@@ -34,7 +35,7 @@ router.post("/", async (req, res) => {
 });
 
 // PUT: Actualizar un ejercicio existente (Administrador)
-router.put("/:id", async (req, res) => {
+router.put("/:id", protect, requireAdmin, async (req, res) => {
   try {
     const updated = await Exercise.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updated) return res.status(404).json({ message: "Ejercicio no encontrado" });

@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const rateLimit = require("express-rate-limit");
 const User = require("../models/User");
 const { sendVerificationEmail } = require("../services/emailService");
+const { getStartingLevel } = require("../services/progressService");
 
 const router = express.Router();
 
@@ -47,6 +48,7 @@ router.post("/register", registerLimiter, async (req, res) => {
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expirationDate = new Date(Date.now() + 10 * 60 * 1000);
+    const startingLevel = getStartingLevel(experienceLevel);
 
     const user = await User.create({
       email: cleanEmail,
@@ -55,6 +57,8 @@ router.post("/register", registerLimiter, async (req, res) => {
       gender,
       experienceLevel,
       mainGoal,
+      level: startingLevel,
+      xp: (startingLevel - 1) * 100,
       role: "user",
       isVerified: false,
       verificationCode: code,

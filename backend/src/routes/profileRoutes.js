@@ -1,14 +1,14 @@
 const express = require("express");
 const User = require("../models/User");
 const { protect } = require("../middleware/authMiddleware");
+const {
+  XP_PER_LEVEL,
+  getRankFromLevel,
+  getLevelFromXp,
+  getStartingLevel
+} = require("../services/progressService");
 
 const router = express.Router();
-
-function getRankFromLevel(level) {
-  if (level <= 2) return "Principiante";
-  if (level <= 4) return "Intermedio";
-  return "Avanzado";
-}
 
 router.get("/me", protect, async (req, res) => {
   try {
@@ -22,9 +22,11 @@ router.get("/me", protect, async (req, res) => {
       });
     }
 
-    const currentXp = user.xp || 0;
-    const level = user.level || 1;
-    const xpGoal = 100;
+    const minimumXp =
+      (getStartingLevel(user.experienceLevel) - 1) * XP_PER_LEVEL;
+    const currentXp = Math.max(user.xp || 0, minimumXp);
+    const level = getLevelFromXp(currentXp);
+    const xpGoal = XP_PER_LEVEL;
     const xpInCurrentLevel = currentXp % xpGoal;
 
     res.json({

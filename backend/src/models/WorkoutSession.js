@@ -31,6 +31,7 @@ const workoutSessionSchema = new mongoose.Schema(
         muscleGroup: String,
         sets: Number,
         reps: String,
+        weight: String,
         videoUrl: String,
         instructions: String
       }
@@ -40,6 +41,10 @@ const workoutSessionSchema = new mongoose.Schema(
       min: 1,
       max: 10,
       default: null
+    },
+    xpAwarded: {
+      type: Number,
+      default: 0
     },
     completedAt: {
       type: Date,
