@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme_controller.dart';
+import '../utils/navigation_guard.dart';
 import 'username_setup_screen.dart';
 
 class VerificationScreen extends StatefulWidget {
@@ -137,7 +138,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       children: [
                         IconButton(
                           onPressed:
-                              _isLoading ? null : () => Navigator.pop(context),
+                              _isLoading ? null : () => popIfPossible(context),
                           icon: const Icon(Icons.arrow_back_rounded),
                           color: Colors.white,
                         ),
@@ -149,7 +150,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                               fontSize: 24,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
-                              letterSpacing: -0.5,
+                              letterSpacing: 0,
                             ),
                           ),
                         ),

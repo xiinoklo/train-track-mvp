@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme_controller.dart';
+import '../utils/navigation_guard.dart';
 import 'verification_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -153,7 +154,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       children: [
                         IconButton(
                           onPressed:
-                              _isLoading ? null : () => Navigator.pop(context),
+                              _isLoading ? null : () => popIfPossible(context),
                           icon: const Icon(Icons.arrow_back_rounded),
                           color: Colors.white,
                         ),
@@ -218,13 +219,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: 18),
 
                             Text(
-                              'Únete a TrainTrack',
+                              'Unete a TrainTrack',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: titleColor,
                                 fontSize: 26,
                                 fontWeight: FontWeight.w900,
-                                letterSpacing: -0.5,
+                                letterSpacing: 0,
                               ),
                             ),
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme_controller.dart';
+import '../utils/navigation_guard.dart';
 
 class RecoveryScreen extends StatefulWidget {
   const RecoveryScreen({Key? key}) : super(key: key);
@@ -99,6 +100,15 @@ class _RecoveryScreenState extends State<RecoveryScreen>
         return Icons.sports_mma_rounded;
       case 'core':
         return Icons.self_improvement_rounded;
+      case 'biceps':
+      case 'triceps':
+        return Icons.sports_mma_rounded;
+      case 'gluteos':
+      case 'cuadriceps':
+      case 'isquios':
+      case 'femorales':
+      case 'pantorrillas':
+        return Icons.directions_run_rounded;
       default:
         return Icons.monitor_heart_rounded;
     }
@@ -278,7 +288,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
       child: Row(
         children: [
           IconButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => popIfPossible(context),
             icon: const Icon(Icons.arrow_back_rounded),
             color: Colors.white,
           ),
@@ -290,7 +300,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
-                letterSpacing: -0.4,
+                letterSpacing: 0,
               ),
             ),
           ),
@@ -390,6 +400,13 @@ class _RecoveryScreenState extends State<RecoveryScreen>
       'hombros',
       'brazos',
       'core',
+      'biceps',
+      'triceps',
+      'gluteos',
+      'cuadriceps',
+      'isquios',
+      'femorales',
+      'pantorrillas',
     ];
 
     return Container(

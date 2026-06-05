@@ -183,7 +183,7 @@ class _UsernameSetupScreenState extends State<UsernameSetupScreen>
                                   fontSize: 30,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
-                                  letterSpacing: -0.7,
+                                  letterSpacing: 0,
                                 ),
                               ),
                             ),

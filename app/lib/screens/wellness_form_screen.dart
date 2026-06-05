@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme_controller.dart';
+import '../utils/navigation_guard.dart';
+import 'workout_blocked_screen.dart';
 import 'workout_screen.dart';
 
 class WellnessFormScreen extends StatefulWidget {
@@ -45,6 +47,31 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
     {'label': 'Hombros', 'value': 'hombros'},
     {'label': 'Brazos', 'value': 'brazos'},
     {'label': 'Core', 'value': 'core'},
+    {'label': 'Biceps', 'value': 'biceps'},
+    {'label': 'Triceps', 'value': 'triceps'},
+    {'label': 'Gluteos', 'value': 'gluteos'},
+    {'label': 'Cuadriceps', 'value': 'cuadriceps'},
+    {'label': 'Isquios', 'value': 'isquios'},
+    {'label': 'Femorales', 'value': 'femorales'},
+    {'label': 'Pantorrillas', 'value': 'pantorrillas'},
+  ];
+
+  static const List<String> upperBodyGroups = [
+    'pecho',
+    'espalda',
+    'hombros',
+    'brazos',
+    'biceps',
+    'triceps',
+  ];
+
+  static const List<String> lowerBodyGroups = [
+    'piernas',
+    'gluteos',
+    'cuadriceps',
+    'isquios',
+    'femorales',
+    'pantorrillas',
   ];
 
   @override
@@ -80,6 +107,72 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
     super.dispose();
   }
 
+  int _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return 0;
+  }
+
+  String _normalizeGroup(dynamic value) {
+    return value
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replaceAll('á', 'a')
+        .replaceAll('é', 'e')
+        .replaceAll('í', 'i')
+        .replaceAll('ó', 'o')
+        .replaceAll('ú', 'u');
+  }
+
+  bool _isBeginnerProfile(Map<String, dynamic>? profile) {
+    final user = Map<String, dynamic>.from(profile?['user'] ?? {});
+    final experienceLevel = user['experienceLevel']?.toString().toLowerCase();
+    final rank = user['rank']?.toString().toLowerCase() ?? '';
+
+    return experienceLevel == 'principiante' || rank.startsWith('principiante');
+  }
+
+  List<String>? _targetMuscleKeys() {
+    final target = _normalizeGroup(targetMuscleGroup);
+
+    if (target == 'full_body' || target == 'full body') {
+      return null;
+    }
+
+    if (target == 'tren_superior' || target == 'tren superior') {
+      return upperBodyGroups.map(_normalizeGroup).toList();
+    }
+
+    if (target == 'tren_inferior' || target == 'tren inferior') {
+      return lowerBodyGroups.map(_normalizeGroup).toList();
+    }
+
+    return [target];
+  }
+
+  Future<List<Map<String, dynamic>>> _getBlockedBeginnerMuscles() async {
+    final profile = await ApiService.getProfile();
+
+    if (!_isBeginnerProfile(profile)) {
+      return [];
+    }
+
+    final recoveryData = await ApiService.getRecoveryStatus();
+    final recovery = List<Map<String, dynamic>>.from(
+      recoveryData['recovery'] ?? [],
+    );
+    final targetKeys = _targetMuscleKeys();
+
+    return recovery.where((item) {
+      final groupKey = _normalizeGroup(item['muscleGroup']);
+      final remainingHours = _asInt(item['remainingHours']);
+      final matchesTarget = targetKeys == null || targetKeys.contains(groupKey);
+
+      return matchesTarget && remainingHours > 24;
+    }).toList();
+  }
+
   Future<void> _generateWorkout() async {
     setState(() {
       isLoading = true;
@@ -99,6 +192,30 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
         "targetMuscleGroup": targetMuscleGroup,
       };
 
+      final blockedMuscles = await _getBlockedBeginnerMuscles();
+
+      if (blockedMuscles.isNotEmpty) {
+        if (!mounted) return;
+
+        setState(() {
+          isLoading = false;
+        });
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WorkoutBlockedScreen(
+              targetMuscleGroup: targetMuscleGroup,
+              blockedMuscles: blockedMuscles,
+              message:
+                  'Tu recuperacion muscular todavia no esta lista para este objetivo. Elige un grupo disponible o espera a que baje de 24 horas.',
+            ),
+          ),
+        );
+
+        return;
+      }
+
       await ApiService.saveWellness(wellnessData);
 
       final data = await ApiService.generateWorkout(workoutData);
@@ -106,21 +223,46 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
       if (!mounted) return;
 
       if (data != null) {
+        final blockedFromBackend = List<Map<String, dynamic>>.from(
+          data['blockedMuscles'] ?? [],
+        );
+
+        if (blockedFromBackend.isNotEmpty) {
+          setState(() {
+            isLoading = false;
+          });
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WorkoutBlockedScreen(
+                targetMuscleGroup: targetMuscleGroup,
+                blockedMuscles: blockedFromBackend,
+                message: data['message'] ??
+                    'Tu recuperacion muscular todavia no esta lista para este objetivo.',
+              ),
+            ),
+          );
+
+          return;
+        }
+
         final double factorCalculado =
             (data['loadFactor'] as num).toDouble();
 
         final List<Map<String, dynamic>> exercises =
-            List<Map<String, dynamic>>.from(data['exercises']);
+            List<Map<String, dynamic>>.from(data['exercises'] ?? []);
 
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => WorkoutScreen(
-              sessionId: data['sessionId'],
+              sessionId: data['sessionId'] ?? '',
               loadFactor: factorCalculado,
-              recommendation: data['recommendation'],
+              recommendation: data['recommendation'] ?? 'Descanso muscular activo',
               message: data['message'] ?? '',
               exercises: exercises,
+              canCustomizeWorkout: data['canCustomizeWorkout'] == true,
             ),
           ),
         );
@@ -320,7 +462,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
       child: Row(
         children: [
           IconButton(
-            onPressed: isLoading ? null : () => Navigator.pop(context),
+            onPressed: isLoading ? null : () => popIfPossible(context),
             icon: const Icon(Icons.arrow_back_rounded),
             color: Colors.white,
           ),
@@ -332,7 +474,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
-                letterSpacing: -0.4,
+                letterSpacing: 0,
               ),
             ),
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme_controller.dart';
+import '../utils/navigation_guard.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({Key? key}) : super(key: key);
@@ -251,7 +252,7 @@ class _HistoryScreenState extends State<HistoryScreen>
       child: Row(
         children: [
           IconButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => popIfPossible(context),
             icon: const Icon(Icons.arrow_back_rounded),
             color: Colors.white,
           ),
@@ -263,7 +264,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
-                letterSpacing: -0.4,
+                letterSpacing: 0,
               ),
             ),
           ),

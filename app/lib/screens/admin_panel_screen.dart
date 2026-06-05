@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme_controller.dart';
+import '../utils/navigation_guard.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   const AdminPanelScreen({super.key});
@@ -47,7 +48,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   Future<void> _logoutAdmin() async {
     await ApiService.adminLogout();
     if (!mounted) return;
-    Navigator.pop(context);
+    popIfPossible(context);
   }
 
   @override
@@ -142,7 +143,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       child: Row(
         children: [
           IconButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => popIfPossible(context),
             icon: const Icon(Icons.arrow_back_rounded),
             color: Colors.white,
           ),
@@ -154,7 +155,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
-                letterSpacing: -0.4,
+                letterSpacing: 0,
               ),
             ),
           ),

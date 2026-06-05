@@ -41,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (email.isEmpty || pass.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Ingresa email y contraseña'),
+          content: Text('Ingresa email y contrasena'),
           backgroundColor: Colors.red,
         ),
       );
@@ -177,10 +177,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                     : primaryColor.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(24),
                               ),
-                              child: const Icon(
-                                Icons.fitness_center_rounded,
-                                size: 46,
-                                color: primaryColor,
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Image.asset(
+                                  'assets/images/traintrack_logo.png',
+                                  fit: BoxFit.contain,
+                                ),
                               ),
                             ),
 
@@ -192,14 +194,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                 fontSize: 30,
                                 fontWeight: FontWeight.w900,
                                 color: titleColor,
-                                letterSpacing: -0.6,
+                                letterSpacing: 0,
                               ),
                             ),
 
                             const SizedBox(height: 8),
 
                             Text(
-                              'Inicia sesión para continuar',
+                              'Inicia sesion para continuar',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: subtitleColor,
@@ -216,7 +218,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               textInputAction: TextInputAction.next,
                               style: TextStyle(color: titleColor),
                               decoration: InputDecoration(
-                                labelText: 'Correo electrónico',
+                                labelText: 'Correo electronico',
                                 labelStyle: TextStyle(color: subtitleColor),
                                 prefixIcon: Icon(
                                   Icons.email_outlined,

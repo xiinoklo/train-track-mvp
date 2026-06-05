@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme_controller.dart';
-import 'dashboard_screen.dart';
+import '../utils/navigation_guard.dart';
+import 'workout_summary_screen.dart';
 
 class WorkoutScreen extends StatefulWidget {
   final String sessionId;
@@ -10,6 +11,7 @@ class WorkoutScreen extends StatefulWidget {
   final String recommendation;
   final String message;
   final List<Map<String, dynamic>> exercises;
+  final bool canCustomizeWorkout;
 
   const WorkoutScreen({
     Key? key,
@@ -18,6 +20,7 @@ class WorkoutScreen extends StatefulWidget {
     required this.recommendation,
     required this.message,
     required this.exercises,
+    this.canCustomizeWorkout = false,
   }) : super(key: key);
 
   @override
@@ -29,6 +32,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  late List<Map<String, dynamic>> _exercises;
 
   static const Color primaryColor = Color(0xFF1E3A8A);
   static const Color secondaryColor = Color(0xFF22C55E);
@@ -42,6 +46,10 @@ class _WorkoutScreenState extends State<WorkoutScreen>
   @override
   void initState() {
     super.initState();
+
+    _exercises = widget.exercises
+        .map((exercise) => Map<String, dynamic>.from(exercise))
+        .toList();
 
     _controller = AnimationController(
       vsync: this,
@@ -78,6 +86,26 @@ class _WorkoutScreenState extends State<WorkoutScreen>
     return 0;
   }
 
+  List<Map<String, dynamic>> get _exercisesForSave {
+    return _exercises
+        .map((exercise) => Map<String, dynamic>.from(exercise))
+        .toList();
+  }
+
+  List<String> get _trainedMuscleGroups {
+    final groups = <String>{};
+
+    for (final exercise in _exercisesForSave) {
+      final group = exercise['muscleGroup']?.toString().trim();
+
+      if (group != null && group.isNotEmpty && group != 'null') {
+        groups.add(group);
+      }
+    }
+
+    return groups.toList();
+  }
+
   Color get _sessionColor {
     if (widget.loadFactor == 0) return dangerColor;
     if (widget.loadFactor == 0.5) return warningColor;
@@ -89,6 +117,9 @@ class _WorkoutScreenState extends State<WorkoutScreen>
     if (widget.loadFactor == 0.5) return Icons.speed_rounded;
     return Icons.bolt_rounded;
   }
+
+  // true = hay sesión real en BD; false = todos los músculos en descanso (sessionId vacío)
+  bool get _hasSession => widget.sessionId.isNotEmpty;
 
   void _showVideoModal(BuildContext context, String videoUrl) {
     final videoId = YoutubePlayer.convertUrlToId(videoUrl);
@@ -113,7 +144,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
 
   @override
   Widget build(BuildContext context) {
-    final bool isRestDay = widget.exercises.isEmpty;
+    final bool isRestDay = _exercises.isEmpty;
 
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: AppThemeController.themeMode,
@@ -193,9 +224,20 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                                   borderColor: borderColor,
                                 ),
                                 const SizedBox(height: 18),
-                                ...widget.exercises.map(
-                                  (exercise) => _buildExerciseCard(
-                                    exercise: exercise,
+                                if (widget.canCustomizeWorkout)
+                                  _buildCustomizeHint(
+                                    isDark: isDark,
+                                    cardColor: cardColor,
+                                    titleColor: titleColor,
+                                    subtitleColor: subtitleColor,
+                                    borderColor: borderColor,
+                                  ),
+                                if (widget.canCustomizeWorkout)
+                                  const SizedBox(height: 18),
+                                ..._exercises.asMap().entries.map(
+                                  (entry) => _buildExerciseCard(
+                                    index: entry.key,
+                                    exercise: entry.value,
                                     isDark: isDark,
                                     cardColor: cardColor,
                                     titleColor: titleColor,
@@ -204,7 +246,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                                   ),
                                 ),
                                 const SizedBox(height: 10),
-                                _buildFinishButton(context),
+                                if (_hasSession) _buildFinishButton(context),
                               ],
                             ],
                           ),
@@ -227,7 +269,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
       child: Row(
         children: [
           IconButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => popIfPossible(context),
             icon: const Icon(Icons.arrow_back_rounded),
             color: Colors.white,
           ),
@@ -239,7 +281,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
-                letterSpacing: -0.4,
+                letterSpacing: 0,
               ),
             ),
           ),
@@ -324,8 +366,8 @@ class _WorkoutScreenState extends State<WorkoutScreen>
     required Color subtitleColor,
     required Color borderColor,
   }) {
-    final int totalExercises = widget.exercises.length;
-    final int totalSets = widget.exercises.fold<int>(
+    final int totalExercises = _exercises.length;
+    final int totalSets = _exercises.fold<int>(
       0,
       (sum, exercise) => sum + _asInt(exercise['sets']),
     );
@@ -460,15 +502,19 @@ class _WorkoutScreenState extends State<WorkoutScreen>
               color: dangerColor.withOpacity(isDark ? 0.20 : 0.12),
               borderRadius: BorderRadius.circular(24),
             ),
-            child: const Icon(
-              Icons.self_improvement_rounded,
+            child: Icon(
+              _hasSession
+                  ? Icons.self_improvement_rounded
+                  : Icons.bed_rounded,
               size: 58,
               color: dangerColor,
             ),
           ),
           const SizedBox(height: 18),
           Text(
-            'Descanso activo / recuperación',
+            _hasSession
+                ? 'Descanso activo / recuperación'
+                : 'Músculos en descanso',
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w900,
@@ -478,7 +524,9 @@ class _WorkoutScreenState extends State<WorkoutScreen>
           ),
           const SizedBox(height: 12),
           Text(
-            'Hoy no se recomienda una rutina de fuerza. Prioriza movilidad suave, caminata ligera o recuperación.',
+            _hasSession
+                ? 'Hoy no se recomienda una rutina de fuerza. Prioriza movilidad suave, caminata ligera o recuperación.'
+                : 'Todos los músculos que seleccionaste aún están en período de recuperación. Respeta el descanso para rendir mejor.',
             style: TextStyle(
               fontSize: 14,
               height: 1.4,
@@ -489,7 +537,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
           ),
           const SizedBox(height: 22),
           OutlinedButton.icon(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => popIfPossible(context),
             icon: const Icon(Icons.home_rounded),
             label: const Text('Volver al inicio'),
             style: OutlinedButton.styleFrom(
@@ -512,7 +560,85 @@ class _WorkoutScreenState extends State<WorkoutScreen>
     );
   }
 
+  Widget _buildCustomizeHint({
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(11),
+            decoration: BoxDecoration(
+              color: warningColor.withOpacity(isDark ? 0.20 : 0.12),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.edit_note_rounded,
+              color: warningColor,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Rutina editable',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: titleColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Ajusta series, repeticiones y peso antes de finalizar.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: subtitleColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _updateExerciseField(int index, String field, dynamic value) {
+    setState(() {
+      _exercises[index][field] = value;
+    });
+  }
+
+  void _changeSets(int index, int delta) {
+    final currentSets = _asInt(_exercises[index]['sets']);
+    final nextSets = (currentSets + delta).clamp(1, 8);
+    _updateExerciseField(index, 'sets', nextSets);
+  }
+
   Widget _buildExerciseCard({
+    required int index,
     required Map<String, dynamic> exercise,
     required bool isDark,
     required Color cardColor,
@@ -524,6 +650,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
     final String muscleGroup = exercise['muscleGroup'] ?? 'General';
     final int sets = _asInt(exercise['sets']);
     final String reps = exercise['reps']?.toString() ?? '-';
+    final String weight = exercise['weight']?.toString() ?? '';
     final String instructions = exercise['instructions'] ?? '';
     final String? videoUrl = exercise['videoUrl'];
 
@@ -638,6 +765,18 @@ class _WorkoutScreenState extends State<WorkoutScreen>
               ],
             ),
           ),
+          if (widget.canCustomizeWorkout) ...[
+            const SizedBox(height: 14),
+            _buildEditableTrainingControls(
+              index: index,
+              sets: sets,
+              reps: reps,
+              weight: weight,
+              isDark: isDark,
+              titleColor: titleColor,
+              subtitleColor: subtitleColor,
+            ),
+          ],
           const SizedBox(height: 14),
           Text(
             instructions,
@@ -730,6 +869,132 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                 ],
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditableTrainingControls({
+    required int index,
+    required int sets,
+    required String reps,
+    required String weight,
+    required bool isDark,
+    required Color titleColor,
+    required Color subtitleColor,
+  }) {
+    final Color fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final Color borderColor =
+        isDark ? Colors.white.withOpacity(0.12) : const Color(0xFFE2E8F0);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF111827) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Series',
+                style: TextStyle(
+                  color: subtitleColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const Spacer(),
+              IconButton.filledTonal(
+                onPressed: () => _changeSets(index, -1),
+                icon: const Icon(Icons.remove_rounded),
+                constraints: const BoxConstraints(
+                  minWidth: 38,
+                  minHeight: 38,
+                ),
+              ),
+              SizedBox(
+                width: 44,
+                child: Text(
+                  sets.toString(),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              IconButton.filledTonal(
+                onPressed: () => _changeSets(index, 1),
+                icon: const Icon(Icons.add_rounded),
+                constraints: const BoxConstraints(
+                  minWidth: 38,
+                  minHeight: 38,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  initialValue: reps,
+                  style: TextStyle(color: titleColor),
+                  decoration: InputDecoration(
+                    labelText: 'Reps',
+                    labelStyle: TextStyle(color: subtitleColor),
+                    filled: true,
+                    fillColor: fieldColor,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: primaryColor),
+                    ),
+                  ),
+                  onChanged: (value) =>
+                      _updateExerciseField(index, 'reps', value),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextFormField(
+                  initialValue: weight,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(color: titleColor),
+                  decoration: InputDecoration(
+                    labelText: 'Peso kg',
+                    labelStyle: TextStyle(color: subtitleColor),
+                    filled: true,
+                    fillColor: fieldColor,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: primaryColor),
+                    ),
+                  ),
+                  onChanged: (value) =>
+                      _updateExerciseField(index, 'weight', value),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -859,28 +1124,36 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                           });
 
                           try {
-                            await ApiService.registerRpe(
+                            final result = await ApiService.registerRpe(
                               sessionId: widget.sessionId,
                               rpe: rpe.round(),
+                              exercises: widget.canCustomizeWorkout
+                                  ? _exercisesForSave
+                                  : null,
                             );
 
                             if (!mounted) return;
 
                             Navigator.pop(dialogContext);
 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Entrenamiento finalizado con éxito 🏆',
-                                ),
-                                backgroundColor: Colors.green,
-                              ),
+                            final int xpGained =
+                                _asInt(result['xpGained']);
+                            final userProgress =
+                                Map<String, dynamic>.from(
+                              result['userProgress'] ?? {},
                             );
 
                             Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const DashboardScreen(),
+                                builder: (context) => WorkoutSummaryScreen(
+                                  xpGained: xpGained,
+                                  userProgress: userProgress,
+                                  exercises: _exercisesForSave,
+                                  trainedMuscleGroups: _trainedMuscleGroups,
+                                  recommendation: widget.recommendation,
+                                  loadFactor: widget.loadFactor,
+                                ),
                               ),
                               (route) => false,
                             );

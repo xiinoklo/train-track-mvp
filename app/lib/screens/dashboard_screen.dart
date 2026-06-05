@@ -200,20 +200,20 @@ class _DashboardScreenState extends State<DashboardScreen>
                         const SizedBox(height: 28),
 
                         const Text(
-                          'Entrena inteligente,\nno más fuerte.',
+                          'Entrena inteligente,\nno mas fuerte.',
                           style: TextStyle(
                             fontSize: 34,
                             height: 1.05,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
-                            letterSpacing: -1,
+                            letterSpacing: 0,
                           ),
                         ),
 
                         const SizedBox(height: 12),
 
                         Text(
-                          'Registra tu bienestar diario, genera rutinas ajustadas y controla tu recuperación muscular.',
+                          'Registra tu bienestar diario, genera rutinas ajustadas y controla tu recuperacion muscular.',
                           style: TextStyle(
                             fontSize: 15,
                             height: 1.4,
@@ -459,7 +459,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             fontSize: 28,
             fontWeight: FontWeight.w900,
             color: Colors.white,
-            letterSpacing: -0.6,
+            letterSpacing: 0,
           ),
         ),
       ],

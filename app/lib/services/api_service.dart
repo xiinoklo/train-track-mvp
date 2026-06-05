@@ -265,9 +265,10 @@ class ApiService {
     }
   }
 
-  static Future<void> registerRpe({
+  static Future<Map<String, dynamic>> registerRpe({
     required String sessionId,
     required int rpe,
+    List<Map<String, dynamic>>? exercises,
   }) async {
     final token = await getToken();
 
@@ -283,12 +284,15 @@ class ApiService {
       },
       body: jsonEncode({
         'rpe': rpe,
+        if (exercises != null) 'exercises': exercises,
       }),
     );
 
-    if (response.statusCode != 200) {
-      throw Exception('Error al registrar RPE');
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
     }
+
+    throw Exception('Error al registrar RPE');
   }
 
   static Future<bool> saveWellness(Map<String, int> wellnessData) async {

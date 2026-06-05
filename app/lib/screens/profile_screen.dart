@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme_controller.dart';
+import '../utils/navigation_guard.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -68,9 +69,12 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   String _getRankFromLevel(int level) {
-    if (level <= 2) return 'Principiante';
-    if (level <= 4) return 'Intermedio';
-    return 'Avanzado';
+    final int safeLevel = level.clamp(1, 9).toInt();
+    final subLevel = ((safeLevel - 1) % 3) + 1;
+
+    if (safeLevel <= 3) return 'Principiante $subLevel';
+    if (safeLevel <= 6) return 'Intermedio $subLevel';
+    return 'Avanzado $subLevel';
   }
 
   String _displayValue(dynamic value, String fallback) {
@@ -238,7 +242,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       child: Row(
         children: [
           IconButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => popIfPossible(context),
             icon: const Icon(Icons.arrow_back_rounded),
             color: Colors.white,
           ),
@@ -250,7 +254,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
-                letterSpacing: -0.4,
+                letterSpacing: 0,
               ),
             ),
           ),
@@ -342,8 +346,8 @@ class _ProfileScreenState extends State<ProfileScreen>
               color: secondaryColor.withOpacity(isDark ? 0.20 : 0.15),
               borderRadius: BorderRadius.circular(999),
             ),
-            child: const Text(
-              'Rango: Principiante',
+            child: Text(
+              'Rango: $rank',
               style: TextStyle(
                 color: Color(0xFF22C55E),
                 fontWeight: FontWeight.w900,
