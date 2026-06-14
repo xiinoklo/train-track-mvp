@@ -6,6 +6,7 @@ const User = require("../models/User");
 const Wellness = require("../models/Wellness");
 const WorkoutSession = require("../models/WorkoutSession");
 const Exercise = require("../models/Exercise");
+const SavedRoutine = require("../models/SavedRoutine");
 
 const { protect, requireAdmin } = require("../middleware/authMiddleware");
 
@@ -84,11 +85,32 @@ router.get("/users", protect, requireAdmin, async (req, res) => {
   try {
     const users = await User.find()
       .select("-password -verificationCode -expireAt")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
+    const userIds = users.map((user) => user._id);
+    const sessionCounts = await WorkoutSession.aggregate([
+      { $match: { userId: { $in: userIds } } },
+      { $group: { _id: "$userId", count: { $sum: 1 } } }
+    ]);
+    const savedCounts = await SavedRoutine.aggregate([
+      { $match: { userId: { $in: userIds } } },
+      { $group: { _id: "$userId", count: { $sum: 1 } } }
+    ]);
+    const countMap = new Map(
+      sessionCounts.map((item) => [item._id.toString(), item.count])
+    );
+    const savedCountMap = new Map(
+      savedCounts.map((item) => [item._id.toString(), item.count])
+    );
+    const usersWithRoutines = users.map((user) => ({
+      ...user,
+      workoutCount: countMap.get(user._id.toString()) || 0,
+      savedRoutineCount: savedCountMap.get(user._id.toString()) || 0
+    }));
 
     res.json({
-      total: users.length,
-      users
+      total: usersWithRoutines.length,
+      users: usersWithRoutines
     });
   } catch (error) {
     console.error("Error obteniendo usuarios admin:", error);
@@ -125,6 +147,10 @@ router.delete("/users/:id", protect, requireAdmin, async (req, res) => {
       userId: userId
     });
 
+    await SavedRoutine.deleteMany({
+      userId: userId
+    });
+
     await User.findByIdAndDelete(userId);
 
     res.json({
@@ -137,6 +163,38 @@ router.delete("/users/:id", protect, requireAdmin, async (req, res) => {
     res.status(500).json({
       message: "Error al eliminar usuario"
     });
+  }
+});
+
+router.get("/users/:id/routines", protect, requireAdmin, async (req, res) => {
+  try {
+    const [sessions, savedRoutines] = await Promise.all([
+      WorkoutSession.find({ userId: req.params.id })
+        .sort({ createdAt: -1 })
+        .lean(),
+      SavedRoutine.find({ userId: req.params.id })
+        .sort({ createdAt: -1 })
+        .lean()
+    ]);
+
+    res.json({ sessions, savedRoutines });
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener rutinas del usuario" });
+  }
+});
+
+router.delete("/routines/:type/:id", protect, requireAdmin, async (req, res) => {
+  try {
+    const model = req.params.type === "saved" ? SavedRoutine : WorkoutSession;
+    const routine = await model.findByIdAndDelete(req.params.id);
+
+    if (!routine) {
+      return res.status(404).json({ message: "Rutina no encontrada" });
+    }
+
+    res.json({ message: "Rutina eliminada correctamente" });
+  } catch (error) {
+    res.status(500).json({ message: "Error al eliminar rutina" });
   }
 });
 
@@ -166,6 +224,7 @@ router.post("/exercises", protect, requireAdmin, async (req, res) => {
       description,
       instructions,
       videoUrl,
+      xp,
       isActive
     } = req.body;
 
@@ -182,6 +241,7 @@ router.post("/exercises", protect, requireAdmin, async (req, res) => {
       description: description || name,
       instructions: instructions || description || "Sin instrucciones",
       videoUrl: videoUrl || "",
+      xp: Number.isFinite(Number(xp)) ? Number(xp) : 10,
       isActive: isActive !== false
     });
 
@@ -210,6 +270,7 @@ router.put("/exercises/:id", protect, requireAdmin, async (req, res) => {
       "description",
       "instructions",
       "videoUrl",
+      "xp",
       "isActive"
     ];
 

@@ -30,6 +30,10 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+    lastXpAwardedAt: {
+      type: Date,
+      default: null
+    },
     level: {
       type: Number,
       default: 1

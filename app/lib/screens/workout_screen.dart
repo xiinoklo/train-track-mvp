@@ -12,6 +12,7 @@ class WorkoutScreen extends StatefulWidget {
   final String message;
   final List<Map<String, dynamic>> exercises;
   final bool canCustomizeWorkout;
+  final bool canSaveCustomRoutine;
 
   const WorkoutScreen({
     Key? key,
@@ -21,6 +22,7 @@ class WorkoutScreen extends StatefulWidget {
     required this.message,
     required this.exercises,
     this.canCustomizeWorkout = false,
+    this.canSaveCustomRoutine = false,
   }) : super(key: key);
 
   @override
@@ -64,12 +66,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.08),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOut,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward();
   }
@@ -151,18 +148,17 @@ class _WorkoutScreenState extends State<WorkoutScreen>
       builder: (context, mode, _) {
         final bool isDark = mode == ThemeMode.dark;
 
-        final Color pageBackground =
-            isDark ? darkBackground : lightBackground;
+        final Color pageBackground = isDark ? darkBackground : lightBackground;
 
         final Color cardColor = isDark ? darkCard : Colors.white;
 
         final Color titleColor = isDark ? Colors.white : darkText;
 
-        final Color subtitleColor =
-            isDark ? Colors.white70 : Colors.grey[700]!;
+        final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[700]!;
 
-        final Color borderColor =
-            isDark ? Colors.white.withOpacity(0.08) : Colors.transparent;
+        final Color borderColor = isDark
+            ? Colors.white.withOpacity(0.08)
+            : Colors.transparent;
 
         return Scaffold(
           backgroundColor: pageBackground,
@@ -246,6 +242,12 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                                   ),
                                 ),
                                 const SizedBox(height: 10),
+                                if (widget.canSaveCustomRoutine) ...[
+                                  _buildAddExerciseButton(),
+                                  const SizedBox(height: 12),
+                                  _buildSaveRoutineButton(),
+                                  const SizedBox(height: 12),
+                                ],
                                 if (_hasSession) _buildFinishButton(context),
                               ],
                             ],
@@ -322,11 +324,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
               color: color.withOpacity(isDark ? 0.20 : 0.12),
               borderRadius: BorderRadius.circular(18),
             ),
-            child: Icon(
-              _sessionIcon,
-              color: color,
-              size: 34,
-            ),
+            child: Icon(_sessionIcon, color: color, size: 34),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -503,9 +501,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
               borderRadius: BorderRadius.circular(24),
             ),
             child: Icon(
-              _hasSession
-                  ? Icons.self_improvement_rounded
-                  : Icons.bed_rounded,
+              _hasSession ? Icons.self_improvement_rounded : Icons.bed_rounded,
               size: 58,
               color: dangerColor,
             ),
@@ -546,10 +542,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                 color: isDark ? Colors.white70 : primaryColor,
                 width: 1.4,
               ),
-              padding: const EdgeInsets.symmetric(
-                vertical: 16,
-                horizontal: 18,
-              ),
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
@@ -715,6 +708,15 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                   ),
                 ),
               ),
+              if (widget.canSaveCustomRoutine)
+                IconButton(
+                  onPressed: _exercises.length <= 1
+                      ? null
+                      : () => setState(() => _exercises.removeAt(index)),
+                  icon: const Icon(Icons.close_rounded),
+                  color: dangerColor,
+                  tooltip: 'Quitar de la rutina',
+                ),
             ],
           ),
           const SizedBox(height: 18),
@@ -807,17 +809,17 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
                               Container(
-                            width: double.infinity,
-                            height: 170,
-                            color: isDark
-                                ? const Color(0xFF111827)
-                                : Colors.grey[200],
-                            child: Icon(
-                              Icons.video_library_rounded,
-                              size: 50,
-                              color: isDark ? Colors.white54 : Colors.grey,
-                            ),
-                          ),
+                                width: double.infinity,
+                                height: 170,
+                                color: isDark
+                                    ? const Color(0xFF111827)
+                                    : Colors.grey[200],
+                                child: Icon(
+                                  Icons.video_library_rounded,
+                                  size: 50,
+                                  color: isDark ? Colors.white54 : Colors.grey,
+                                ),
+                              ),
                         ),
                         Container(
                           width: double.infinity,
@@ -884,8 +886,9 @@ class _WorkoutScreenState extends State<WorkoutScreen>
     required Color subtitleColor,
   }) {
     final Color fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
-    final Color borderColor =
-        isDark ? Colors.white.withOpacity(0.12) : const Color(0xFFE2E8F0);
+    final Color borderColor = isDark
+        ? Colors.white.withOpacity(0.12)
+        : const Color(0xFFE2E8F0);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -911,10 +914,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
               IconButton.filledTonal(
                 onPressed: () => _changeSets(index, -1),
                 icon: const Icon(Icons.remove_rounded),
-                constraints: const BoxConstraints(
-                  minWidth: 38,
-                  minHeight: 38,
-                ),
+                constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
               ),
               SizedBox(
                 width: 44,
@@ -931,10 +931,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
               IconButton.filledTonal(
                 onPressed: () => _changeSets(index, 1),
                 icon: const Icon(Icons.add_rounded),
-                constraints: const BoxConstraints(
-                  minWidth: 38,
-                  minHeight: 38,
-                ),
+                constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
               ),
             ],
           ),
@@ -1006,20 +1003,186 @@ class _WorkoutScreenState extends State<WorkoutScreen>
       icon: const Icon(Icons.check_circle_outline_rounded),
       label: const Text(
         'FINALIZAR ENTRENAMIENTO',
-        style: TextStyle(
-          fontWeight: FontWeight.w900,
-        ),
+        style: TextStyle(fontWeight: FontWeight.w900),
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor: secondaryColor,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 19),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         elevation: 0,
       ),
     );
+  }
+
+  Widget _buildSaveRoutineButton() {
+    return OutlinedButton.icon(
+      onPressed: _showSaveRoutineDialog,
+      icon: const Icon(Icons.bookmark_add_rounded),
+      label: const Text(
+        'GUARDAR COMO MI RUTINA',
+        style: TextStyle(fontWeight: FontWeight.w900),
+      ),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: warningColor,
+        side: const BorderSide(color: warningColor, width: 1.5),
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+    );
+  }
+
+  Widget _buildAddExerciseButton() {
+    return ElevatedButton.icon(
+      onPressed: _showAddExerciseSheet,
+      icon: const Icon(Icons.add_rounded),
+      label: const Text(
+        'AGREGAR EJERCICIO',
+        style: TextStyle(fontWeight: FontWeight.w900),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+    );
+  }
+
+  void _showAddExerciseSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => SizedBox(
+        height: MediaQuery.of(sheetContext).size.height * 0.75,
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: ApiService.getExercises(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return const Center(
+                child: Text('No se pudieron cargar los ejercicios'),
+              );
+            }
+
+            final exercises = snapshot.data ?? [];
+            return Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text(
+                    'Agregar ejercicio',
+                    style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: exercises.length,
+                    itemBuilder: (context, index) {
+                      final exercise = exercises[index];
+                      return ListTile(
+                        leading: const Icon(
+                          Icons.fitness_center_rounded,
+                          color: primaryColor,
+                        ),
+                        title: Text(
+                          exercise['name']?.toString() ?? 'Ejercicio',
+                        ),
+                        subtitle: Text(
+                          exercise['muscleGroup']?.toString() ?? 'General',
+                        ),
+                        trailing: const Icon(Icons.add_circle_rounded),
+                        onTap: () {
+                          setState(() {
+                            _exercises.add({
+                              'exerciseId': exercise['_id']?.toString(),
+                              'name': exercise['name'],
+                              'muscleGroup': exercise['muscleGroup'],
+                              'sets': 3,
+                              'reps': '10-12',
+                              'weight': '',
+                              'videoUrl': exercise['videoUrl'] ?? '',
+                              'instructions': exercise['instructions'] ?? '',
+                              'xp': exercise['xp'] ?? 10,
+                            });
+                          });
+                          Navigator.pop(sheetContext);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showSaveRoutineDialog() {
+    final controller = TextEditingController();
+    bool isSaving = false;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Guardar rutina'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            maxLength: 60,
+            decoration: const InputDecoration(
+              labelText: 'Nombre de la rutina',
+              hintText: 'Ej: Piernas intenso',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      final name = controller.text.trim();
+                      if (name.isEmpty) return;
+                      setDialogState(() => isSaving = true);
+                      final success = await ApiService.saveRoutine(
+                        name: name,
+                        exercises: _exercisesForSave,
+                      );
+                      if (!mounted) return;
+                      Navigator.pop(dialogContext);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            success
+                                ? 'Rutina guardada correctamente'
+                                : 'No se pudo guardar la rutina',
+                          ),
+                          backgroundColor: success
+                              ? secondaryColor
+                              : dangerColor,
+                        ),
+                      );
+                    },
+              child: isSaving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Guardar'),
+            ),
+          ],
+        ),
+      ),
+    ).whenComplete(controller.dispose);
   }
 
   void _mostrarDialogoRPE(BuildContext context) {
@@ -1097,17 +1260,15 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                   Text(
                     '1 = muy fácil | 10 = máximo esfuerzo',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: subtitleColor,
-                    ),
+                    style: TextStyle(fontSize: 12, color: subtitleColor),
                   ),
                 ],
               ),
               actions: [
                 TextButton(
-                  onPressed:
-                      isSaving ? null : () => Navigator.pop(dialogContext),
+                  onPressed: isSaving
+                      ? null
+                      : () => Navigator.pop(dialogContext),
                   child: Text(
                     'Cancelar',
                     style: TextStyle(
@@ -1136,10 +1297,8 @@ class _WorkoutScreenState extends State<WorkoutScreen>
 
                             Navigator.pop(dialogContext);
 
-                            final int xpGained =
-                                _asInt(result['xpGained']);
-                            final userProgress =
-                                Map<String, dynamic>.from(
+                            final int xpGained = _asInt(result['xpGained']);
+                            final userProgress = Map<String, dynamic>.from(
                               result['userProgress'] ?? {},
                             );
 
@@ -1202,15 +1361,11 @@ class _WorkoutScreenState extends State<WorkoutScreen>
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.22),
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.22)),
       ),
       child: IconButton(
         onPressed: AppThemeController.toggleTheme,
-        icon: Icon(
-          isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-        ),
+        icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
         color: Colors.white,
         tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
       ),
@@ -1266,16 +1421,15 @@ class _VideoPlayerModalState extends State<_VideoPlayerModal> {
 
         final Color modalColor = isDark ? darkCard : Colors.white;
         final Color titleColor = isDark ? Colors.white : darkText;
-        final Color handleColor =
-            isDark ? Colors.white.withOpacity(0.18) : Colors.grey[300]!;
+        final Color handleColor = isDark
+            ? Colors.white.withOpacity(0.18)
+            : Colors.grey[300]!;
 
         return Container(
           height: MediaQuery.of(context).size.height * 0.7,
           decoration: BoxDecoration(
             color: modalColor,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(28),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           ),
           child: Column(
             children: [

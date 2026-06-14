@@ -56,16 +56,15 @@ class WorkoutSummaryScreen extends StatelessWidget {
       builder: (context, mode, _) {
         final bool isDark = mode == ThemeMode.dark;
         final Color titleColor = isDark ? Colors.white : darkText;
-        final Color subtitleColor =
-            isDark ? Colors.white70 : Colors.grey[700]!;
+        final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[700]!;
         final int level = _asInt(userProgress['level']);
         final int xp = _asInt(userProgress['xp']);
         final int xpInLevel = _asInt(userProgress['xpInLevel']);
         final int xpNeeded = _asInt(userProgress['xpNeeded']);
         final String rank =
             userProgress['rank']?.toString().trim().isNotEmpty == true
-                ? userProgress['rank'].toString()
-                : _rankFromLevel(level == 0 ? 1 : level);
+            ? userProgress['rank'].toString()
+            : _rankFromLevel(level == 0 ? 1 : level);
         final double progressValue = xpNeeded <= 0
             ? 1.0
             : (xpInLevel / xpNeeded).clamp(0.0, 1.0).toDouble();
@@ -98,193 +97,211 @@ class WorkoutSummaryScreen extends StatelessWidget {
                   Expanded(
                     child: _AnimatedPageContent(
                       child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          AppCard(
-                            isDark: isDark,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 62,
-                                      height: 62,
-                                      decoration: BoxDecoration(
-                                        color:
-                                            secondaryColor.withOpacity(0.14),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: const Icon(
-                                        Icons.check_circle_rounded,
-                                        color: secondaryColor,
-                                        size: 34,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Entrenamiento finalizado',
-                                            style: TextStyle(
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.w900,
-                                              color: titleColor,
-                                            ),
+                        padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            AppCard(
+                              isDark: isDark,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 62,
+                                        height: 62,
+                                        decoration: BoxDecoration(
+                                          color: secondaryColor.withOpacity(
+                                            0.14,
                                           ),
-                                          const SizedBox(height: 5),
-                                          Text(
-                                            recommendation,
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w800,
-                                              color: secondaryColor,
-                                            ),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
                                           ),
-                                        ],
+                                        ),
+                                        child: const Icon(
+                                          Icons.check_circle_rounded,
+                                          color: secondaryColor,
+                                          size: 34,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Entrenamiento finalizado',
+                                              style: TextStyle(
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.w900,
+                                                color: titleColor,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            Text(
+                                              recommendation,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w800,
+                                                color: secondaryColor,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 22),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _MetricTile(
+                                          title: 'XP ganada',
+                                          value: xpGained > 0
+                                              ? '+$xpGained'
+                                              : '0 XP',
+                                          isDark: isDark,
+                                          color: secondaryColor,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: _MetricTile(
+                                          title: 'Nivel',
+                                          value: '${level == 0 ? 1 : level}',
+                                          isDark: isDark,
+                                          color: primaryColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (xpGained == 0) ...[
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      'Ya obtuviste la XP disponible de hoy. Puedes seguir entrenando, pero volverás a ganar XP mañana.',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        height: 1.35,
+                                        fontWeight: FontWeight.w700,
+                                        color: subtitleColor,
                                       ),
                                     ),
                                   ],
-                                ),
-                                const SizedBox(height: 22),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _MetricTile(
-                                        title: 'XP ganada',
-                                        value: '+$xpGained',
-                                        isDark: isDark,
-                                        color: secondaryColor,
-                                      ),
+                                  const SizedBox(height: 14),
+                                  Text(
+                                    rank,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w900,
+                                      color: titleColor,
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: _MetricTile(
-                                        title: 'Nivel',
-                                        value: '${level == 0 ? 1 : level}',
-                                        isDark: isDark,
-                                        color: primaryColor,
-                                      ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(999),
+                                    child: LinearProgressIndicator(
+                                      value: progressValue,
+                                      minHeight: 9,
+                                      color: secondaryColor,
+                                      backgroundColor: isDark
+                                          ? Colors.white.withOpacity(0.10)
+                                          : const Color(0xFFE2E8F0),
                                     ),
-                                  ],
-                                ),
-                                const SizedBox(height: 14),
-                                Text(
-                                  rank,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w900,
-                                    color: titleColor,
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(999),
-                                  child: LinearProgressIndicator(
-                                    value: progressValue,
-                                    minHeight: 9,
-                                    color: secondaryColor,
-                                    backgroundColor: isDark
-                                        ? Colors.white.withOpacity(0.10)
-                                        : const Color(0xFFE2E8F0),
+                                  const SizedBox(height: 7),
+                                  Text(
+                                    xpNeeded <= 0
+                                        ? '$xp XP acumulada'
+                                        : '$xpInLevel/$xpNeeded XP hacia el siguiente nivel',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: subtitleColor,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 7),
-                                Text(
-                                  xpNeeded <= 0
-                                      ? '$xp XP acumulada'
-                                      : '$xpInLevel/$xpNeeded XP hacia el siguiente nivel',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: subtitleColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          AppCard(
-                            isDark: isDark,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Resumen de rutina',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w900,
-                                    color: titleColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 14),
-                                _SummaryRow(
-                                  icon: Icons.fitness_center_rounded,
-                                  label: 'Ejercicios',
-                                  value: '${exercises.length}',
-                                  isDark: isDark,
-                                ),
-                                _SummaryRow(
-                                  icon: Icons.speed_rounded,
-                                  label: 'Intensidad',
-                                  value: _loadLabel(),
-                                  isDark: isDark,
-                                ),
-                                _SummaryRow(
-                                  icon: Icons.grid_view_rounded,
-                                  label: 'Grupos',
-                                  value: trainedMuscleGroups.isEmpty
-                                      ? 'Sin datos'
-                                      : trainedMuscleGroups.join(', '),
-                                  isDark: isDark,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 22),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const DashboardScreen(),
-                                ),
-                                (route) => false,
-                              );
-                            },
-                            icon: const Icon(Icons.home_rounded),
-                            label: const Text('Ir al inicio'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryColor,
-                              foregroundColor: Colors.white,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 15),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
+                                ],
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 10),
-                          TextButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const ProfileScreen(),
+                            const SizedBox(height: 16),
+                            AppCard(
+                              isDark: isDark,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Resumen de rutina',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                      color: titleColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  _SummaryRow(
+                                    icon: Icons.fitness_center_rounded,
+                                    label: 'Ejercicios',
+                                    value: '${exercises.length}',
+                                    isDark: isDark,
+                                  ),
+                                  _SummaryRow(
+                                    icon: Icons.speed_rounded,
+                                    label: 'Intensidad',
+                                    value: _loadLabel(),
+                                    isDark: isDark,
+                                  ),
+                                  _SummaryRow(
+                                    icon: Icons.grid_view_rounded,
+                                    label: 'Grupos',
+                                    value: trainedMuscleGroups.isEmpty
+                                        ? 'Sin datos'
+                                        : trainedMuscleGroups.join(', '),
+                                    isDark: isDark,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 22),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const DashboardScreen(),
+                                  ),
+                                  (route) => false,
+                                );
+                              },
+                              icon: const Icon(Icons.home_rounded),
+                              label: const Text('Ir al inicio'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 15,
                                 ),
-                              );
-                            },
-                            icon: const Icon(Icons.person_rounded),
-                            label: const Text('Ver progreso'),
-                          ),
-                        ],
-                      ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            TextButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ProfileScreen(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.person_rounded),
+                              label: const Text('Ver progreso'),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

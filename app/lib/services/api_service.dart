@@ -48,10 +48,7 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/verify'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'code': code,
-        }),
+        body: jsonEncode({'email': email, 'code': code}),
       );
 
       if (response.statusCode == 200) {
@@ -82,10 +79,7 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
+        body: jsonEncode({'email': email, 'password': password}),
       );
 
       if (response.statusCode == 200) {
@@ -163,10 +157,7 @@ class ApiService {
     return null;
   }
 
-  static Future<bool> updateProfile({
-    String? username,
-    String? avatar,
-  }) async {
+  static Future<bool> updateProfile({String? username, String? avatar}) async {
     final token = await getToken();
 
     if (token == null) {
@@ -451,6 +442,7 @@ class ApiService {
     required String description,
     required String instructions,
     required String level,
+    required int xp,
     String videoUrl = '',
     bool isActive = true,
   }) async {
@@ -474,6 +466,7 @@ class ApiService {
           'description': description,
           'instructions': instructions,
           'level': level,
+          'xp': xp,
           'videoUrl': videoUrl,
           'isActive': isActive,
         }),
@@ -545,5 +538,125 @@ class ApiService {
       print('[ADMIN DELETE EXERCISE] Error: $e');
       return false;
     }
+  }
+
+  static Future<List<Map<String, dynamic>>> getExercises() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/exercises'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return List<Map<String, dynamic>>.from(data['exercises'] ?? []);
+    }
+
+    throw Exception('Error al cargar ejercicios');
+  }
+
+  static Future<Map<String, dynamic>> getAdminUserRoutines(
+    String userId,
+  ) async {
+    final token = await getAdminToken();
+    if (token == null) throw Exception('No hay token admin');
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/admin/users/$userId/routines'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+    throw Exception('Error al cargar rutinas');
+  }
+
+  static Future<bool> deleteAdminRoutine({
+    required String routineId,
+    required String type,
+  }) async {
+    final token = await getAdminToken();
+    if (token == null) return false;
+
+    final response = await http.delete(
+      Uri.parse('$baseUrl/admin/routines/$type/$routineId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    return response.statusCode == 200;
+  }
+
+  static Future<List<Map<String, dynamic>>> getSavedRoutines() async {
+    final token = await getToken();
+    if (token == null) throw Exception('No autorizado');
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/routines'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Error al cargar rutinas');
+    }
+    final data = jsonDecode(response.body);
+    return List<Map<String, dynamic>>.from(data['routines'] ?? []);
+  }
+
+  static Future<bool> saveRoutine({
+    required String name,
+    required List<Map<String, dynamic>> exercises,
+  }) async {
+    final token = await getToken();
+    if (token == null) return false;
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/routines'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'name': name, 'exercises': exercises}),
+    );
+    return response.statusCode == 201;
+  }
+
+  static Future<Map<String, dynamic>> startSavedRoutine(
+    String routineId,
+  ) async {
+    final token = await getToken();
+    if (token == null) throw Exception('No autorizado');
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/routines/$routineId/start'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 201) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+    throw Exception('Error al iniciar rutina');
+  }
+
+  static Future<bool> deleteSavedRoutine(String routineId) async {
+    final token = await getToken();
+    if (token == null) return false;
+
+    final response = await http.delete(
+      Uri.parse('$baseUrl/routines/$routineId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    return response.statusCode == 200;
   }
 }

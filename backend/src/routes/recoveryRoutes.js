@@ -1,7 +1,8 @@
 const express = require("express");
 const { protect } = require("../middleware/authMiddleware");
 const {
-  getMuscleRecoveryDetails
+  getMuscleRecoveryDetails,
+  muscleGroupHierarchy
 } = require("../services/muscleRecoveryService");
 
 const router = express.Router();
@@ -12,7 +13,8 @@ router.get("/", protect, async (req, res) => {
 
     res.json({
       total: recovery.length,
-      recovery
+      recovery,
+      groups: muscleGroupHierarchy
     });
   } catch (error) {
     console.error("Error al calcular recuperacion muscular:", error);

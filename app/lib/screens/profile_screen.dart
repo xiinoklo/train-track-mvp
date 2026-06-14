@@ -46,12 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.08),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOut,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward();
   }
@@ -101,9 +96,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (context) => const LoginScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
       (route) => false,
     );
   }
@@ -115,18 +108,17 @@ class _ProfileScreenState extends State<ProfileScreen>
       builder: (context, mode, _) {
         final bool isDark = mode == ThemeMode.dark;
 
-        final Color pageBackground =
-            isDark ? darkBackground : lightBackground;
+        final Color pageBackground = isDark ? darkBackground : lightBackground;
 
         final Color cardColor = isDark ? darkCard : Colors.white;
 
         final Color titleColor = isDark ? Colors.white : darkText;
 
-        final Color subtitleColor =
-            isDark ? Colors.white70 : Colors.grey[600]!;
+        final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[600]!;
 
-        final Color borderColor =
-            isDark ? Colors.white.withOpacity(0.08) : Colors.transparent;
+        final Color borderColor = isDark
+            ? Colors.white.withOpacity(0.08)
+            : Colors.transparent;
 
         return Scaffold(
           backgroundColor: pageBackground,
@@ -185,12 +177,11 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                             final Map<String, dynamic> user =
                                 Map<String, dynamic>.from(
-                              response['user'] ?? {},
-                            );
+                                  response['user'] ?? {},
+                                );
 
                             return ListView(
-                              padding:
-                                  const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                               children: [
                                 _buildProfileCard(
                                   user: user,
@@ -276,10 +267,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     final String email = _displayValue(user['email'], 'correo@email.com');
 
     final int level = _asInt(user['level']) == 0 ? 1 : _asInt(user['level']);
-    final String rank = _displayValue(
-      user['rank'],
-      _getRankFromLevel(level),
-    );
+    final String rank = _displayValue(user['rank'], _getRankFromLevel(level));
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -305,10 +293,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   ? Colors.white.withOpacity(0.08)
                   : primaryColor.withOpacity(0.10),
               shape: BoxShape.circle,
-              border: Border.all(
-                color: primaryColor,
-                width: 3,
-              ),
+              border: Border.all(color: primaryColor, width: 3),
             ),
             child: const Icon(
               Icons.person_rounded,
@@ -338,10 +323,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 17,
-              vertical: 9,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 9),
             decoration: BoxDecoration(
               color: secondaryColor.withOpacity(isDark ? 0.20 : 0.15),
               borderRadius: BorderRadius.circular(999),
@@ -378,17 +360,20 @@ class _ProfileScreenState extends State<ProfileScreen>
   }) {
     final int level = _asInt(user['level']) == 0 ? 1 : _asInt(user['level']);
     final int xp = _asInt(user['xp']);
-    final int xpGoal =
-        _asInt(user['xpGoal']) == 0 ? 100 : _asInt(user['xpGoal']);
+    final int xpGoal = _asInt(user['xpGoal']) == 0
+        ? 100
+        : _asInt(user['xpGoal']);
 
     final int xpInCurrentLevel = user['xpInCurrentLevel'] != null
         ? _asInt(user['xpInCurrentLevel'])
         : xp % xpGoal;
 
-    final double progress =
-        xpGoal == 0 ? 0 : (xpInCurrentLevel / xpGoal).clamp(0.0, 1.0);
+    final double progress = xpGoal == 0
+        ? 0
+        : (xpInCurrentLevel / xpGoal).clamp(0.0, 1.0);
 
     final int remainingXp = (xpGoal - xpInCurrentLevel).clamp(0, xpGoal);
+    final int beginnerDaysRemaining = _asInt(user['beginnerDaysRemaining']);
 
     return Container(
       padding: const EdgeInsets.all(22),
@@ -441,16 +426,17 @@ class _ProfileScreenState extends State<ProfileScreen>
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 14,
-              backgroundColor:
-                  isDark ? Colors.white.withOpacity(0.12) : const Color(0xFFE2E8F0),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                secondaryColor,
-              ),
+              backgroundColor: isDark
+                  ? Colors.white.withOpacity(0.12)
+                  : const Color(0xFFE2E8F0),
+              valueColor: const AlwaysStoppedAnimation<Color>(secondaryColor),
             ),
           ),
           const SizedBox(height: 10),
           Text(
-            remainingXp == 0
+            beginnerDaysRemaining > 0 && remainingXp == 0
+                ? 'XP completada. Te faltan $beginnerDaysRemaining días para avanzar de Principiante.'
+                : remainingXp == 0
                 ? 'Ya puedes subir al siguiente nivel'
                 : 'Te faltan $remainingXp XP para subir al siguiente nivel',
             style: TextStyle(
@@ -477,15 +463,9 @@ class _ProfileScreenState extends State<ProfileScreen>
       'Sin definir',
     );
 
-    final String mainGoal = _displayValue(
-      user['mainGoal'],
-      'Sin definir',
-    );
+    final String mainGoal = _displayValue(user['mainGoal'], 'Sin definir');
 
-    final String gender = _displayValue(
-      user['gender'],
-      'Sin definir',
-    );
+    final String gender = _displayValue(user['gender'], 'Sin definir');
 
     return Container(
       padding: const EdgeInsets.all(22),
@@ -598,9 +578,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         backgroundColor: dangerColor,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 18),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         elevation: 0,
       ),
     );
@@ -649,10 +627,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               Text(
                 'Revisa tu conexion o vuelve a iniciar sesion.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: subtitleColor,
-                ),
+                style: TextStyle(fontSize: 13, color: subtitleColor),
               ),
               const SizedBox(height: 18),
               ElevatedButton.icon(
@@ -682,15 +657,11 @@ class _ProfileScreenState extends State<ProfileScreen>
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.22),
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.22)),
       ),
       child: IconButton(
         onPressed: AppThemeController.toggleTheme,
-        icon: Icon(
-          isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-        ),
+        icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
         color: Colors.white,
         tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
       ),
@@ -719,8 +690,9 @@ class _StatRow extends StatelessWidget {
 
     final Color titleColor = isDark ? Colors.white : darkText;
     final Color valueColor = secondaryColor;
-    final Color iconBackgroundColor =
-        isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFDBEAFE);
+    final Color iconBackgroundColor = isDark
+        ? Colors.white.withOpacity(0.08)
+        : const Color(0xFFDBEAFE);
 
     return Row(
       children: [
@@ -731,10 +703,7 @@ class _StatRow extends StatelessWidget {
             color: iconBackgroundColor,
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(
-            icon,
-            color: primaryColor,
-          ),
+          child: Icon(icon, color: primaryColor),
         ),
         const SizedBox(width: 12),
         Expanded(

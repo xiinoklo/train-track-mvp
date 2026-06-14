@@ -3,8 +3,11 @@ const User = require("../models/User");
 const { protect } = require("../middleware/authMiddleware");
 const {
   XP_PER_LEVEL,
+  BEGINNER_MIN_DAYS,
+  getAccountAgeDays,
+  getExperienceFromLevel,
   getRankFromLevel,
-  getLevelFromXp,
+  getProgressLevel,
   getStartingLevel
 } = require("../services/progressService");
 
@@ -25,9 +28,18 @@ router.get("/me", protect, async (req, res) => {
     const minimumXp =
       (getStartingLevel(user.experienceLevel) - 1) * XP_PER_LEVEL;
     const currentXp = Math.max(user.xp || 0, minimumXp);
-    const level = getLevelFromXp(currentXp);
+    const level = getProgressLevel({
+      xp: currentXp,
+      experienceLevel: user.experienceLevel,
+      createdAt: user.createdAt
+    });
+    const experienceLevel = getExperienceFromLevel(level);
     const xpGoal = XP_PER_LEVEL;
-    const xpInCurrentLevel = currentXp % xpGoal;
+    const xpInCurrentLevel = Math.min(
+      xpGoal,
+      Math.max(0, currentXp - (level - 1) * xpGoal)
+    );
+    const accountAgeDays = getAccountAgeDays(user.createdAt);
 
     res.json({
       user: {
@@ -42,7 +54,10 @@ router.get("/me", protect, async (req, res) => {
         xpInCurrentLevel,
         age: user.age,
         gender: user.gender,
-        experienceLevel: user.experienceLevel,
+        experienceLevel,
+        beginnerMinDays: BEGINNER_MIN_DAYS,
+        accountAgeDays,
+        beginnerDaysRemaining: Math.max(0, BEGINNER_MIN_DAYS - accountAgeDays),
         mainGoal: user.mainGoal
       }
     });

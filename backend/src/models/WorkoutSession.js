@@ -33,7 +33,11 @@ const workoutSessionSchema = new mongoose.Schema(
         reps: String,
         weight: String,
         videoUrl: String,
-        instructions: String
+        instructions: String,
+        xp: {
+          type: Number,
+          default: 10
+        }
       }
     ],
     rpe: {

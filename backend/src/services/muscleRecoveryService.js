@@ -16,6 +16,18 @@ const muscleGroups = [
   "pantorrillas"
 ];
 
+const muscleGroupHierarchy = [
+  { group: "pecho", muscles: ["pecho"] },
+  { group: "espalda", muscles: ["espalda"] },
+  { group: "hombros", muscles: ["hombros"] },
+  { group: "brazos", muscles: ["biceps", "triceps"] },
+  {
+    group: "piernas",
+    muscles: ["gluteos", "cuadriceps", "isquios", "femorales", "pantorrillas"]
+  },
+  { group: "core", muscles: ["core"] }
+];
+
 function normalizeText(value) {
   return String(value || "")
     .toLowerCase()
@@ -56,6 +68,26 @@ function getMuscleGroupsFromSession(session) {
   return [];
 }
 
+function sessionAffectsMuscle(session, muscleGroup) {
+  const target = normalizeText(muscleGroup);
+  const trainedGroups = getMuscleGroupsFromSession(session).map(normalizeText);
+
+  if (trainedGroups.includes(target)) {
+    return true;
+  }
+
+  return muscleGroupHierarchy.some(({ group, muscles }) => {
+    const parent = normalizeText(group);
+    const children = muscles.map(normalizeText);
+
+    if (target === parent) {
+      return trainedGroups.some((trained) => children.includes(trained));
+    }
+
+    return children.includes(target) && trainedGroups.includes(parent);
+  });
+}
+
 function getRecoveryColor(remainingHours, requiredRestHours, hoursSinceTraining) {
   if (remainingHours <= 0) return "green";
   if (hoursSinceTraining / requiredRestHours >= 0.5) return "yellow";
@@ -75,10 +107,9 @@ async function getMuscleRecoveryStatus(userId) {
 
   for (const muscleGroup of muscleGroups) {
     const muscleKey = normalizeText(muscleGroup);
-    const lastSession = completedSessions.find((session) => {
-      const groups = getMuscleGroupsFromSession(session);
-      return groups.map(normalizeText).includes(muscleKey);
-    });
+    const lastSession = completedSessions.find((session) =>
+      sessionAffectsMuscle(session, muscleKey)
+    );
 
     if (!lastSession) {
       statusMap[muscleKey] = "green";
@@ -104,10 +135,9 @@ async function getMuscleRecoveryDetails(userId) {
 
   return muscleGroups.map((muscleGroup) => {
     const muscleKey = normalizeText(muscleGroup);
-    const lastSession = completedSessions.find((session) => {
-      const groups = getMuscleGroupsFromSession(session);
-      return groups.map(normalizeText).includes(muscleKey);
-    });
+    const lastSession = completedSessions.find((session) =>
+      sessionAffectsMuscle(session, muscleKey)
+    );
 
     if (!lastSession) {
       return {
@@ -150,7 +180,9 @@ async function getMuscleRecoveryDetails(userId) {
 
 module.exports = {
   muscleGroups,
+  muscleGroupHierarchy,
   normalizeText,
+  sessionAffectsMuscle,
   getMuscleRecoveryStatus,
   getMuscleRecoveryDetails
 };

@@ -14,6 +14,7 @@ const wellnessRoutes = require("./routes/wellnessRoutes");
 const recoveryRoutes = require("./routes/recoveryRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const routineRoutes = require("./routes/routineRoutes");
 
 connectDB();
 
@@ -41,6 +42,7 @@ app.use("/api/wellness", wellnessRoutes);
 app.use("/api/recovery", recoveryRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/routines", routineRoutes);
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);

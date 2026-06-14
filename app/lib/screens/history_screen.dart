@@ -46,12 +46,7 @@ class _HistoryScreenState extends State<HistoryScreen>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.08),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOut,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward();
   }
@@ -124,18 +119,17 @@ class _HistoryScreenState extends State<HistoryScreen>
       builder: (context, mode, _) {
         final bool isDark = mode == ThemeMode.dark;
 
-        final Color pageBackground =
-            isDark ? darkBackground : lightBackground;
+        final Color pageBackground = isDark ? darkBackground : lightBackground;
 
         final Color cardColor = isDark ? darkCard : Colors.white;
 
         final Color titleColor = isDark ? Colors.white : darkText;
 
-        final Color subtitleColor =
-            isDark ? Colors.white70 : Colors.grey[700]!;
+        final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[700]!;
 
-        final Color borderColor =
-            isDark ? Colors.white.withOpacity(0.08) : Colors.transparent;
+        final Color borderColor = isDark
+            ? Colors.white.withOpacity(0.08)
+            : Colors.transparent;
 
         return Scaffold(
           backgroundColor: pageBackground,
@@ -207,8 +201,12 @@ class _HistoryScreenState extends State<HistoryScreen>
                               onRefresh: _refreshHistory,
                               color: primaryColor,
                               child: ListView(
-                                padding:
-                                    const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  8,
+                                  20,
+                                  24,
+                                ),
                                 children: [
                                   _buildSummaryCard(
                                     entries: entries,
@@ -219,7 +217,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                                     borderColor: borderColor,
                                   ),
                                   const SizedBox(height: 18),
-                                  ...entries.reversed.map(
+                                  ...entries.map(
                                     (entry) => _buildHistoryCard(
                                       entry: entry,
                                       isDark: isDark,
@@ -408,11 +406,7 @@ class _HistoryScreenState extends State<HistoryScreen>
       ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            color: color,
-            size: 26,
-          ),
+          Icon(icon, color: color, size: 26),
           const SizedBox(height: 8),
           Text(
             value.toStringAsFixed(1),
@@ -562,20 +556,13 @@ class _HistoryScreenState extends State<HistoryScreen>
       padding: const EdgeInsets.only(bottom: 13),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: color,
-            size: 22,
-          ),
+          Icon(icon, color: color, size: 22),
           const SizedBox(width: 10),
           SizedBox(
             width: 70,
             child: Text(
               label,
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                color: titleColor,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w800, color: titleColor),
             ),
           ),
           Expanded(
@@ -584,8 +571,9 @@ class _HistoryScreenState extends State<HistoryScreen>
               child: LinearProgressIndicator(
                 value: value / 5,
                 minHeight: 8,
-                backgroundColor:
-                    isDark ? Colors.white.withOpacity(0.12) : const Color(0xFFE2E8F0),
+                backgroundColor: isDark
+                    ? Colors.white.withOpacity(0.12)
+                    : const Color(0xFFE2E8F0),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
               ),
             ),
@@ -601,10 +589,7 @@ class _HistoryScreenState extends State<HistoryScreen>
             ),
             child: Text(
               value.toString(),
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w900,
-              ),
+              style: TextStyle(color: color, fontWeight: FontWeight.w900),
             ),
           ),
         ],
@@ -723,10 +708,7 @@ class _HistoryScreenState extends State<HistoryScreen>
               Text(
                 error,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: subtitleColor,
-                ),
+                style: TextStyle(fontSize: 13, color: subtitleColor),
               ),
               const SizedBox(height: 18),
               ElevatedButton.icon(
@@ -752,15 +734,11 @@ class _HistoryScreenState extends State<HistoryScreen>
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.22),
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.22)),
       ),
       child: IconButton(
         onPressed: AppThemeController.toggleTheme,
-        icon: Icon(
-          isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-        ),
+        icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
         color: Colors.white,
         tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
       ),

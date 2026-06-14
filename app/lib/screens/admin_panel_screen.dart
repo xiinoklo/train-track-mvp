@@ -61,9 +61,15 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         final Color cardColor = isDark ? darkCard : Colors.white;
         final Color titleColor = isDark ? Colors.white : darkText;
         final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[600]!;
-        final Color borderColor = isDark ? Colors.white.withOpacity(0.08) : Colors.transparent;
-        final Color innerCardColor = isDark ? const Color(0xFF111827) : const Color(0xFFF8FAFC);
-        final Color innerBorderColor = isDark ? Colors.white.withOpacity(0.10) : const Color(0xFFE2E8F0);
+        final Color borderColor = isDark
+            ? Colors.white.withOpacity(0.08)
+            : Colors.transparent;
+        final Color innerCardColor = isDark
+            ? const Color(0xFF111827)
+            : const Color(0xFFF8FAFC);
+        final Color innerBorderColor = isDark
+            ? Colors.white.withOpacity(0.10)
+            : const Color(0xFFE2E8F0);
 
         return Scaffold(
           backgroundColor: pageBackground,
@@ -71,8 +77,16 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: isDark
-                    ? const [Color(0xFF020617), Color(0xFF1E3A8A), Color(0xFF020617)]
-                    : const [Color(0xFF1E3A8A), Color(0xFF2563EB), Color(0xFFF8FAFC)],
+                    ? const [
+                        Color(0xFF020617),
+                        Color(0xFF1E3A8A),
+                        Color(0xFF020617),
+                      ]
+                    : const [
+                        Color(0xFF1E3A8A),
+                        Color(0xFF2563EB),
+                        Color(0xFFF8FAFC),
+                      ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 stops: const [0.0, 0.30, 0.30],
@@ -297,14 +311,18 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             children: [
               Icon(
                 icon,
-                color: active ? Colors.white : (isDark ? Colors.white : primaryColor),
+                color: active
+                    ? Colors.white
+                    : (isDark ? Colors.white : primaryColor),
                 size: 20,
               ),
               const SizedBox(width: 8),
               Text(
                 label,
                 style: TextStyle(
-                  color: active ? Colors.white : (isDark ? Colors.white : primaryColor),
+                  color: active
+                      ? Colors.white
+                      : (isDark ? Colors.white : primaryColor),
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -338,7 +356,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         children: [
           TextField(
             style: TextStyle(color: titleColor),
-            onChanged: (value) => setState(() => _userSearch = value.trim().toLowerCase()),
+            onChanged: (value) =>
+                setState(() => _userSearch = value.trim().toLowerCase()),
             decoration: InputDecoration(
               hintText: 'Buscar usuario...',
               hintStyle: TextStyle(color: subtitleColor),
@@ -353,7 +372,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 borderRadius: BorderRadius.circular(18),
                 borderSide: const BorderSide(color: primaryColor, width: 1.6),
               ),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(18)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
             ),
           ),
           const SizedBox(height: 18),
@@ -363,7 +384,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Padding(
                   padding: EdgeInsets.all(24),
-                  child: Center(child: CircularProgressIndicator(color: primaryColor)),
+                  child: Center(
+                    child: CircularProgressIndicator(color: primaryColor),
+                  ),
                 );
               }
               if (snapshot.hasError) {
@@ -381,11 +404,17 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 if (_userSearch.isEmpty) return true;
                 final email = (u['email'] ?? '').toString().toLowerCase();
                 final username = (u['username'] ?? '').toString().toLowerCase();
-                return email.contains(_userSearch) || username.contains(_userSearch);
+                return email.contains(_userSearch) ||
+                    username.contains(_userSearch);
               }).toList();
 
               if (filtered.isEmpty) {
-                return _buildEmptyBox(innerCardColor, innerBorderColor, subtitleColor, 'No hay usuarios para mostrar.');
+                return _buildEmptyBox(
+                  innerCardColor,
+                  innerBorderColor,
+                  subtitleColor,
+                  'No hay usuarios para mostrar.',
+                );
               }
               return Column(
                 children: filtered.map((user) {
@@ -393,12 +422,17 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   final email = (user['email'] ?? 'Sin correo').toString();
                   final username = (user['username'] ?? '').toString();
                   final role = (user['role'] ?? 'user').toString();
+                  final workoutCount =
+                      (user['workoutCount'] as num?)?.toInt() ?? 0;
+                  final savedRoutineCount =
+                      (user['savedRoutineCount'] as num?)?.toInt() ?? 0;
                   final name = username.isNotEmpty ? username : email;
                   return _buildUserItem(
                     userId: id,
                     name: name,
                     email: email,
                     role: role,
+                    routineCount: workoutCount + savedRoutineCount,
                     isDark: isDark,
                     titleColor: titleColor,
                     subtitleColor: subtitleColor,
@@ -419,6 +453,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     required String name,
     required String email,
     required String role,
+    required int routineCount,
     required bool isDark,
     required Color titleColor,
     required Color subtitleColor,
@@ -441,7 +476,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 ? warningColor.withOpacity(isDark ? 0.22 : 0.15)
                 : primaryColor.withOpacity(isDark ? 0.22 : 0.12),
             child: Icon(
-              isAdmin ? Icons.admin_panel_settings_rounded : Icons.person_rounded,
+              isAdmin
+                  ? Icons.admin_panel_settings_rounded
+                  : Icons.person_rounded,
               color: isAdmin ? warningColor : primaryColor,
             ),
           ),
@@ -457,20 +494,30 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: titleColor, fontWeight: FontWeight.w900),
+                        style: TextStyle(
+                          color: titleColor,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ),
                     if (isAdmin) ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: warningColor.withOpacity(isDark ? 0.22 : 0.12),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: const Text(
                           'ADMIN',
-                          style: TextStyle(color: warningColor, fontSize: 10, fontWeight: FontWeight.w900),
+                          style: TextStyle(
+                            color: warningColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
                     ],
@@ -481,18 +528,42 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   email,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: subtitleColor, fontSize: 12, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    color: subtitleColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '$routineCount rutinas',
+                  style: const TextStyle(
+                    color: warningColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ],
             ),
           ),
+          if (!isAdmin)
+            IconButton(
+              onPressed: userId.isEmpty
+                  ? null
+                  : () => _showUserRoutines(userId: userId, name: name),
+              icon: const Icon(Icons.list_alt_rounded),
+              color: primaryColor,
+              tooltip: 'Ver rutinas',
+            ),
           IconButton(
             onPressed: isAdmin || userId.isEmpty
                 ? null
                 : () => _confirmDeleteUser(userId: userId, name: name),
             icon: const Icon(Icons.delete_outline_rounded),
             color: isAdmin ? Colors.grey : dangerColor,
-            tooltip: isAdmin ? 'No puedes eliminar un admin' : 'Eliminar usuario',
+            tooltip: isAdmin
+                ? 'No puedes eliminar un admin'
+                : 'Eliminar usuario',
           ),
         ],
       ),
@@ -528,12 +599,17 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               subtitleColor: subtitleColor,
             ),
             icon: const Icon(Icons.add_rounded),
-            label: const Text('AGREGAR EJERCICIO', style: TextStyle(fontWeight: FontWeight.w900)),
+            label: const Text(
+              'AGREGAR EJERCICIO',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: secondaryColor,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
               elevation: 0,
             ),
           ),
@@ -544,7 +620,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Padding(
                   padding: EdgeInsets.all(24),
-                  child: Center(child: CircularProgressIndicator(color: primaryColor)),
+                  child: Center(
+                    child: CircularProgressIndicator(color: primaryColor),
+                  ),
                 );
               }
               if (snapshot.hasError) {
@@ -559,7 +637,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               }
               final exercises = snapshot.data ?? [];
               if (exercises.isEmpty) {
-                return _buildEmptyBox(innerCardColor, innerBorderColor, subtitleColor, 'No hay ejercicios. ¡Agrega el primero!');
+                return _buildEmptyBox(
+                  innerCardColor,
+                  innerBorderColor,
+                  subtitleColor,
+                  'No hay ejercicios. ¡Agrega el primero!',
+                );
               }
               return Column(
                 children: exercises.map((exercise) {
@@ -568,11 +651,13 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   final muscle = (exercise['muscleGroup'] ?? '').toString();
                   final videoUrl = (exercise['videoUrl'] ?? '').toString();
                   final hasVideo = videoUrl.isNotEmpty;
+                  final xp = (exercise['xp'] as num?)?.toInt() ?? 10;
                   return _buildExerciseItem(
                     exerciseId: id,
                     name: name,
                     muscle: muscle,
                     hasVideo: hasVideo,
+                    xp: xp,
                     exerciseData: exercise,
                     isDark: isDark,
                     titleColor: titleColor,
@@ -594,6 +679,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     required String name,
     required String muscle,
     required bool hasVideo,
+    required int xp,
     required Map<String, dynamic> exerciseData,
     required bool isDark,
     required Color titleColor,
@@ -618,17 +704,26 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               color: warningColor.withOpacity(isDark ? 0.22 : 0.12),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.fitness_center_rounded, color: warningColor),
+            child: const Icon(
+              Icons.fitness_center_rounded,
+              color: warningColor,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: TextStyle(color: titleColor, fontWeight: FontWeight.w900)),
+                Text(
+                  name,
+                  style: TextStyle(
+                    color: titleColor,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
                 const SizedBox(height: 3),
                 Text(
-                  '$muscle · ${hasVideo ? 'Con video' : 'Sin video'}',
+                  '$muscle · $xp XP · ${hasVideo ? 'Con video' : 'Sin video'}',
                   style: TextStyle(
                     color: hasVideo ? secondaryColor : dangerColor,
                     fontSize: 12,
@@ -650,7 +745,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             tooltip: 'Editar ejercicio',
           ),
           IconButton(
-            onPressed: () => _confirmDeleteExercise(exerciseId: exerciseId, name: name),
+            onPressed: () =>
+                _confirmDeleteExercise(exerciseId: exerciseId, name: name),
             icon: const Icon(Icons.delete_outline_rounded),
             color: dangerColor,
             tooltip: 'Eliminar ejercicio',
@@ -677,39 +773,72 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           builder: (dialogContext, setDialogState) {
             return AlertDialog(
               backgroundColor: dialogColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: Text('Eliminar usuario', style: TextStyle(color: titleColor, fontWeight: FontWeight.w900)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              title: Text(
+                'Eliminar usuario',
+                style: TextStyle(
+                  color: titleColor,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
               content: Text(
                 '¿Seguro que quieres eliminar a $name?\n\nTambién se eliminará su historial y datos asociados.',
                 style: TextStyle(color: subtitleColor),
               ),
               actions: [
                 TextButton(
-                  onPressed: isDeleting ? null : () => Navigator.of(dialogContext).pop(),
-                  child: Text('Cancelar', style: TextStyle(color: isDark ? Colors.white : primaryColor)),
+                  onPressed: isDeleting
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
+                  child: Text(
+                    'Cancelar',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : primaryColor,
+                    ),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: isDeleting
                       ? null
                       : () async {
                           setDialogState(() => isDeleting = true);
-                          final success = await ApiService.deleteAdminUser(userId);
+                          final success = await ApiService.deleteAdminUser(
+                            userId,
+                          );
                           if (!mounted) return;
                           Navigator.of(dialogContext).pop();
                           if (success) {
                             _refreshUsers();
                             ScaffoldMessenger.of(parentContext).showSnackBar(
-                              SnackBar(content: Text('$name eliminado correctamente'), backgroundColor: secondaryColor),
+                              SnackBar(
+                                content: Text('$name eliminado correctamente'),
+                                backgroundColor: secondaryColor,
+                              ),
                             );
                           } else {
                             ScaffoldMessenger.of(parentContext).showSnackBar(
-                              const SnackBar(content: Text('No se pudo eliminar el usuario'), backgroundColor: dangerColor),
+                              const SnackBar(
+                                content: Text('No se pudo eliminar el usuario'),
+                                backgroundColor: dangerColor,
+                              ),
                             );
                           }
                         },
-                  style: ElevatedButton.styleFrom(backgroundColor: dangerColor, foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: dangerColor,
+                    foregroundColor: Colors.white,
+                  ),
                   child: isDeleting
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white))
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Text('Eliminar'),
                 ),
               ],
@@ -720,7 +849,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     );
   }
 
-  void _confirmDeleteExercise({required String exerciseId, required String name}) {
+  void _confirmDeleteExercise({
+    required String exerciseId,
+    required String name,
+  }) {
     final parentContext = context;
     final bool isDark = AppThemeController.themeMode.value == ThemeMode.dark;
     final Color dialogColor = isDark ? darkCard : Colors.white;
@@ -735,41 +867,206 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           builder: (dialogContext, setDialogState) {
             return AlertDialog(
               backgroundColor: dialogColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: Text('Eliminar ejercicio', style: TextStyle(color: titleColor, fontWeight: FontWeight.w900)),
-              content: Text('¿Seguro que quieres eliminar "$name"?', style: TextStyle(color: subtitleColor)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              title: Text(
+                'Eliminar ejercicio',
+                style: TextStyle(
+                  color: titleColor,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              content: Text(
+                '¿Seguro que quieres eliminar "$name"?',
+                style: TextStyle(color: subtitleColor),
+              ),
               actions: [
                 TextButton(
-                  onPressed: isDeleting ? null : () => Navigator.of(dialogContext).pop(),
-                  child: Text('Cancelar', style: TextStyle(color: isDark ? Colors.white : primaryColor)),
+                  onPressed: isDeleting
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
+                  child: Text(
+                    'Cancelar',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : primaryColor,
+                    ),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: isDeleting
                       ? null
                       : () async {
                           setDialogState(() => isDeleting = true);
-                          final success = await ApiService.deleteAdminExercise(exerciseId);
+                          final success = await ApiService.deleteAdminExercise(
+                            exerciseId,
+                          );
                           if (!mounted) return;
                           Navigator.of(dialogContext).pop();
                           if (success) {
                             _refreshExercises();
                             ScaffoldMessenger.of(parentContext).showSnackBar(
-                              SnackBar(content: Text('"$name" eliminado correctamente'), backgroundColor: secondaryColor),
+                              SnackBar(
+                                content: Text(
+                                  '"$name" eliminado correctamente',
+                                ),
+                                backgroundColor: secondaryColor,
+                              ),
                             );
                           } else {
                             ScaffoldMessenger.of(parentContext).showSnackBar(
-                              const SnackBar(content: Text('No se pudo eliminar el ejercicio'), backgroundColor: dangerColor),
+                              const SnackBar(
+                                content: Text(
+                                  'No se pudo eliminar el ejercicio',
+                                ),
+                                backgroundColor: dangerColor,
+                              ),
                             );
                           }
                         },
-                  style: ElevatedButton.styleFrom(backgroundColor: dangerColor, foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: dangerColor,
+                    foregroundColor: Colors.white,
+                  ),
                   child: isDeleting
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white))
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Text('Eliminar'),
                 ),
               ],
             );
           },
+        );
+      },
+    );
+  }
+
+  void _showUserRoutines({required String userId, required String name}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        final isDark = AppThemeController.themeMode.value == ThemeMode.dark;
+        final titleColor = isDark ? Colors.white : darkText;
+        final subtitleColor = isDark ? Colors.white70 : Colors.grey[700]!;
+
+        return Container(
+          height: MediaQuery.of(sheetContext).size.height * 0.78,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDark ? darkCard : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Rutinas de $name',
+                style: TextStyle(
+                  color: titleColor,
+                  fontSize: 21,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Expanded(
+                child: FutureBuilder<Map<String, dynamic>>(
+                  future: ApiService.getAdminUserRoutines(userId),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'No se pudieron cargar las rutinas',
+                          style: TextStyle(color: subtitleColor),
+                        ),
+                      );
+                    }
+
+                    final sessions = List<Map<String, dynamic>>.from(
+                      snapshot.data?['sessions'] ?? [],
+                    );
+                    final saved = List<Map<String, dynamic>>.from(
+                      snapshot.data?['savedRoutines'] ?? [],
+                    );
+                    final items = [
+                      ...saved.map((item) => {...item, '_type': 'saved'}),
+                      ...sessions.map((item) => {...item, '_type': 'session'}),
+                    ];
+
+                    if (items.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'Este usuario no tiene rutinas.',
+                          style: TextStyle(color: subtitleColor),
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        final type = item['_type'].toString();
+                        final exercises = List.from(item['exercises'] ?? []);
+                        final label = type == 'saved'
+                            ? (item['name'] ?? 'Rutina guardada').toString()
+                            : (item['recommendationLabel'] ?? 'Sesión')
+                                  .toString();
+
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(
+                            type == 'saved'
+                                ? Icons.bookmark_rounded
+                                : Icons.fitness_center_rounded,
+                            color: warningColor,
+                          ),
+                          title: Text(
+                            label,
+                            style: TextStyle(
+                              color: titleColor,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '${exercises.length} ejercicios',
+                            style: TextStyle(color: subtitleColor),
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete_outline_rounded),
+                            color: dangerColor,
+                            onPressed: () async {
+                              final success =
+                                  await ApiService.deleteAdminRoutine(
+                                    routineId: item['_id'].toString(),
+                                    type: type,
+                                  );
+                              if (!mounted) return;
+                              Navigator.pop(sheetContext);
+                              if (success) {
+                                _refreshUsers();
+                                _showUserRoutines(userId: userId, name: name);
+                              }
+                            },
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -796,7 +1093,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       _refreshExercises();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(exerciseData == null ? 'Ejercicio agregado correctamente' : 'Ejercicio actualizado correctamente'),
+          content: Text(
+            exerciseData == null
+                ? 'Ejercicio agregado correctamente'
+                : 'Ejercicio actualizado correctamente',
+          ),
           backgroundColor: secondaryColor,
         ),
       );
@@ -824,22 +1125,38 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         children: [
           const Icon(Icons.error_outline_rounded, color: dangerColor, size: 40),
           const SizedBox(height: 10),
-          Text(message, textAlign: TextAlign.center, style: TextStyle(color: titleColor, fontWeight: FontWeight.w900)),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: titleColor, fontWeight: FontWeight.w900),
+          ),
           const SizedBox(height: 8),
-          Text(detail, textAlign: TextAlign.center, style: TextStyle(color: subtitleColor, fontSize: 12)),
+          Text(
+            detail,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: subtitleColor, fontSize: 12),
+          ),
           const SizedBox(height: 12),
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded),
             label: const Text('Reintentar'),
-            style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              foregroundColor: Colors.white,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyBox(Color bg, Color border, Color textColor, String message) {
+  Widget _buildEmptyBox(
+    Color bg,
+    Color border,
+    Color textColor,
+    String message,
+  ) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -847,7 +1164,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: border),
       ),
-      child: Text(message, textAlign: TextAlign.center, style: TextStyle(color: textColor, fontWeight: FontWeight.w700)),
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
+      ),
     );
   }
 
@@ -886,12 +1207,12 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
   late final TextEditingController descriptionController;
   late final TextEditingController instructionsController;
   late final TextEditingController videoController;
+  late final TextEditingController xpController;
   late String selectedMuscle;
   late String selectedLevel;
   bool _isSaving = false;
 
   static const Color primaryColor = Color(0xFF1E3A8A);
-  static const Color secondaryColor = Color(0xFF22C55E);
   static const Color darkCard = Color(0xFF0F172A);
   static const Color darkText = Color(0xFF0F172A);
 
@@ -903,9 +1224,14 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
     super.initState();
     final d = widget.exerciseData;
     nameController = TextEditingController(text: d?['name'] ?? '');
-    descriptionController = TextEditingController(text: d?['description'] ?? '');
-    instructionsController = TextEditingController(text: d?['instructions'] ?? '');
+    descriptionController = TextEditingController(
+      text: d?['description'] ?? '',
+    );
+    instructionsController = TextEditingController(
+      text: d?['instructions'] ?? '',
+    );
     videoController = TextEditingController(text: d?['videoUrl'] ?? '');
+    xpController = TextEditingController(text: '${d?['xp'] ?? 10}');
     selectedMuscle = _normalizeMuscle(d?['muscleGroup']);
     selectedLevel = _normalizeLevel(d?['level']);
   }
@@ -916,12 +1242,27 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
     descriptionController.dispose();
     instructionsController.dispose();
     videoController.dispose();
+    xpController.dispose();
     super.dispose();
   }
 
   String _normalizeMuscle(String? value) {
     final v = (value ?? '').toLowerCase().trim();
-    const valid = ['pecho', 'espalda', 'piernas', 'hombros', 'brazos', 'core'];
+    const valid = [
+      'pecho',
+      'espalda',
+      'piernas',
+      'hombros',
+      'brazos',
+      'core',
+      'biceps',
+      'triceps',
+      'gluteos',
+      'cuadriceps',
+      'isquios',
+      'femorales',
+      'pantorrillas',
+    ];
     return valid.contains(v) ? v : 'piernas';
   }
 
@@ -935,10 +1276,14 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
     final name = nameController.text.trim();
     final description = descriptionController.text.trim();
     final instructions = instructionsController.text.trim();
+    final xp = (int.tryParse(xpController.text.trim()) ?? 10).clamp(0, 100);
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingresa el nombre del ejercicio'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Ingresa el nombre del ejercicio'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -955,8 +1300,13 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
           'muscleGroup': selectedMuscle,
           'level': selectedLevel,
           'description': description.isNotEmpty ? description : name,
-          'instructions': instructions.isNotEmpty ? instructions : description.isNotEmpty ? description : 'Sin instrucciones',
+          'instructions': instructions.isNotEmpty
+              ? instructions
+              : description.isNotEmpty
+              ? description
+              : 'Sin instrucciones',
           'videoUrl': videoController.text.trim(),
+          'xp': xp,
         },
       );
     } else {
@@ -965,8 +1315,13 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
         muscleGroup: selectedMuscle,
         level: selectedLevel,
         description: description.isNotEmpty ? description : name,
-        instructions: instructions.isNotEmpty ? instructions : description.isNotEmpty ? description : 'Sin instrucciones',
+        instructions: instructions.isNotEmpty
+            ? instructions
+            : description.isNotEmpty
+            ? description
+            : 'Sin instrucciones',
         videoUrl: videoController.text.trim(),
+        xp: xp,
       );
     }
 
@@ -978,7 +1333,11 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isEditing ? 'Error al actualizar el ejercicio' : 'Error al crear el ejercicio'),
+          content: Text(
+            isEditing
+                ? 'Error al actualizar el ejercicio'
+                : 'Error al crear el ejercicio',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -994,12 +1353,23 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
         final Color sheetColor = isDark ? darkCard : Colors.white;
         final Color titleColor = isDark ? Colors.white : darkText;
         final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[600]!;
-        final Color inputFillColor = isDark ? const Color(0xFF111827) : Colors.white;
-        final Color inputBorderColor = isDark ? Colors.white.withOpacity(0.14) : const Color(0xFFCBD5E1);
-        final Color handleColor = isDark ? Colors.white.withOpacity(0.18) : Colors.grey[300]!;
+        final Color inputFillColor = isDark
+            ? const Color(0xFF111827)
+            : Colors.white;
+        final Color inputBorderColor = isDark
+            ? Colors.white.withOpacity(0.14)
+            : const Color(0xFFCBD5E1);
+        final Color handleColor = isDark
+            ? Colors.white.withOpacity(0.18)
+            : Colors.grey[300]!;
 
         return Container(
-          padding: EdgeInsets.fromLTRB(20, 18, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            18,
+            20,
+            MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
           decoration: BoxDecoration(
             color: sheetColor,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -1013,19 +1383,59 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
                   child: Container(
                     width: 48,
                     height: 5,
-                    decoration: BoxDecoration(color: handleColor, borderRadius: BorderRadius.circular(999)),
+                    decoration: BoxDecoration(
+                      color: handleColor,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 18),
                 Text(
                   isEditing ? 'Editar ejercicio' : 'Agregar ejercicio',
-                  style: TextStyle(color: titleColor, fontSize: 22, fontWeight: FontWeight.w900),
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 TextField(
                   controller: nameController,
                   style: TextStyle(color: titleColor),
-                  decoration: _inputDeco('Nombre', isDark, subtitleColor, inputFillColor, inputBorderColor),
+                  decoration: _inputDeco(
+                    'Nombre',
+                    isDark,
+                    subtitleColor,
+                    inputFillColor,
+                    inputBorderColor,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: xpController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(
+                    color: titleColor,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  decoration:
+                      _inputDeco(
+                        'XP del ejercicio',
+                        isDark,
+                        subtitleColor,
+                        inputFillColor,
+                        inputBorderColor,
+                        hint: 'Ej: 10',
+                      ).copyWith(
+                        prefixIcon: const Icon(
+                          Icons.stars_rounded,
+                          color: Color(0xFFF59E0B),
+                        ),
+                        suffixText: 'XP',
+                        helperText:
+                            'Puntos otorgados al completar este ejercicio (0 a 100).',
+                        helperMaxLines: 2,
+                      ),
                 ),
                 const SizedBox(height: 14),
                 TextField(
@@ -1033,7 +1443,13 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
                   minLines: 2,
                   maxLines: 3,
                   style: TextStyle(color: titleColor),
-                  decoration: _inputDeco('Descripción', isDark, subtitleColor, inputFillColor, inputBorderColor),
+                  decoration: _inputDeco(
+                    'Descripción',
+                    isDark,
+                    subtitleColor,
+                    inputFillColor,
+                    inputBorderColor,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 TextField(
@@ -1041,14 +1457,26 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
                   minLines: 2,
                   maxLines: 3,
                   style: TextStyle(color: titleColor),
-                  decoration: _inputDeco('Instrucciones', isDark, subtitleColor, inputFillColor, inputBorderColor),
+                  decoration: _inputDeco(
+                    'Instrucciones',
+                    isDark,
+                    subtitleColor,
+                    inputFillColor,
+                    inputBorderColor,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
                   value: selectedMuscle,
                   dropdownColor: sheetColor,
                   style: TextStyle(color: titleColor),
-                  decoration: _inputDeco('Grupo muscular', isDark, subtitleColor, inputFillColor, inputBorderColor),
+                  decoration: _inputDeco(
+                    'Grupo muscular',
+                    isDark,
+                    subtitleColor,
+                    inputFillColor,
+                    inputBorderColor,
+                  ),
                   items: const [
                     DropdownMenuItem(value: 'pecho', child: Text('Pecho')),
                     DropdownMenuItem(value: 'espalda', child: Text('Espalda')),
@@ -1056,33 +1484,81 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
                     DropdownMenuItem(value: 'hombros', child: Text('Hombros')),
                     DropdownMenuItem(value: 'brazos', child: Text('Brazos')),
                     DropdownMenuItem(value: 'core', child: Text('Core')),
+                    DropdownMenuItem(value: 'biceps', child: Text('Biceps')),
+                    DropdownMenuItem(value: 'triceps', child: Text('Triceps')),
+                    DropdownMenuItem(value: 'gluteos', child: Text('Gluteos')),
+                    DropdownMenuItem(
+                      value: 'cuadriceps',
+                      child: Text('Cuadriceps'),
+                    ),
+                    DropdownMenuItem(value: 'isquios', child: Text('Isquios')),
+                    DropdownMenuItem(
+                      value: 'femorales',
+                      child: Text('Femorales'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'pantorrillas',
+                      child: Text('Pantorrillas'),
+                    ),
                   ],
-                  onChanged: (v) { if (v != null) setState(() => selectedMuscle = v); },
+                  onChanged: (v) {
+                    if (v != null) setState(() => selectedMuscle = v);
+                  },
                 ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
                   value: selectedLevel,
                   dropdownColor: sheetColor,
                   style: TextStyle(color: titleColor),
-                  decoration: _inputDeco('Nivel', isDark, subtitleColor, inputFillColor, inputBorderColor),
+                  decoration: _inputDeco(
+                    'Nivel',
+                    isDark,
+                    subtitleColor,
+                    inputFillColor,
+                    inputBorderColor,
+                  ),
                   items: const [
-                    DropdownMenuItem(value: 'principiante', child: Text('Principiante')),
-                    DropdownMenuItem(value: 'intermedio', child: Text('Intermedio')),
-                    DropdownMenuItem(value: 'avanzado', child: Text('Avanzado')),
+                    DropdownMenuItem(
+                      value: 'principiante',
+                      child: Text('Principiante'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'intermedio',
+                      child: Text('Intermedio'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'avanzado',
+                      child: Text('Avanzado'),
+                    ),
                   ],
-                  onChanged: (v) { if (v != null) setState(() => selectedLevel = v); },
+                  onChanged: (v) {
+                    if (v != null) setState(() => selectedLevel = v);
+                  },
                 ),
                 const SizedBox(height: 14),
                 TextField(
                   controller: videoController,
                   style: TextStyle(color: titleColor),
-                  decoration: _inputDeco('URL video YouTube (opcional)', isDark, subtitleColor, inputFillColor, inputBorderColor),
+                  decoration: _inputDeco(
+                    'URL video YouTube (opcional)',
+                    isDark,
+                    subtitleColor,
+                    inputFillColor,
+                    inputBorderColor,
+                  ),
                 ),
                 const SizedBox(height: 22),
                 ElevatedButton.icon(
                   onPressed: _isSaving ? null : _save,
                   icon: _isSaving
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white))
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Icon(Icons.save_rounded),
                   label: Text(
                     _isSaving ? 'GUARDANDO...' : 'GUARDAR',
@@ -1092,7 +1568,9 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 17),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
                   ),
                 ),
               ],
@@ -1103,7 +1581,14 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
     );
   }
 
-  InputDecoration _inputDeco(String label, bool isDark, Color subtitleColor, Color fillColor, Color borderColor, {String? hint}) {
+  InputDecoration _inputDeco(
+    String label,
+    bool isDark,
+    Color subtitleColor,
+    Color fillColor,
+    Color borderColor, {
+    String? hint,
+  }) {
     return InputDecoration(
       labelText: label,
       hintText: hint,
@@ -1166,9 +1651,19 @@ class _AdminSectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: TextStyle(color: titleColor, fontSize: 21, fontWeight: FontWeight.w900)),
+          Text(
+            title,
+            style: TextStyle(
+              color: titleColor,
+              fontSize: 21,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
           const SizedBox(height: 6),
-          Text(subtitle, style: TextStyle(color: subtitleColor, fontWeight: FontWeight.w600)),
+          Text(
+            subtitle,
+            style: TextStyle(color: subtitleColor, fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 18),
           child,
         ],

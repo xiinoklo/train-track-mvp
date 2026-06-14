@@ -91,12 +91,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.08),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOut,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward();
   }
@@ -238,7 +233,8 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
               builder: (context) => WorkoutBlockedScreen(
                 targetMuscleGroup: targetMuscleGroup,
                 blockedMuscles: blockedFromBackend,
-                message: data['message'] ??
+                message:
+                    data['message'] ??
                     'Tu recuperacion muscular todavia no esta lista para este objetivo.',
               ),
             ),
@@ -247,8 +243,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
           return;
         }
 
-        final double factorCalculado =
-            (data['loadFactor'] as num).toDouble();
+        final double factorCalculado = (data['loadFactor'] as num).toDouble();
 
         final List<Map<String, dynamic>> exercises =
             List<Map<String, dynamic>>.from(data['exercises'] ?? []);
@@ -259,10 +254,12 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
             builder: (context) => WorkoutScreen(
               sessionId: data['sessionId'] ?? '',
               loadFactor: factorCalculado,
-              recommendation: data['recommendation'] ?? 'Descanso muscular activo',
+              recommendation:
+                  data['recommendation'] ?? 'Descanso muscular activo',
               message: data['message'] ?? '',
               exercises: exercises,
               canCustomizeWorkout: data['canCustomizeWorkout'] == true,
+              canSaveCustomRoutine: data['canSaveCustomRoutine'] == true,
             ),
           ),
         );
@@ -303,18 +300,17 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
       builder: (context, mode, _) {
         final bool isDark = mode == ThemeMode.dark;
 
-        final Color pageBackground =
-            isDark ? darkBackground : lightBackground;
+        final Color pageBackground = isDark ? darkBackground : lightBackground;
 
         final Color cardColor = isDark ? darkCard : Colors.white;
 
         final Color titleColor = isDark ? Colors.white : darkText;
 
-        final Color subtitleColor =
-            isDark ? Colors.white70 : Colors.grey[600]!;
+        final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[600]!;
 
-        final Color borderColor =
-            isDark ? Colors.white.withOpacity(0.08) : Colors.transparent;
+        final Color borderColor = isDark
+            ? Colors.white.withOpacity(0.08)
+            : Colors.transparent;
 
         return Scaffold(
           backgroundColor: pageBackground,
@@ -603,10 +599,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                     const SizedBox(height: 3),
                     Text(
                       'Elige que grupo quieres entrenar.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: subtitleColor,
-                      ),
+                      style: TextStyle(fontSize: 12, color: subtitleColor),
                     ),
                   ],
                 ),
@@ -635,8 +628,9 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                   ),
                   selected: isSelected,
                   selectedColor: primaryColor,
-                  backgroundColor:
-                      isDark ? const Color(0xFF111827) : const Color(0xFFF1F5F9),
+                  backgroundColor: isDark
+                      ? const Color(0xFF111827)
+                      : const Color(0xFFF1F5F9),
                   labelStyle: TextStyle(
                     color: isSelected ? Colors.white : titleColor,
                     fontWeight: FontWeight.w800,
@@ -652,8 +646,8 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                       color: isSelected
                           ? primaryColor
                           : isDark
-                              ? Colors.white.withOpacity(0.14)
-                              : const Color(0xFFE2E8F0),
+                          ? Colors.white.withOpacity(0.14)
+                          : const Color(0xFFE2E8F0),
                     ),
                   ),
                   onSelected: isLoading
@@ -714,11 +708,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                   color: metricColor.withOpacity(isDark ? 0.18 : 0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(
-                  icon,
-                  color: metricColor,
-                  size: 26,
-                ),
+                child: Icon(icon, color: metricColor, size: 26),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -736,10 +726,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: subtitleColor,
-                      ),
+                      style: TextStyle(fontSize: 12, color: subtitleColor),
                     ),
                   ],
                 ),
@@ -769,14 +756,13 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
               activeTrackColor: metricColor,
-              inactiveTrackColor:
-                  isDark ? Colors.white.withOpacity(0.14) : const Color(0xFFE2E8F0),
+              inactiveTrackColor: isDark
+                  ? Colors.white.withOpacity(0.14)
+                  : const Color(0xFFE2E8F0),
               thumbColor: metricColor,
               overlayColor: metricColor.withOpacity(0.15),
               trackHeight: 5,
-              thumbShape: const RoundSliderThumbShape(
-                enabledThumbRadius: 11,
-              ),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 11),
             ),
             child: Slider(
               value: value,
@@ -800,9 +786,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
         foregroundColor: Colors.white,
         disabledBackgroundColor: Colors.grey[500],
         padding: const EdgeInsets.symmetric(vertical: 19),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         elevation: 0,
       ),
       child: isLoading
@@ -839,15 +823,11 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.22),
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.22)),
       ),
       child: IconButton(
         onPressed: AppThemeController.toggleTheme,
-        icon: Icon(
-          isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-        ),
+        icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
         color: Colors.white,
         tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
       ),

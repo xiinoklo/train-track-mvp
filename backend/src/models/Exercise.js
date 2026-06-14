@@ -33,6 +33,12 @@ const exerciseSchema = new mongoose.Schema(
       default: "",
       trim: true
     },
+    xp: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 10
+    },
     isActive: {
       type: Boolean,
       default: true
