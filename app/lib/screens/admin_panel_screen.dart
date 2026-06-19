@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme_controller.dart';
 import '../utils/navigation_guard.dart';
@@ -15,6 +16,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
   late Future<List<Map<String, dynamic>>> _usersFuture;
   late Future<List<Map<String, dynamic>>> _exercisesFuture;
+  late Future<Map<String, dynamic>> _statsFuture;
   String _userSearch = '';
 
   static const Color primaryColor = Color(0xFF1E3A8A);
@@ -31,6 +33,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     super.initState();
     _usersFuture = ApiService.getAdminUsers();
     _exercisesFuture = ApiService.getAdminExercises();
+    _statsFuture = ApiService.getAdminStats();
   }
 
   void _refreshUsers() {
@@ -42,6 +45,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   void _refreshExercises() {
     setState(() {
       _exercisesFuture = ApiService.getAdminExercises();
+    });
+  }
+
+  void _refreshStats() {
+    setState(() {
+      _statsFuture = ApiService.getAdminStats();
     });
   }
 
@@ -62,13 +71,13 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         final Color titleColor = isDark ? Colors.white : darkText;
         final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[600]!;
         final Color borderColor = isDark
-            ? Colors.white.withOpacity(0.08)
+            ? Colors.white.withValues(alpha: 0.08)
             : Colors.transparent;
         final Color innerCardColor = isDark
             ? const Color(0xFF111827)
             : const Color(0xFFF8FAFC);
         final Color innerBorderColor = isDark
-            ? Colors.white.withOpacity(0.10)
+            ? Colors.white.withValues(alpha: 0.10)
             : const Color(0xFFE2E8F0);
 
         return Scaffold(
@@ -102,8 +111,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                       onRefresh: () async {
                         if (selectedTab == 0) {
                           _refreshUsers();
-                        } else {
+                        } else if (selectedTab == 1) {
                           _refreshExercises();
+                        } else {
+                          _refreshStats();
                         }
                       },
                       child: ListView(
@@ -129,7 +140,17 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                                   innerCardColor: innerCardColor,
                                   innerBorderColor: innerBorderColor,
                                 )
-                              : _buildExercisesSection(
+                              : selectedTab == 1
+                              ? _buildExercisesSection(
+                                  isDark: isDark,
+                                  cardColor: cardColor,
+                                  titleColor: titleColor,
+                                  subtitleColor: subtitleColor,
+                                  borderColor: borderColor,
+                                  innerCardColor: innerCardColor,
+                                  innerBorderColor: innerBorderColor,
+                                )
+                              : _buildStatsSection(
                                   isDark: isDark,
                                   cardColor: cardColor,
                                   titleColor: titleColor,
@@ -203,7 +224,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.35 : 0.12),
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -216,7 +237,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
+                  color: primaryColor.withValues(alpha: isDark ? 0.22 : 0.1),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: const Icon(
@@ -266,7 +287,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   onTap: () => setState(() => selectedTab = 0),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Expanded(
                 child: _buildTabButton(
                   label: 'Ejercicios',
@@ -276,6 +297,18 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   innerCardColor: innerCardColor,
                   innerBorderColor: innerBorderColor,
                   onTap: () => setState(() => selectedTab = 1),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildTabButton(
+                  label: 'Datos',
+                  icon: Icons.analytics_rounded,
+                  active: selectedTab == 2,
+                  isDark: isDark,
+                  innerCardColor: innerCardColor,
+                  innerBorderColor: innerBorderColor,
+                  onTap: () => setState(() => selectedTab = 2),
                 ),
               ),
             ],
@@ -473,8 +506,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         children: [
           CircleAvatar(
             backgroundColor: isAdmin
-                ? warningColor.withOpacity(isDark ? 0.22 : 0.15)
-                : primaryColor.withOpacity(isDark ? 0.22 : 0.12),
+                ? warningColor.withValues(alpha: isDark ? 0.22 : 0.15)
+                : primaryColor.withValues(alpha: isDark ? 0.22 : 0.12),
             child: Icon(
               isAdmin
                   ? Icons.admin_panel_settings_rounded
@@ -508,7 +541,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: warningColor.withOpacity(isDark ? 0.22 : 0.12),
+                          color: warningColor.withValues(
+                            alpha: isDark ? 0.22 : 0.12,
+                          ),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: const Text(
@@ -554,6 +589,15 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               icon: const Icon(Icons.list_alt_rounded),
               color: primaryColor,
               tooltip: 'Ver rutinas',
+            ),
+          if (!isAdmin)
+            IconButton(
+              onPressed: userId.isEmpty
+                  ? null
+                  : () => _showUserData(userId: userId, name: name),
+              icon: const Icon(Icons.analytics_rounded),
+              color: secondaryColor,
+              tooltip: 'Ver datos',
             ),
           IconButton(
             onPressed: isAdmin || userId.isEmpty
@@ -701,7 +745,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: warningColor.withOpacity(isDark ? 0.22 : 0.12),
+              color: warningColor.withValues(alpha: isDark ? 0.22 : 0.12),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
@@ -1117,9 +1161,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: dangerColor.withOpacity(isDark ? 0.16 : 0.08),
+        color: dangerColor.withValues(alpha: isDark ? 0.16 : 0.08),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: dangerColor.withOpacity(isDark ? 0.35 : 0.2)),
+        border: Border.all(
+          color: dangerColor.withValues(alpha: isDark ? 0.35 : 0.2),
+        ),
       ),
       child: Column(
         children: [
@@ -1177,15 +1223,400 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.16),
+        color: Colors.white.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.22)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
       ),
       child: IconButton(
         onPressed: AppThemeController.toggleTheme,
         icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
         color: Colors.white,
         tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
+      ),
+    );
+  }
+
+  // ─── ESTADÍSTICAS GLOBALES ───────────────────────────────────────────────────
+
+  Widget _buildStatsSection({
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+    required Color innerCardColor,
+    required Color innerBorderColor,
+  }) {
+    return _AdminSectionCard(
+      title: 'Datos Generales',
+      subtitle: 'Métricas clave de la plataforma',
+      isDark: isDark,
+      cardColor: cardColor,
+      titleColor: titleColor,
+      subtitleColor: subtitleColor,
+      borderColor: borderColor,
+      child: FutureBuilder<Map<String, dynamic>>(
+        future: _statsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(
+                child: CircularProgressIndicator(color: primaryColor),
+              ),
+            );
+          }
+          if (snapshot.hasError) {
+            return _buildErrorBox(
+              isDark: isDark,
+              titleColor: titleColor,
+              subtitleColor: subtitleColor,
+              message: 'No se pudieron cargar las estadísticas',
+              detail: snapshot.error.toString(),
+              onRetry: _refreshStats,
+            );
+          }
+          final stats = snapshot.data!;
+          final totalUsers = stats['totalUsers'] ?? 0;
+          final usersPerRank = List<Map<String, dynamic>>.from(
+            stats['usersPerRank'] ?? [],
+          );
+          final topExercises = List<Map<String, dynamic>>.from(
+            stats['topExercises'] ?? [],
+          );
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Total Usuarios Card
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: innerCardColor,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: innerBorderColor),
+                ),
+                child: Column(
+                  children: [
+                    const Icon(
+                      Icons.group_rounded,
+                      color: primaryColor,
+                      size: 40,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Total de usuarios',
+                      style: TextStyle(
+                        color: subtitleColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$totalUsers',
+                      style: TextStyle(
+                        color: titleColor,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              // PieChart Usuarios por Nivel
+              Text(
+                'Usuarios por Nivel',
+                style: TextStyle(
+                  color: titleColor,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (usersPerRank.isEmpty)
+                Text(
+                  'No hay datos de nivel',
+                  style: TextStyle(color: subtitleColor),
+                )
+              else
+                SizedBox(
+                  height: 200,
+                  child: PieChart(
+                    PieChartData(
+                      sections: usersPerRank.asMap().entries.map((entry) {
+                        final idx = entry.key;
+                        final item = entry.value;
+                        final color = [
+                          primaryColor,
+                          secondaryColor,
+                          warningColor,
+                          dangerColor,
+                          Colors.purple,
+                        ][idx % 5];
+                        return PieChartSectionData(
+                          value: (item['count'] as num).toDouble(),
+                          title: 'Lvl ${item['_id']}\n(${item['count']})',
+                          radius: 60,
+                          titleStyle: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          color: color,
+                        );
+                      }).toList(),
+                      sectionsSpace: 2,
+                      centerSpaceRadius: 40,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 24),
+              // Top Exercises
+              Text(
+                'Top 5 Ejercicios',
+                style: TextStyle(
+                  color: titleColor,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (topExercises.isEmpty)
+                Text(
+                  'No hay datos de ejercicios',
+                  style: TextStyle(color: subtitleColor),
+                )
+              else
+                ...topExercises.map((ex) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: innerCardColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: innerBorderColor),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            ex['name'] ?? 'Desconocido',
+                            style: TextStyle(
+                              color: titleColor,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: secondaryColor.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${ex['count']} veces',
+                            style: const TextStyle(
+                              color: secondaryColor,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // ─── ESTADÍSTICAS POR USUARIO ───────────────────────────────────────────────
+
+  void _showUserData({required String userId, required String name}) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        final bool isDark =
+            AppThemeController.themeMode.value == ThemeMode.dark;
+        final Color dialogColor = isDark ? darkCard : Colors.white;
+        final Color titleColor = isDark ? Colors.white : darkText;
+        final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[700]!;
+
+        return AlertDialog(
+          backgroundColor: dialogColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.analytics_rounded, color: secondaryColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Datos de $name',
+                  style: TextStyle(
+                    color: titleColor,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: FutureBuilder<Map<String, dynamic>>(
+              future: ApiService.getAdminUserStats(userId),
+              builder: (ctx, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 100,
+                    child: Center(
+                      child: CircularProgressIndicator(color: secondaryColor),
+                    ),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return Text(
+                    'Error al cargar datos',
+                    style: TextStyle(color: dangerColor),
+                  );
+                }
+                final data = snapshot.data!;
+                final level = data['level'] ?? 1;
+                final xp = data['xp'] ?? 0;
+                final topExercises = List<Map<String, dynamic>>.from(
+                  data['topExercises'] ?? [],
+                );
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildMiniStatCard(
+                            'Nivel',
+                            '$level',
+                            isDark,
+                            warningColor,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildMiniStatCard(
+                            'XP Total',
+                            '$xp',
+                            isDark,
+                            primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Ejercicios más repetidos',
+                      style: TextStyle(
+                        color: titleColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    if (topExercises.isEmpty)
+                      Text(
+                        'No hay historial de ejercicios',
+                        style: TextStyle(color: subtitleColor, fontSize: 13),
+                      )
+                    else
+                      ...topExercises.map((ex) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  ex['name'] ?? 'Desconocido',
+                                  style: TextStyle(
+                                    color: subtitleColor,
+                                    fontSize: 13,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Text(
+                                '${ex['count']}x',
+                                style: TextStyle(
+                                  color: titleColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                  ],
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text('Cerrar', style: TextStyle(color: titleColor)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildMiniStatCard(
+    String title,
+    String value,
+    bool isDark,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.2 : 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1357,10 +1788,10 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
             ? const Color(0xFF111827)
             : Colors.white;
         final Color inputBorderColor = isDark
-            ? Colors.white.withOpacity(0.14)
+            ? Colors.white.withValues(alpha: 0.14)
             : const Color(0xFFCBD5E1);
         final Color handleColor = isDark
-            ? Colors.white.withOpacity(0.18)
+            ? Colors.white.withValues(alpha: 0.18)
             : Colors.grey[300]!;
 
         return Container(
@@ -1467,7 +1898,7 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
                 ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
-                  value: selectedMuscle,
+                  initialValue: selectedMuscle,
                   dropdownColor: sheetColor,
                   style: TextStyle(color: titleColor),
                   decoration: _inputDeco(
@@ -1507,7 +1938,7 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
                 ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
-                  value: selectedLevel,
+                  initialValue: selectedLevel,
                   dropdownColor: sheetColor,
                   style: TextStyle(color: titleColor),
                   decoration: _inputDeco(
@@ -1593,7 +2024,7 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
       labelText: label,
       hintText: hint,
       labelStyle: TextStyle(color: subtitleColor),
-      hintStyle: TextStyle(color: subtitleColor.withOpacity(0.7)),
+      hintStyle: TextStyle(color: subtitleColor.withValues(alpha: 0.7)),
       filled: true,
       fillColor: fillColor,
       enabledBorder: OutlineInputBorder(
@@ -1642,7 +2073,7 @@ class _AdminSectionCard extends StatelessWidget {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
+            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),

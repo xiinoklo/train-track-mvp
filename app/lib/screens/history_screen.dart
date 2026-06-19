@@ -4,7 +4,7 @@ import '../theme/app_theme_controller.dart';
 import '../utils/navigation_guard.dart';
 
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({Key? key}) : super(key: key);
+  const HistoryScreen({super.key});
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -128,7 +128,7 @@ class _HistoryScreenState extends State<HistoryScreen>
         final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[700]!;
 
         final Color borderColor = isDark
-            ? Colors.white.withOpacity(0.08)
+            ? Colors.white.withValues(alpha: 0.08)
             : Colors.transparent;
 
         return Scaffold(
@@ -292,7 +292,7 @@ class _HistoryScreenState extends State<HistoryScreen>
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.35 : 0.12),
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -306,7 +306,7 @@ class _HistoryScreenState extends State<HistoryScreen>
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
+                  color: primaryColor.withValues(alpha: isDark ? 0.22 : 0.1),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: const Icon(
@@ -400,7 +400,7 @@ class _HistoryScreenState extends State<HistoryScreen>
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark
-              ? Colors.white.withOpacity(0.08)
+              ? Colors.white.withValues(alpha: 0.08)
               : const Color(0xFFE2E8F0),
         ),
       ),
@@ -453,7 +453,7 @@ class _HistoryScreenState extends State<HistoryScreen>
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
+            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -467,7 +467,7 @@ class _HistoryScreenState extends State<HistoryScreen>
               Container(
                 padding: const EdgeInsets.all(11),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
+                  color: primaryColor.withValues(alpha: isDark ? 0.22 : 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
@@ -572,7 +572,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                 value: value / 5,
                 minHeight: 8,
                 backgroundColor: isDark
-                    ? Colors.white.withOpacity(0.12)
+                    ? Colors.white.withValues(alpha: 0.12)
                     : const Color(0xFFE2E8F0),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
               ),
@@ -584,7 +584,7 @@ class _HistoryScreenState extends State<HistoryScreen>
             height: 34,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: color.withOpacity(isDark ? 0.20 : 0.12),
+              color: color.withValues(alpha: isDark ? 0.20 : 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -615,7 +615,7 @@ class _HistoryScreenState extends State<HistoryScreen>
             border: Border.all(color: borderColor),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.30 : 0.08),
+                color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.08),
                 blurRadius: 22,
                 offset: const Offset(0, 10),
               ),
@@ -627,7 +627,7 @@ class _HistoryScreenState extends State<HistoryScreen>
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
+                  color: primaryColor.withValues(alpha: isDark ? 0.22 : 0.1),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: const Icon(
@@ -682,8 +682,8 @@ class _HistoryScreenState extends State<HistoryScreen>
             borderRadius: BorderRadius.circular(28),
             border: Border.all(
               color: isDark
-                  ? Colors.white.withOpacity(0.08)
-                  : dangerColor.withOpacity(0.2),
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : dangerColor.withValues(alpha: 0.2),
             ),
           ),
           child: Column(
@@ -732,9 +732,9 @@ class _HistoryScreenState extends State<HistoryScreen>
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.16),
+        color: Colors.white.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.22)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
       ),
       child: IconButton(
         onPressed: AppThemeController.toggleTheme,

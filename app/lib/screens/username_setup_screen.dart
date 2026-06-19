@@ -4,7 +4,7 @@ import '../theme/app_theme_controller.dart';
 import 'dashboard_screen.dart';
 
 class UsernameSetupScreen extends StatefulWidget {
-  const UsernameSetupScreen({Key? key}) : super(key: key);
+  const UsernameSetupScreen({super.key});
 
   @override
   State<UsernameSetupScreen> createState() => _UsernameSetupScreenState();
@@ -44,12 +44,7 @@ class _UsernameSetupScreenState extends State<UsernameSetupScreen>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.08),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOut,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward();
   }
@@ -101,9 +96,7 @@ class _UsernameSetupScreenState extends State<UsernameSetupScreen>
     if (success) {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (context) => const DashboardScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const DashboardScreen()),
         (route) => false,
       );
     } else {
@@ -123,25 +116,25 @@ class _UsernameSetupScreenState extends State<UsernameSetupScreen>
       builder: (context, mode, _) {
         final bool isDark = mode == ThemeMode.dark;
 
-        final Color pageBackground =
-            isDark ? darkBackground : lightBackground;
+        final Color pageBackground = isDark ? darkBackground : lightBackground;
 
         final Color cardColor = isDark ? darkCard : Colors.white;
 
         final Color titleColor = isDark ? Colors.white : darkText;
 
-        final Color subtitleColor =
-            isDark ? Colors.white70 : Colors.grey[600]!;
+        final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[600]!;
 
-        final Color inputFillColor =
-            isDark ? const Color(0xFF111827) : Colors.white;
+        final Color inputFillColor = isDark
+            ? const Color(0xFF111827)
+            : Colors.white;
 
-        final Color inputBorderColor =
-            isDark ? Colors.white.withOpacity(0.18) : const Color(0xFFCBD5E1);
+        final Color inputBorderColor = isDark
+            ? Colors.white.withValues(alpha: 0.18)
+            : const Color(0xFFCBD5E1);
 
         final Color iconBackgroundColor = isDark
-            ? Colors.white.withOpacity(0.08)
-            : primaryColor.withOpacity(0.1);
+            ? Colors.white.withValues(alpha: 0.08)
+            : primaryColor.withValues(alpha: 0.1);
 
         return Scaffold(
           backgroundColor: pageBackground,
@@ -198,7 +191,7 @@ class _UsernameSetupScreenState extends State<UsernameSetupScreen>
                           style: TextStyle(
                             fontSize: 15,
                             height: 1.4,
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                           ),
                         ),
 
@@ -211,13 +204,13 @@ class _UsernameSetupScreenState extends State<UsernameSetupScreen>
                             borderRadius: BorderRadius.circular(28),
                             border: Border.all(
                               color: isDark
-                                  ? Colors.white.withOpacity(0.08)
+                                  ? Colors.white.withValues(alpha: 0.08)
                                   : Colors.transparent,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(
-                                  isDark ? 0.35 : 0.12,
+                                color: Colors.black.withValues(
+                                  alpha: isDark ? 0.35 : 0.12,
                                 ),
                                 blurRadius: 24,
                                 offset: const Offset(0, 12),
@@ -277,7 +270,9 @@ class _UsernameSetupScreenState extends State<UsernameSetupScreen>
                                   hintText: 'ej: benja_fit',
                                   labelStyle: TextStyle(color: subtitleColor),
                                   hintStyle: TextStyle(
-                                    color: subtitleColor.withOpacity(0.65),
+                                    color: subtitleColor.withValues(
+                                      alpha: 0.65,
+                                    ),
                                   ),
                                   prefixIcon: Icon(
                                     Icons.alternate_email,
@@ -328,13 +323,12 @@ class _UsernameSetupScreenState extends State<UsernameSetupScreen>
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
-                                  onPressed:
-                                      isLoading ? null : _saveUsername,
+                                  onPressed: isLoading ? null : _saveUsername,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: secondaryColor,
                                     foregroundColor: Colors.white,
-                                    disabledBackgroundColor:
-                                        secondaryColor.withOpacity(0.55),
+                                    disabledBackgroundColor: secondaryColor
+                                        .withValues(alpha: 0.55),
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 18,
                                     ),
@@ -383,17 +377,13 @@ class _UsernameSetupScreenState extends State<UsernameSetupScreen>
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.16),
+        color: Colors.white.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.22),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
       ),
       child: IconButton(
         onPressed: AppThemeController.toggleTheme,
-        icon: Icon(
-          isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-        ),
+        icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
         color: Colors.white,
         tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
       ),

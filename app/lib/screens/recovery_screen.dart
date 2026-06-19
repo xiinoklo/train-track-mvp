@@ -6,7 +6,7 @@ import '../theme/app_theme_controller.dart';
 import '../utils/navigation_guard.dart';
 
 class RecoveryScreen extends StatefulWidget {
-  const RecoveryScreen({Key? key}) : super(key: key);
+  const RecoveryScreen({super.key});
 
   @override
   State<RecoveryScreen> createState() => _RecoveryScreenState();
@@ -193,7 +193,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
         final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[700]!;
 
         final Color borderColor = isDark
-            ? Colors.white.withOpacity(0.08)
+            ? Colors.white.withValues(alpha: 0.08)
             : Colors.transparent;
 
         return Scaffold(
@@ -369,7 +369,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.35 : 0.12),
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -380,7 +380,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: secondaryColor.withOpacity(isDark ? 0.20 : 0.12),
+              color: secondaryColor.withValues(alpha: isDark ? 0.20 : 0.12),
               borderRadius: BorderRadius.circular(18),
             ),
             child: const Icon(
@@ -451,7 +451,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
+            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -465,7 +465,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
+                  color: primaryColor.withValues(alpha: isDark ? 0.22 : 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
@@ -598,8 +598,8 @@ class _RecoveryScreenState extends State<RecoveryScreen>
   }) {
     final group = _openMuscleGroup!;
     final sheetColor = isDark
-        ? const Color(0xFF0F172A).withOpacity(0.97)
-        : Colors.white.withOpacity(0.97);
+        ? const Color(0xFF0F172A).withValues(alpha: 0.97)
+        : Colors.white.withValues(alpha: 0.97);
 
     return Positioned.fill(
       child: TweenAnimationBuilder<double>(
@@ -618,7 +618,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                       sigmaY: 7 * value,
                     ),
                     child: Container(
-                      color: Colors.black.withOpacity(0.30 * value),
+                      color: Colors.black.withValues(alpha: 0.30 * value),
                     ),
                   ),
                 ),
@@ -642,12 +642,12 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                           borderRadius: BorderRadius.circular(30),
                           border: Border.all(
                             color: isDark
-                                ? Colors.white.withOpacity(0.12)
+                                ? Colors.white.withValues(alpha: 0.12)
                                 : Colors.white,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.30),
+                              color: Colors.black.withValues(alpha: 0.30),
                               blurRadius: 34,
                               offset: const Offset(0, 16),
                             ),
@@ -662,7 +662,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                                   width: 46,
                                   height: 46,
                                   decoration: BoxDecoration(
-                                    color: warningColor.withOpacity(0.14),
+                                    color: warningColor.withValues(alpha: 0.14),
                                     borderRadius: BorderRadius.circular(15),
                                   ),
                                   child: Icon(
@@ -772,11 +772,11 @@ class _RecoveryScreenState extends State<RecoveryScreen>
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: isDark
-                ? statusColor.withOpacity(0.12)
-                : statusColor.withOpacity(0.08),
+                ? statusColor.withValues(alpha: 0.12)
+                : statusColor.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: statusColor.withOpacity(isDark ? 0.45 : 0.35),
+              color: statusColor.withValues(alpha: isDark ? 0.45 : 0.35),
               width: 1.4,
             ),
           ),
@@ -790,7 +790,9 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                     height: 42,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(isDark ? 0.20 : 0.14),
+                      color: statusColor.withValues(
+                        alpha: isDark ? 0.20 : 0.14,
+                      ),
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: Icon(
@@ -807,8 +809,8 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                     ),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? const Color(0xFF020617).withOpacity(0.85)
-                          : Colors.white.withOpacity(0.9),
+                          ? const Color(0xFF020617).withValues(alpha: 0.85)
+                          : Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
@@ -865,8 +867,8 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                   value: progress,
                   minHeight: 7,
                   backgroundColor: isDark
-                      ? Colors.white.withOpacity(0.12)
-                      : Colors.white.withOpacity(0.8),
+                      ? Colors.white.withValues(alpha: 0.12)
+                      : Colors.white.withValues(alpha: 0.8),
                   valueColor: AlwaysStoppedAnimation<Color>(statusColor),
                 ),
               ),
@@ -931,7 +933,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
             border: Border.all(color: borderColor),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.30 : 0.08),
+                color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.08),
                 blurRadius: 22,
                 offset: const Offset(0, 10),
               ),
@@ -990,8 +992,8 @@ class _RecoveryScreenState extends State<RecoveryScreen>
             borderRadius: BorderRadius.circular(28),
             border: Border.all(
               color: isDark
-                  ? Colors.white.withOpacity(0.08)
-                  : dangerColor.withOpacity(0.2),
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : dangerColor.withValues(alpha: 0.2),
             ),
           ),
           child: Column(
@@ -1040,9 +1042,9 @@ class _RecoveryScreenState extends State<RecoveryScreen>
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.16),
+        color: Colors.white.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.22)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
       ),
       child: IconButton(
         onPressed: AppThemeController.toggleTheme,

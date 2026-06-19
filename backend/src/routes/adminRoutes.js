@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 const User = require("../models/User");
 const Wellness = require("../models/Wellness");
@@ -117,6 +118,82 @@ router.get("/users", protect, requireAdmin, async (req, res) => {
 
     res.status(500).json({
       message: "Error al obtener usuarios"
+    });
+  }
+});
+
+router.get("/stats", protect, requireAdmin, async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    
+    const usersPerRank = await User.aggregate([
+      { $group: { _id: "$level", count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+    
+    const topExercises = await WorkoutSession.aggregate([
+      { $unwind: "$exercises" },
+      { 
+        $group: { 
+          _id: { id: "$exercises.exerciseId", name: "$exercises.name" }, 
+          count: { $sum: 1 } 
+        } 
+      },
+      { $sort: { count: -1 } },
+      { $limit: 5 },
+      { 
+        $project: { 
+          _id: 0, 
+          exerciseId: "$_id.id", 
+          name: "$_id.name", 
+          count: 1 
+        } 
+      }
+    ]);
+    
+    res.json({ totalUsers, usersPerRank, topExercises });
+  } catch (error) {
+    console.error("Error obteniendo estadisticas admin:", error);
+    res.status(500).json({
+      message: "Error al obtener estadisticas"
+    });
+  }
+});
+
+router.get("/users/:id/stats", protect, requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("level xp");
+    
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+    
+    const topExercises = await WorkoutSession.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(req.params.id) } },
+      { $unwind: "$exercises" },
+      { 
+        $group: { 
+          _id: { id: "$exercises.exerciseId", name: "$exercises.name" }, 
+          count: { $sum: 1 } 
+        } 
+      },
+      { $sort: { count: -1 } },
+      { $limit: 5 },
+      { 
+        $project: { 
+          _id: 0, 
+          exerciseId: "$_id.id", 
+          name: "$_id.name", 
+          count: 1 
+        } 
+      }
+    ]);
+
+    res.json({ level: user.level, xp: user.xp, topExercises });
+  } catch (error) {
+    console.error("Error obteniendo estadisticas de usuario:", error);
+    res.status(500).json({
+      message: "Error al obtener estadisticas de usuario"
     });
   }
 });

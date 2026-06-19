@@ -59,9 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (context) => const DashboardScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const DashboardScreen()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -78,9 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const RegisterScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const RegisterScreen()),
     );
   }
 
@@ -91,26 +87,23 @@ class _LoginScreenState extends State<LoginScreen> {
       builder: (context, mode, _) {
         final bool isDark = mode == ThemeMode.dark;
 
-        final Color pageBackground =
-            isDark ? darkBackground : lightBackground;
+        final Color pageBackground = isDark ? darkBackground : lightBackground;
 
-        final Color cardColor =
-            isDark ? darkCard : Colors.white;
+        final Color cardColor = isDark ? darkCard : Colors.white;
 
-        final Color titleColor =
-            isDark ? Colors.white : darkText;
+        final Color titleColor = isDark ? Colors.white : darkText;
 
-        final Color subtitleColor =
-            isDark ? Colors.white70 : Colors.grey[600]!;
+        final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[600]!;
 
-        final Color inputFillColor =
-            isDark ? const Color(0xFF111827) : Colors.white;
+        final Color inputFillColor = isDark
+            ? const Color(0xFF111827)
+            : Colors.white;
 
-        final Color inputBorderColor =
-            isDark ? Colors.white.withOpacity(0.18) : Colors.grey;
+        final Color inputBorderColor = isDark
+            ? Colors.white.withValues(alpha: 0.18)
+            : Colors.grey;
 
-        final Color iconColor =
-            isDark ? Colors.white70 : Colors.grey;
+        final Color iconColor = isDark ? Colors.white70 : Colors.grey;
 
         return Scaffold(
           backgroundColor: pageBackground,
@@ -152,13 +145,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(
                             color: isDark
-                                ? Colors.white.withOpacity(0.08)
+                                ? Colors.white.withValues(alpha: 0.08)
                                 : Colors.transparent,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(
-                                isDark ? 0.35 : 0.16,
+                              color: Colors.black.withValues(
+                                alpha: isDark ? 0.35 : 0.16,
                               ),
                               blurRadius: 24,
                               offset: const Offset(0, 12),
@@ -173,8 +166,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               height: 82,
                               decoration: BoxDecoration(
                                 color: isDark
-                                    ? Colors.white.withOpacity(0.08)
-                                    : primaryColor.withOpacity(0.1),
+                                    ? Colors.white.withValues(alpha: 0.08)
+                                    : primaryColor.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(24),
                               ),
                               child: Padding(
@@ -313,8 +306,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: secondaryColor,
                                   foregroundColor: Colors.white,
-                                  disabledBackgroundColor:
-                                      secondaryColor.withOpacity(0.55),
+                                  disabledBackgroundColor: secondaryColor
+                                      .withValues(alpha: 0.55),
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 17,
                                   ),
@@ -350,9 +343,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 '¿No tienes cuenta? Regístrate aquí',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  color: isDark
-                                      ? Colors.white
-                                      : primaryColor,
+                                  color: isDark ? Colors.white : primaryColor,
                                 ),
                               ),
                             ),
@@ -375,17 +366,13 @@ class _LoginScreenState extends State<LoginScreen> {
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.16),
+        color: Colors.white.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.22),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
       ),
       child: IconButton(
         onPressed: AppThemeController.toggleTheme,
-        icon: Icon(
-          isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-        ),
+        icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
         color: Colors.white,
         tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
       ),

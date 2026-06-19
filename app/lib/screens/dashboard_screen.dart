@@ -9,7 +9,7 @@ import 'admin_panel_screen.dart';
 import 'saved_routines_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({Key? key}) : super(key: key);
+  const DashboardScreen({super.key});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -146,8 +146,8 @@ class _DashboardScreenState extends State<DashboardScreen>
         final Color mutedTextColor = isDark ? Colors.white70 : Colors.grey;
 
         final Color footerColor = isDark
-            ? const Color(0xFF0F172A).withOpacity(0.90)
-            : Colors.white.withOpacity(0.82);
+            ? const Color(0xFF0F172A).withValues(alpha: 0.90)
+            : Colors.white.withValues(alpha: 0.82);
 
         final Color footerTextColor = isDark ? Colors.white : darkText;
 
@@ -215,7 +215,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             style: TextStyle(
                               fontSize: 15,
                               height: 1.4,
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                             ),
                           ),
 
@@ -230,13 +230,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 borderRadius: BorderRadius.circular(28),
                                 border: Border.all(
                                   color: isDark
-                                      ? Colors.white.withOpacity(0.08)
+                                      ? Colors.white.withValues(alpha: 0.08)
                                       : Colors.transparent,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(
-                                      isDark ? 0.28 : 0.12,
+                                    color: Colors.black.withValues(
+                                      alpha: isDark ? 0.28 : 0.12,
                                     ),
                                     blurRadius: 24,
                                     offset: const Offset(0, 12),
@@ -251,8 +251,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                                       Container(
                                         padding: const EdgeInsets.all(14),
                                         decoration: BoxDecoration(
-                                          color: secondaryColor.withOpacity(
-                                            isDark ? 0.18 : 0.12,
+                                          color: secondaryColor.withValues(
+                                            alpha: isDark ? 0.18 : 0.12,
                                           ),
                                           borderRadius: BorderRadius.circular(
                                             18,
@@ -359,12 +359,16 @@ class _DashboardScreenState extends State<DashboardScreen>
                                           ? Colors.white
                                           : primaryColor,
                                       backgroundColor: isDark
-                                          ? primaryColor.withOpacity(0.20)
+                                          ? primaryColor.withValues(alpha: 0.20)
                                           : const Color(0xFFF8FAFC),
                                       side: BorderSide(
                                         color: isDark
-                                            ? Colors.white.withOpacity(0.28)
-                                            : primaryColor.withOpacity(0.35),
+                                            ? Colors.white.withValues(
+                                                alpha: 0.28,
+                                              )
+                                            : primaryColor.withValues(
+                                                alpha: 0.35,
+                                              ),
                                         width: 1.4,
                                       ),
                                       padding: const EdgeInsets.symmetric(
@@ -439,7 +443,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                               borderRadius: BorderRadius.circular(22),
                               border: Border.all(
                                 color: isDark
-                                    ? Colors.white.withOpacity(0.08)
+                                    ? Colors.white.withValues(alpha: 0.08)
                                     : Colors.transparent,
                               ),
                             ),
@@ -489,12 +493,12 @@ class _DashboardScreenState extends State<DashboardScreen>
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: isDark
-            ? primaryColor.withOpacity(0.18)
+            ? primaryColor.withValues(alpha: 0.18)
             : const Color(0xFFEFF6FF),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark
-              ? Colors.white.withOpacity(0.12)
+              ? Colors.white.withValues(alpha: 0.12)
               : const Color(0xFFBFDBFE),
         ),
       ),
@@ -507,7 +511,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withOpacity(0.10) : Colors.white,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.10)
+                      : Colors.white,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
@@ -597,9 +603,9 @@ class _DashboardScreenState extends State<DashboardScreen>
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.16),
+            color: Colors.white.withValues(alpha: 0.16),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.22)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
           ),
           child: const Icon(
             Icons.fitness_center_rounded,
@@ -631,9 +637,9 @@ class _DashboardScreenState extends State<DashboardScreen>
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.16),
+            color: Colors.white.withValues(alpha: 0.16),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.22)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
           ),
           child: IconButton(
             onPressed: AppThemeController.toggleTheme,
@@ -653,9 +659,9 @@ class _DashboardScreenState extends State<DashboardScreen>
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.16),
+        color: Colors.white.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.22)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
       ),
       child: IconButton(
         onPressed: _goToProfile,

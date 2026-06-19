@@ -6,7 +6,7 @@ import '../utils/navigation_guard.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -117,7 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[600]!;
 
         final Color borderColor = isDark
-            ? Colors.white.withOpacity(0.08)
+            ? Colors.white.withValues(alpha: 0.08)
             : Colors.transparent;
 
         return Scaffold(
@@ -277,7 +277,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.35 : 0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
             blurRadius: 22,
             offset: const Offset(0, 10),
           ),
@@ -290,8 +290,8 @@ class _ProfileScreenState extends State<ProfileScreen>
             height: 96,
             decoration: BoxDecoration(
               color: isDark
-                  ? Colors.white.withOpacity(0.08)
-                  : primaryColor.withOpacity(0.10),
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : primaryColor.withValues(alpha: 0.10),
               shape: BoxShape.circle,
               border: Border.all(color: primaryColor, width: 3),
             ),
@@ -325,7 +325,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 9),
             decoration: BoxDecoration(
-              color: secondaryColor.withOpacity(isDark ? 0.20 : 0.15),
+              color: secondaryColor.withValues(alpha: isDark ? 0.20 : 0.15),
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
@@ -383,7 +383,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.30 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.05),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -427,7 +427,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               value: progress,
               minHeight: 14,
               backgroundColor: isDark
-                  ? Colors.white.withOpacity(0.12)
+                  ? Colors.white.withValues(alpha: 0.12)
                   : const Color(0xFFE2E8F0),
               valueColor: const AlwaysStoppedAnimation<Color>(secondaryColor),
             ),
@@ -475,7 +475,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.30 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.05),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -533,7 +533,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isDark
-                ? Colors.white.withOpacity(0.10)
+                ? Colors.white.withValues(alpha: 0.10)
                 : const Color(0xFFE2E8F0),
           ),
         ),
@@ -601,8 +601,8 @@ class _ProfileScreenState extends State<ProfileScreen>
             borderRadius: BorderRadius.circular(28),
             border: Border.all(
               color: isDark
-                  ? Colors.white.withOpacity(0.08)
-                  : Colors.red.withOpacity(0.2),
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.red.withValues(alpha: 0.2),
             ),
           ),
           child: Column(
@@ -655,9 +655,9 @@ class _ProfileScreenState extends State<ProfileScreen>
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.16),
+        color: Colors.white.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.22)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
       ),
       child: IconButton(
         onPressed: AppThemeController.toggleTheme,
@@ -691,7 +691,7 @@ class _StatRow extends StatelessWidget {
     final Color titleColor = isDark ? Colors.white : darkText;
     final Color valueColor = secondaryColor;
     final Color iconBackgroundColor = isDark
-        ? Colors.white.withOpacity(0.08)
+        ? Colors.white.withValues(alpha: 0.08)
         : const Color(0xFFDBEAFE);
 
     return Row(

@@ -106,21 +106,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
       builder: (context, mode, _) {
         final bool isDark = mode == ThemeMode.dark;
 
-        final Color pageBackground =
-            isDark ? darkBackground : lightBackground;
+        final Color pageBackground = isDark ? darkBackground : lightBackground;
 
         final Color cardColor = isDark ? darkCard : Colors.white;
 
         final Color titleColor = isDark ? Colors.white : darkText;
 
-        final Color subtitleColor =
-            isDark ? Colors.white70 : Colors.grey[600]!;
+        final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[600]!;
 
-        final Color inputFillColor =
-            isDark ? const Color(0xFF111827) : Colors.white;
+        final Color inputFillColor = isDark
+            ? const Color(0xFF111827)
+            : Colors.white;
 
-        final Color inputBorderColor =
-            isDark ? Colors.white.withOpacity(0.18) : const Color(0xFFCBD5E1);
+        final Color inputBorderColor = isDark
+            ? Colors.white.withValues(alpha: 0.18)
+            : const Color(0xFFCBD5E1);
 
         final Color iconColor = isDark ? Colors.white70 : Colors.grey;
 
@@ -153,8 +153,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: Row(
                       children: [
                         IconButton(
-                          onPressed:
-                              _isLoading ? null : () => popIfPossible(context),
+                          onPressed: _isLoading
+                              ? null
+                              : () => popIfPossible(context),
                           icon: const Icon(Icons.arrow_back_rounded),
                           color: Colors.white,
                         ),
@@ -183,13 +184,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(
                             color: isDark
-                                ? Colors.white.withOpacity(0.08)
+                                ? Colors.white.withValues(alpha: 0.08)
                                 : Colors.transparent,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(
-                                isDark ? 0.35 : 0.14,
+                              color: Colors.black.withValues(
+                                alpha: isDark ? 0.35 : 0.14,
                               ),
                               blurRadius: 24,
                               offset: const Offset(0, 12),
@@ -205,8 +206,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
                                 color: isDark
-                                    ? Colors.white.withOpacity(0.08)
-                                    : primaryColor.withOpacity(0.1),
+                                    ? Colors.white.withValues(alpha: 0.08)
+                                    : primaryColor.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(24),
                               ),
                               child: const Icon(
@@ -243,10 +244,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                             const SizedBox(height: 28),
 
-                            _buildSectionTitle(
-                              'Datos de acceso',
-                              titleColor,
-                            ),
+                            _buildSectionTitle('Datos de acceso', titleColor),
 
                             const SizedBox(height: 12),
 
@@ -304,10 +302,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                             const SizedBox(height: 28),
 
-                            _buildSectionTitle(
-                              'Perfil físico',
-                              titleColor,
-                            ),
+                            _buildSectionTitle('Perfil físico', titleColor),
 
                             const SizedBox(height: 12),
 
@@ -331,7 +326,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: 14),
 
                             DropdownButtonFormField<String>(
-                              value: _selectedGender,
+                              initialValue: _selectedGender,
                               dropdownColor: cardColor,
                               style: TextStyle(color: titleColor),
                               decoration: _inputDecoration(
@@ -368,7 +363,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: 14),
 
                             DropdownButtonFormField<String>(
-                              value: _selectedExperience,
+                              initialValue: _selectedExperience,
                               dropdownColor: cardColor,
                               style: TextStyle(color: titleColor),
                               decoration: _inputDecoration(
@@ -405,7 +400,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: 14),
 
                             DropdownButtonFormField<String>(
-                              value: _selectedGoal,
+                              initialValue: _selectedGoal,
                               dropdownColor: cardColor,
                               style: TextStyle(color: titleColor),
                               decoration: _inputDecoration(
@@ -452,8 +447,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: secondaryColor,
                                   foregroundColor: Colors.white,
-                                  disabledBackgroundColor:
-                                      secondaryColor.withOpacity(0.55),
+                                  disabledBackgroundColor: secondaryColor
+                                      .withValues(alpha: 0.55),
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 17,
                                   ),
@@ -497,11 +492,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildSectionTitle(String text, Color color) {
     return Text(
       text,
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w900,
-        color: color,
-      ),
+      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: color),
     );
   }
 
@@ -528,18 +519,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(
-          color: primaryColor,
-          width: 1.8,
-        ),
+        borderSide: const BorderSide(color: primaryColor, width: 1.8),
       ),
       disabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide(color: inputBorderColor),
       ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
     );
   }
 
@@ -548,17 +534,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.16),
+        color: Colors.white.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.22),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
       ),
       child: IconButton(
         onPressed: AppThemeController.toggleTheme,
-        icon: Icon(
-          isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-        ),
+        icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
         color: Colors.white,
         tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
       ),

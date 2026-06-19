@@ -13,14 +13,14 @@ class WorkoutSummaryScreen extends StatelessWidget {
   final double loadFactor;
 
   const WorkoutSummaryScreen({
-    Key? key,
+    super.key,
     required this.xpGained,
     required this.userProgress,
     required this.exercises,
     required this.trainedMuscleGroups,
     required this.recommendation,
     required this.loadFactor,
-  }) : super(key: key);
+  });
 
   static const Color primaryColor = Color(0xFF1E3A8A);
   static const Color secondaryColor = Color(0xFF22C55E);
@@ -112,8 +112,8 @@ class WorkoutSummaryScreen extends StatelessWidget {
                                         width: 62,
                                         height: 62,
                                         decoration: BoxDecoration(
-                                          color: secondaryColor.withOpacity(
-                                            0.14,
+                                          color: secondaryColor.withValues(
+                                            alpha: 0.14,
                                           ),
                                           borderRadius: BorderRadius.circular(
                                             20,
@@ -206,7 +206,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
                                       minHeight: 9,
                                       color: secondaryColor,
                                       backgroundColor: isDark
-                                          ? Colors.white.withOpacity(0.10)
+                                          ? Colors.white.withValues(alpha: 0.10)
                                           : const Color(0xFFE2E8F0),
                                     ),
                                   ),
@@ -386,9 +386,9 @@ class _MetricTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
       decoration: BoxDecoration(
-        color: color.withOpacity(isDark ? 0.14 : 0.08),
+        color: color.withValues(alpha: isDark ? 0.14 : 0.08),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withOpacity(0.16)),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

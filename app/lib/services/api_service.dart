@@ -3,7 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://train-track-mvp.onrender.com/api';
+  // static const String baseUrl = 'https://train-track-mvp.onrender.com/api';
+  static const String baseUrl = 'http://127.0.0.1:3000/api';
 
   static Future<bool> registerUser({
     required String email,
@@ -396,6 +397,68 @@ class ApiService {
     } catch (e) {
       print('[ADMIN DELETE USER] Error: $e');
       return false;
+    }
+  }
+
+  // =========================
+  // ADMIN - ESTADÍSTICAS
+  // =========================
+
+  static Future<Map<String, dynamic>> getAdminStats() async {
+    final token = await getAdminToken();
+
+    if (token == null) {
+      throw Exception('No hay token admin');
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/stats'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('[ADMIN STATS] Status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+
+      throw Exception('Error al cargar estadisticas admin');
+    } catch (e) {
+      print('[ADMIN STATS] Error: $e');
+      rethrow;
+    }
+  }
+
+  static Future<Map<String, dynamic>> getAdminUserStats(String userId) async {
+    final token = await getAdminToken();
+
+    if (token == null) {
+      throw Exception('No hay token admin');
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/users/$userId/stats'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('[ADMIN USER STATS] Status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+
+      throw Exception('Error al cargar estadisticas del usuario');
+    } catch (e) {
+      print('[ADMIN USER STATS] Error: $e');
+      rethrow;
     }
   }
 
