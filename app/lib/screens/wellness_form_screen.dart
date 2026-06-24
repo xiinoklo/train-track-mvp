@@ -6,7 +6,7 @@ import 'workout_blocked_screen.dart';
 import 'workout_screen.dart';
 
 class WellnessFormScreen extends StatefulWidget {
-  const WellnessFormScreen({super.key});
+  const WellnessFormScreen({Key? key}) : super(key: key);
 
   @override
   State<WellnessFormScreen> createState() => _WellnessFormScreenState();
@@ -309,7 +309,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
         final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[600]!;
 
         final Color borderColor = isDark
-            ? Colors.white.withValues(alpha: 0.08)
+            ? Colors.white.withOpacity(0.08)
             : Colors.transparent;
 
         return Scaffold(
@@ -495,7 +495,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
+            color: Colors.black.withOpacity(isDark ? 0.35 : 0.12),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -506,7 +506,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: secondaryColor.withValues(alpha: isDark ? 0.20 : 0.12),
+              color: secondaryColor.withOpacity(isDark ? 0.20 : 0.12),
               borderRadius: BorderRadius.circular(18),
             ),
             child: const Icon(
@@ -560,7 +560,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.045),
+            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -574,7 +574,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
               Container(
                 padding: const EdgeInsets.all(11),
                 decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: isDark ? 0.22 : 0.1),
+                  color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
@@ -646,7 +646,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                       color: isSelected
                           ? primaryColor
                           : isDark
-                          ? Colors.white.withValues(alpha: 0.14)
+                          ? Colors.white.withOpacity(0.14)
                           : const Color(0xFFE2E8F0),
                     ),
                   ),
@@ -687,12 +687,12 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
         color: cardColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: metricColor.withValues(alpha: isDark ? 0.30 : 0.18),
+          color: metricColor.withOpacity(isDark ? 0.30 : 0.18),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.045),
+            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -705,7 +705,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
               Container(
                 padding: const EdgeInsets.all(11),
                 decoration: BoxDecoration(
-                  color: metricColor.withValues(alpha: isDark ? 0.18 : 0.12),
+                  color: metricColor.withOpacity(isDark ? 0.18 : 0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(icon, color: metricColor, size: 26),
@@ -736,7 +736,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                 height: 42,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: metricColor.withValues(alpha: isDark ? 0.18 : 0.12),
+                  color: metricColor.withOpacity(isDark ? 0.18 : 0.12),
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Text(
@@ -757,10 +757,10 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
             data: SliderTheme.of(context).copyWith(
               activeTrackColor: metricColor,
               inactiveTrackColor: isDark
-                  ? Colors.white.withValues(alpha: 0.14)
+                  ? Colors.white.withOpacity(0.14)
                   : const Color(0xFFE2E8F0),
               thumbColor: metricColor,
-              overlayColor: metricColor.withValues(alpha: 0.15),
+              overlayColor: metricColor.withOpacity(0.15),
               trackHeight: 5,
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 11),
             ),
@@ -821,9 +821,9 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
+        color: Colors.white.withOpacity(0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+        border: Border.all(color: Colors.white.withOpacity(0.22)),
       ),
       child: IconButton(
         onPressed: AppThemeController.toggleTheme,

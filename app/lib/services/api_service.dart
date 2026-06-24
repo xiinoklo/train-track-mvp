@@ -373,6 +373,32 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> getAdminAnalytics() async {
+    final token = await getAdminToken();
+
+    if (token == null) {
+      throw Exception('No hay token admin');
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/analytics'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(response.body));
+      }
+
+      throw Exception('Error al cargar analitica admin');
+    } catch (_) {
+      rethrow;
+    }
+  }
+
   static Future<bool> deleteAdminUser(String userId) async {
     final token = await getAdminToken();
 

@@ -1,7 +1,6 @@
 const XP_PER_LEVEL = 500;
 const MAX_LEVEL = 9;
 const DAILY_XP_LIMIT = 40;
-const BEGINNER_MIN_DAYS = 45;
 
 function getStartingLevel(experienceLevel) {
   if (experienceLevel === "intermedio") return 4;
@@ -11,32 +10,6 @@ function getStartingLevel(experienceLevel) {
 
 function getLevelFromXp(xp) {
   return Math.min(MAX_LEVEL, Math.floor((xp || 0) / XP_PER_LEVEL) + 1);
-}
-
-function getAccountAgeDays(createdAt, now = new Date()) {
-  if (!createdAt) return 0;
-
-  const createdTime = new Date(createdAt).getTime();
-  if (!Number.isFinite(createdTime)) return 0;
-
-  return Math.max(0, Math.floor((now.getTime() - createdTime) / 86400000));
-}
-
-function getProgressLevel({
-  xp,
-  experienceLevel,
-  createdAt,
-  now = new Date()
-}) {
-  const levelFromXp = getLevelFromXp(xp);
-  const isBeginner = experienceLevel === "principiante";
-  const hasMinimumTime = getAccountAgeDays(createdAt, now) >= BEGINNER_MIN_DAYS;
-
-  if (isBeginner && !hasMinimumTime) {
-    return Math.min(levelFromXp, 3);
-  }
-
-  return levelFromXp;
 }
 
 function getRankFromLevel(level) {
@@ -68,11 +41,8 @@ module.exports = {
   XP_PER_LEVEL,
   MAX_LEVEL,
   DAILY_XP_LIMIT,
-  BEGINNER_MIN_DAYS,
   getStartingLevel,
   getLevelFromXp,
-  getAccountAgeDays,
-  getProgressLevel,
   getRankFromLevel,
   getExperienceFromLevel,
   calculateWorkoutXp

@@ -3,11 +3,10 @@ const mongoose = require("mongoose");
 const User = require("../models/User");
 const WorkoutSession = require("../models/WorkoutSession");
 const {
-  DAILY_XP_LIMIT,
   XP_PER_LEVEL,
   calculateWorkoutXp,
   getExperienceFromLevel,
-  getProgressLevel,
+  getLevelFromXp,
   getStartingLevel
 } = require("../services/progressService");
 
@@ -30,43 +29,23 @@ async function backfillUserXp(user) {
   let xpAdded = 0;
   let experienceLevel =
     user.experienceLevel || getExperienceFromLevel(user.level || 1);
-  const awardedSessions = await WorkoutSession.find({
-    userId: user._id,
-    xpAwarded: { $gt: 0 }
-  }).select("completedAt");
-  const awardedDays = new Set(
-    awardedSessions
-      .filter((session) => session.completedAt)
-      .map((session) => session.completedAt.toISOString().slice(0, 10))
-  );
 
   for (const session of sessions) {
-    const dayKey = session.completedAt.toISOString().slice(0, 10);
-    const calculatedXp = calculateWorkoutXp({
+    const xp = calculateWorkoutXp({
       exercises: session.exercises,
       loadFactor: session.loadFactor,
       rpe: session.rpe
     });
-    const xp = awardedDays.has(dayKey)
-      ? 0
-      : Math.min(calculatedXp, DAILY_XP_LIMIT);
 
     session.xpAwarded = xp;
     await session.save();
 
     xpAdded += xp;
-    if (xp > 0) {
-      awardedDays.add(dayKey);
-    }
   }
 
   const minimumXp = (getStartingLevel(experienceLevel) - 1) * XP_PER_LEVEL;
   user.xp = Math.max(user.xp || 0, minimumXp) + xpAdded;
-  user.level = getProgressLevel({
-    xp: user.xp,
-    experienceLevel,
-    createdAt: user.createdAt
-  });
+  user.level = getLevelFromXp(user.xp);
   user.experienceLevel = getExperienceFromLevel(user.level);
 
   await user.save();

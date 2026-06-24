@@ -9,7 +9,7 @@ import 'admin_panel_screen.dart';
 import 'saved_routines_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({Key? key}) : super(key: key);
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -24,7 +24,6 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   bool _isAdmin = false;
   bool _isAdvanced = false;
-  bool _isBeginner = false;
 
   static const Color primaryColor = Color(0xFF1E3A8A);
   static const Color secondaryColor = Color(0xFF22C55E);
@@ -64,19 +63,14 @@ class _DashboardScreenState extends State<DashboardScreen>
     final admin = await ApiService.isAdmin();
     final profile = await ApiService.getProfile();
     final user = Map<String, dynamic>.from(profile?['user'] ?? {});
-    final experienceLevel =
-        user['experienceLevel']?.toString().toLowerCase() ?? '';
-    final rank = user['rank']?.toString().toLowerCase() ?? '';
-    final advanced = experienceLevel == 'avanzado';
-    final beginner =
-        experienceLevel == 'principiante' || rank.startsWith('principiante');
+    final advanced =
+        user['experienceLevel']?.toString().toLowerCase() == 'avanzado';
 
     if (!mounted) return;
 
     setState(() {
       _isAdmin = admin;
       _isAdvanced = advanced;
-      _isBeginner = beginner;
     });
   }
 
@@ -146,8 +140,8 @@ class _DashboardScreenState extends State<DashboardScreen>
         final Color mutedTextColor = isDark ? Colors.white70 : Colors.grey;
 
         final Color footerColor = isDark
-            ? const Color(0xFF0F172A).withValues(alpha: 0.90)
-            : Colors.white.withValues(alpha: 0.82);
+            ? const Color(0xFF0F172A).withOpacity(0.90)
+            : Colors.white.withOpacity(0.82);
 
         final Color footerTextColor = isDark ? Colors.white : darkText;
 
@@ -177,301 +171,270 @@ class _DashboardScreenState extends State<DashboardScreen>
                 opacity: _fadeAnimation,
                 child: SlideTransition(
                   position: _slideAnimation,
-                  child: ListView(
-                    padding: const EdgeInsets.all(24),
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const SizedBox(height: 8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 8),
 
-                          Row(
-                            children: [
-                              _buildLogoBadge(),
-                              const Spacer(),
-                              _buildThemeButton(),
-                              const SizedBox(width: 10),
-                              _buildProfileButton(),
-                            ],
+                        Row(
+                          children: [
+                            _buildLogoBadge(),
+                            const Spacer(),
+                            _buildThemeButton(),
+                            const SizedBox(width: 10),
+                            _buildProfileButton(),
+                          ],
+                        ),
+
+                        const SizedBox(height: 28),
+
+                        const Text(
+                          'Entrena inteligente,\nno mas fuerte.',
+                          style: TextStyle(
+                            fontSize: 34,
+                            height: 1.05,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 0,
                           ),
+                        ),
 
-                          const SizedBox(height: 28),
+                        const SizedBox(height: 12),
 
-                          const Text(
-                            'Entrena inteligente,\nno mas fuerte.',
-                            style: TextStyle(
-                              fontSize: 34,
-                              height: 1.05,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: 0,
-                            ),
+                        Text(
+                          'Registra tu bienestar diario, genera rutinas ajustadas y controla tu recuperacion muscular.',
+                          style: TextStyle(
+                            fontSize: 15,
+                            height: 1.4,
+                            color: Colors.white.withOpacity(0.9),
                           ),
+                        ),
 
-                          const SizedBox(height: 12),
+                        const SizedBox(height: 34),
 
-                          Text(
-                            'Registra tu bienestar diario, genera rutinas ajustadas y controla tu recuperacion muscular.',
-                            style: TextStyle(
-                              fontSize: 15,
-                              height: 1.4,
-                              color: Colors.white.withValues(alpha: 0.9),
-                            ),
-                          ),
-
-                          const SizedBox(height: 34),
-
-                          ScaleTransition(
-                            scale: _scaleAnimation,
-                            child: Container(
-                              padding: const EdgeInsets.all(22),
-                              decoration: BoxDecoration(
-                                color: cardColor,
-                                borderRadius: BorderRadius.circular(28),
-                                border: Border.all(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.08)
-                                      : Colors.transparent,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(
-                                      alpha: isDark ? 0.28 : 0.12,
-                                    ),
-                                    blurRadius: 24,
-                                    offset: const Offset(0, 12),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(14),
-                                        decoration: BoxDecoration(
-                                          color: secondaryColor.withValues(
-                                            alpha: isDark ? 0.18 : 0.12,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            18,
-                                          ),
-                                        ),
-                                        child: const Icon(
-                                          Icons.monitor_heart,
-                                          color: secondaryColor,
-                                          size: 32,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 14),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Panel de entrenamiento',
-                                              style: TextStyle(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.w900,
-                                                color: cardTextColor,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              'Bienestar, historial y descanso muscular.',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                color: mutedTextColor,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-
-                                  if (_isBeginner) ...[
-                                    const SizedBox(height: 18),
-                                    _buildBeginnerSchedule(
-                                      isDark: isDark,
-                                      titleColor: cardTextColor,
-                                      subtitleColor: mutedTextColor,
-                                    ),
-                                  ],
-
-                                  const SizedBox(height: 26),
-
-                                  ElevatedButton.icon(
-                                    onPressed: _goToWellnessForm,
-                                    icon: const Icon(Icons.add_circle_outline),
-                                    label: const Text('Registrar Bienestar'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: primaryColor,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 18,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18),
-                                      ),
-                                      elevation: 0,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 14),
-
-                                  OutlinedButton.icon(
-                                    onPressed: _goToHistory,
-                                    icon: const Icon(Icons.history),
-                                    label: const Text('Ver Historial'),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: isDark
-                                          ? Colors.white
-                                          : primaryColor,
-                                      side: BorderSide(
-                                        color: isDark
-                                            ? Colors.white70
-                                            : primaryColor,
-                                        width: 1.4,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 18,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18),
-                                      ),
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 14),
-
-                                  OutlinedButton.icon(
-                                    onPressed: _goToRecovery,
-                                    icon: const Icon(
-                                      Icons.health_and_safety_rounded,
-                                      color: warningColor,
-                                    ),
-                                    label: const Text('Descanso Muscular'),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: isDark
-                                          ? Colors.white
-                                          : primaryColor,
-                                      backgroundColor: isDark
-                                          ? primaryColor.withValues(alpha: 0.20)
-                                          : const Color(0xFFF8FAFC),
-                                      side: BorderSide(
-                                        color: isDark
-                                            ? Colors.white.withValues(
-                                                alpha: 0.28,
-                                              )
-                                            : primaryColor.withValues(
-                                                alpha: 0.35,
-                                              ),
-                                        width: 1.4,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 18,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18),
-                                      ),
-                                    ),
-                                  ),
-
-                                  if (_isAdvanced) ...[
-                                    const SizedBox(height: 14),
-                                    OutlinedButton.icon(
-                                      onPressed: _goToSavedRoutines,
-                                      icon: const Icon(Icons.bookmarks_rounded),
-                                      label: const Text('Mis Rutinas'),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: warningColor,
-                                        side: const BorderSide(
-                                          color: warningColor,
-                                          width: 1.4,
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 18,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            18,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-
-                                  if (_isAdmin) ...[
-                                    const SizedBox(height: 14),
-                                    OutlinedButton.icon(
-                                      onPressed: _goToAdminPanel,
-                                      icon: const Icon(
-                                        Icons.admin_panel_settings_rounded,
-                                      ),
-                                      label: const Text('Panel Admin'),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: adminColor,
-                                        side: const BorderSide(
-                                          color: adminColor,
-                                          width: 1.4,
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 18,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            18,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          Container(
-                            padding: const EdgeInsets.all(16),
+                        ScaleTransition(
+                          scale: _scaleAnimation,
+                          child: Container(
+                            padding: const EdgeInsets.all(22),
                             decoration: BoxDecoration(
-                              color: footerColor,
-                              borderRadius: BorderRadius.circular(22),
+                              color: cardColor,
+                              borderRadius: BorderRadius.circular(28),
                               border: Border.all(
                                 color: isDark
-                                    ? Colors.white.withValues(alpha: 0.08)
+                                    ? Colors.white.withOpacity(0.08)
                                     : Colors.transparent,
                               ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.shield_outlined,
-                                  color: isDark ? Colors.white : primaryColor,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'La carga y el descanso se ajustan según tu estado y sesiones recientes.',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: footerTextColor,
-                                    ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(
+                                    isDark ? 0.28 : 0.12,
                                   ),
+                                  blurRadius: 24,
+                                  offset: const Offset(0, 12),
                                 ),
                               ],
                             ),
-                          ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: secondaryColor.withOpacity(
+                                          isDark ? 0.18 : 0.12,
+                                        ),
+                                        borderRadius: BorderRadius.circular(18),
+                                      ),
+                                      child: const Icon(
+                                        Icons.monitor_heart,
+                                        color: secondaryColor,
+                                        size: 32,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Panel de entrenamiento',
+                                            style: TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w900,
+                                              color: cardTextColor,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Bienestar, historial y descanso muscular.',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: mutedTextColor,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
 
-                          const SizedBox(height: 8),
-                        ],
-                      ),
-                    ],
+                                const SizedBox(height: 26),
+
+                                ElevatedButton.icon(
+                                  onPressed: _goToWellnessForm,
+                                  icon: const Icon(Icons.add_circle_outline),
+                                  label: const Text('Registrar Bienestar'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primaryColor,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 18,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 14),
+
+                                OutlinedButton.icon(
+                                  onPressed: _goToHistory,
+                                  icon: const Icon(Icons.history),
+                                  label: const Text('Ver Historial'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: isDark
+                                        ? Colors.white
+                                        : primaryColor,
+                                    side: BorderSide(
+                                      color: isDark
+                                          ? Colors.white70
+                                          : primaryColor,
+                                      width: 1.4,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 18,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 14),
+
+                                OutlinedButton.icon(
+                                  onPressed: _goToRecovery,
+                                  icon: const Icon(
+                                    Icons.health_and_safety_rounded,
+                                  ),
+                                  label: const Text('Descanso Muscular'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.black87,
+                                    backgroundColor: warningColor,
+                                    side: const BorderSide(color: warningColor),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 18,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                  ),
+                                ),
+
+                                if (_isAdvanced) ...[
+                                  const SizedBox(height: 14),
+                                  OutlinedButton.icon(
+                                    onPressed: _goToSavedRoutines,
+                                    icon: const Icon(Icons.bookmarks_rounded),
+                                    label: const Text('Mis Rutinas'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: warningColor,
+                                      side: const BorderSide(
+                                        color: warningColor,
+                                        width: 1.4,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 18,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(18),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+
+                                if (_isAdmin) ...[
+                                  const SizedBox(height: 14),
+                                  OutlinedButton.icon(
+                                    onPressed: _goToAdminPanel,
+                                    icon: const Icon(
+                                      Icons.admin_panel_settings_rounded,
+                                    ),
+                                    label: const Text('Panel Admin'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: adminColor,
+                                      side: const BorderSide(
+                                        color: adminColor,
+                                        width: 1.4,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 18,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(18),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const Spacer(),
+
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: footerColor,
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.08)
+                                  : Colors.transparent,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.shield_outlined,
+                                color: isDark ? Colors.white : primaryColor,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'La carga y el descanso se ajustan según tu estado y sesiones recientes.',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: footerTextColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -479,119 +442,6 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
         );
       },
-    );
-  }
-
-  Widget _buildBeginnerSchedule({
-    required bool isDark,
-    required Color titleColor,
-    required Color subtitleColor,
-  }) {
-    const schedule = [('Lun', 'Piernas'), ('Mié', 'Pecho'), ('Vie', 'Espalda')];
-
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: isDark
-            ? primaryColor.withValues(alpha: 0.18)
-            : const Color(0xFFEFF6FF),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.12)
-              : const Color(0xFFBFDBFE),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.10)
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(
-                  Icons.calendar_month_rounded,
-                  color: primaryColor,
-                  size: 23,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Semana sugerida: 3 días',
-                  style: TextStyle(
-                    color: titleColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: schedule
-                .map(
-                  (item) => Expanded(
-                    child: Container(
-                      margin: EdgeInsets.only(
-                        right: item != schedule.last ? 7 : 0,
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 9,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primaryColor,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            item.$1,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            item.$2,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-          const SizedBox(height: 9),
-          Text(
-            'Alterna grupos musculares y deja al menos un día de descanso entre sesiones.',
-            style: TextStyle(
-              color: subtitleColor,
-              fontSize: 11,
-              height: 1.25,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -603,9 +453,9 @@ class _DashboardScreenState extends State<DashboardScreen>
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.16),
+            color: Colors.white.withOpacity(0.16),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+            border: Border.all(color: Colors.white.withOpacity(0.22)),
           ),
           child: const Icon(
             Icons.fitness_center_rounded,
@@ -637,9 +487,9 @@ class _DashboardScreenState extends State<DashboardScreen>
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.16),
+            color: Colors.white.withOpacity(0.16),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+            border: Border.all(color: Colors.white.withOpacity(0.22)),
           ),
           child: IconButton(
             onPressed: AppThemeController.toggleTheme,
@@ -659,9 +509,9 @@ class _DashboardScreenState extends State<DashboardScreen>
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
+        color: Colors.white.withOpacity(0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+        border: Border.all(color: Colors.white.withOpacity(0.22)),
       ),
       child: IconButton(
         onPressed: _goToProfile,

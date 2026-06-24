@@ -1,7 +1,6 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const mongoose = require("mongoose");
 
 const User = require("../models/User");
 const Wellness = require("../models/Wellness");
@@ -12,6 +11,49 @@ const SavedRoutine = require("../models/SavedRoutine");
 const { protect, requireAdmin } = require("../middleware/authMiddleware");
 
 const router = express.Router();
+const ANALYTICS_TIMEZONE = "America/Santiago";
+
+const dayLabels = {
+  1: "Domingo",
+  2: "Lunes",
+  3: "Martes",
+  4: "Miercoles",
+  5: "Jueves",
+  6: "Viernes",
+  7: "Sabado"
+};
+
+const moodLabels = {
+  1: "Muy bajo",
+  2: "Bajo",
+  3: "Neutro",
+  4: "Bueno",
+  5: "Excelente"
+};
+
+function percent(count, total) {
+  if (!total) return 0;
+  return Math.round((count / total) * 1000) / 10;
+}
+
+function countMap(items) {
+  return new Map(items.map((item) => [Number(item._id), item.count]));
+}
+
+function seriesFromRange({ items, min, max, labelFor, keyName, total }) {
+  const map = countMap(items);
+  return Array.from({ length: max - min + 1 }, (_, index) => {
+    const key = min + index;
+    const count = map.get(key) || 0;
+
+    return {
+      [keyName]: key,
+      label: labelFor(key),
+      count,
+      percentage: percent(count, total)
+    };
+  });
+}
 
 router.post("/login", async (req, res) => {
   try {
@@ -122,82 +164,6 @@ router.get("/users", protect, requireAdmin, async (req, res) => {
   }
 });
 
-router.get("/stats", protect, requireAdmin, async (req, res) => {
-  try {
-    const totalUsers = await User.countDocuments();
-    
-    const usersPerRank = await User.aggregate([
-      { $group: { _id: "$level", count: { $sum: 1 } } },
-      { $sort: { _id: 1 } }
-    ]);
-    
-    const topExercises = await WorkoutSession.aggregate([
-      { $unwind: "$exercises" },
-      { 
-        $group: { 
-          _id: { id: "$exercises.exerciseId", name: "$exercises.name" }, 
-          count: { $sum: 1 } 
-        } 
-      },
-      { $sort: { count: -1 } },
-      { $limit: 5 },
-      { 
-        $project: { 
-          _id: 0, 
-          exerciseId: "$_id.id", 
-          name: "$_id.name", 
-          count: 1 
-        } 
-      }
-    ]);
-    
-    res.json({ totalUsers, usersPerRank, topExercises });
-  } catch (error) {
-    console.error("Error obteniendo estadisticas admin:", error);
-    res.status(500).json({
-      message: "Error al obtener estadisticas"
-    });
-  }
-});
-
-router.get("/users/:id/stats", protect, requireAdmin, async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id).select("level xp");
-    
-    if (!user) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    }
-    
-    const topExercises = await WorkoutSession.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(req.params.id) } },
-      { $unwind: "$exercises" },
-      { 
-        $group: { 
-          _id: { id: "$exercises.exerciseId", name: "$exercises.name" }, 
-          count: { $sum: 1 } 
-        } 
-      },
-      { $sort: { count: -1 } },
-      { $limit: 5 },
-      { 
-        $project: { 
-          _id: 0, 
-          exerciseId: "$_id.id", 
-          name: "$_id.name", 
-          count: 1 
-        } 
-      }
-    ]);
-
-    res.json({ level: user.level, xp: user.xp, topExercises });
-  } catch (error) {
-    console.error("Error obteniendo estadisticas de usuario:", error);
-    res.status(500).json({
-      message: "Error al obtener estadisticas de usuario"
-    });
-  }
-});
-
 router.delete("/users/:id", protect, requireAdmin, async (req, res) => {
   try {
     const userId = req.params.id;
@@ -239,6 +205,217 @@ router.delete("/users/:id", protect, requireAdmin, async (req, res) => {
 
     res.status(500).json({
       message: "Error al eliminar usuario"
+    });
+  }
+});
+
+router.get("/analytics", protect, requireAdmin, async (req, res) => {
+  try {
+    const completedSessionMatch = {
+      completedAt: { $ne: null, $exists: true }
+    };
+
+    const [
+      totalUsers,
+      totalWorkoutSessions,
+      completedWorkoutSessions,
+      totalSavedRoutines,
+      totalWellnessEntries,
+      commonExerciseDays,
+      weeklyTrainingDays,
+      rpeFrequency,
+      preWorkoutMood
+    ] = await Promise.all([
+      User.countDocuments(),
+      WorkoutSession.countDocuments(),
+      WorkoutSession.countDocuments(completedSessionMatch),
+      SavedRoutine.countDocuments(),
+      Wellness.countDocuments(),
+      WorkoutSession.aggregate([
+        { $match: completedSessionMatch },
+        {
+          $project: {
+            dayOfWeek: {
+              $dayOfWeek: {
+                date: "$completedAt",
+                timezone: ANALYTICS_TIMEZONE
+              }
+            }
+          }
+        },
+        { $group: { _id: "$dayOfWeek", count: { $sum: 1 } } },
+        { $sort: { _id: 1 } }
+      ]),
+      WorkoutSession.aggregate([
+        { $match: completedSessionMatch },
+        {
+          $project: {
+            userId: 1,
+            isoYear: {
+              $isoWeekYear: {
+                date: "$completedAt",
+                timezone: ANALYTICS_TIMEZONE
+              }
+            },
+            isoWeek: {
+              $isoWeek: {
+                date: "$completedAt",
+                timezone: ANALYTICS_TIMEZONE
+              }
+            },
+            dayKey: {
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$completedAt",
+                timezone: ANALYTICS_TIMEZONE
+              }
+            }
+          }
+        },
+        {
+          $group: {
+            _id: {
+              userId: "$userId",
+              isoYear: "$isoYear",
+              isoWeek: "$isoWeek"
+            },
+            days: { $addToSet: "$dayKey" }
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            daysPerWeek: { $size: "$days" }
+          }
+        },
+        { $group: { _id: "$daysPerWeek", count: { $sum: 1 } } },
+        { $sort: { _id: 1 } }
+      ]),
+      WorkoutSession.aggregate([
+        {
+          $match: {
+            ...completedSessionMatch,
+            rpe: { $gte: 1, $lte: 10 }
+          }
+        },
+        { $group: { _id: "$rpe", count: { $sum: 1 } } },
+        { $sort: { _id: 1 } }
+      ]),
+      WorkoutSession.aggregate([
+        { $match: completedSessionMatch },
+        {
+          $lookup: {
+            from: Wellness.collection.name,
+            let: {
+              sessionUserId: { $toString: "$userId" },
+              sessionCreatedAt: "$createdAt"
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$userId", "$$sessionUserId"] },
+                      { $lte: ["$createdAt", "$$sessionCreatedAt"] }
+                    ]
+                  }
+                }
+              },
+              { $sort: { createdAt: -1 } },
+              { $limit: 1 },
+              { $project: { mood: 1 } }
+            ],
+            as: "preWorkoutWellness"
+          }
+        },
+        { $unwind: "$preWorkoutWellness" },
+        { $group: { _id: "$preWorkoutWellness.mood", count: { $sum: 1 } } },
+        { $sort: { _id: 1 } }
+      ])
+    ]);
+
+    const totalUserWeeks = weeklyTrainingDays.reduce(
+      (total, item) => total + item.count,
+      0
+    );
+    const totalRpeAnswers = rpeFrequency.reduce(
+      (total, item) => total + item.count,
+      0
+    );
+    const totalMoodMatches = preWorkoutMood.reduce(
+      (total, item) => total + item.count,
+      0
+    );
+    const totalWeeklyDays = weeklyTrainingDays.reduce(
+      (total, item) => total + Number(item._id) * item.count,
+      0
+    );
+    const totalRpeScore = rpeFrequency.reduce(
+      (total, item) => total + Number(item._id) * item.count,
+      0
+    );
+    const totalMoodScore = preWorkoutMood.reduce(
+      (total, item) => total + Number(item._id) * item.count,
+      0
+    );
+
+    res.json({
+      totals: {
+        totalUsers,
+        totalWorkoutSessions,
+        completedWorkoutSessions,
+        totalSavedRoutines,
+        totalWellnessEntries,
+        totalUserWeeks,
+        averageDaysPerWeek: totalUserWeeks
+          ? Math.round((totalWeeklyDays / totalUserWeeks) * 10) / 10
+          : 0,
+        averageRpe: totalRpeAnswers
+          ? Math.round((totalRpeScore / totalRpeAnswers) * 10) / 10
+          : 0,
+        averagePreWorkoutMood: totalMoodMatches
+          ? Math.round((totalMoodScore / totalMoodMatches) * 10) / 10
+          : 0
+      },
+      commonExerciseDays: seriesFromRange({
+        items: commonExerciseDays,
+        min: 1,
+        max: 7,
+        keyName: "dayOfWeek",
+        labelFor: (key) => dayLabels[key],
+        total: completedWorkoutSessions
+      }),
+      weeklyDayFrequency: seriesFromRange({
+        items: weeklyTrainingDays,
+        min: 1,
+        max: 7,
+        keyName: "daysPerWeek",
+        labelFor: (key) => `${key} ${key === 1 ? "dia" : "dias"}`,
+        total: totalUserWeeks
+      }),
+      rpeFrequency: seriesFromRange({
+        items: rpeFrequency,
+        min: 1,
+        max: 10,
+        keyName: "rpe",
+        labelFor: (key) => `RPE ${key}`,
+        total: totalRpeAnswers
+      }),
+      preWorkoutMood: seriesFromRange({
+        items: preWorkoutMood,
+        min: 1,
+        max: 5,
+        keyName: "mood",
+        labelFor: (key) => moodLabels[key],
+        total: totalMoodMatches
+      }),
+      generatedAt: new Date()
+    });
+  } catch (error) {
+    console.error("Error obteniendo analitica admin:", error);
+
+    res.status(500).json({
+      message: "Error al obtener analitica"
     });
   }
 });

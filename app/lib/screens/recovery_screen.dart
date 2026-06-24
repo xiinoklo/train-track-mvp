@@ -1,12 +1,10 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme_controller.dart';
 import '../utils/navigation_guard.dart';
 
 class RecoveryScreen extends StatefulWidget {
-  const RecoveryScreen({super.key});
+  const RecoveryScreen({Key? key}) : super(key: key);
 
   @override
   State<RecoveryScreen> createState() => _RecoveryScreenState();
@@ -19,10 +17,6 @@ class _RecoveryScreenState extends State<RecoveryScreen>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-
-  String? _openMuscleGroup;
-  List<String> _openMuscles = const [];
-  List<dynamic> _overlayRecovery = const [];
 
   static const Color primaryColor = Color(0xFF1E3A8A);
   static const Color secondaryColor = Color(0xFF22C55E);
@@ -137,27 +131,6 @@ class _RecoveryScreenState extends State<RecoveryScreen>
     };
   }
 
-  Map<String, dynamic> _childRecoveryItem(
-    List recovery,
-    String parentGroup,
-    String muscleGroup,
-  ) {
-    final child = _recoveryItemFor(recovery, muscleGroup);
-    final parent = _recoveryItemFor(recovery, parentGroup);
-    final childHours = _asInt(child['remainingHours']);
-    final parentHours = _asInt(parent['remainingHours']);
-
-    if (parentHours <= childHours) {
-      return child;
-    }
-
-    return {
-      ...parent,
-      'muscleGroup': muscleGroup,
-      'message': 'Descanso heredado de ${_capitalize(parentGroup)}',
-    };
-  }
-
   String _statusText(String status, int remainingHours) {
     if (status == 'ready' || remainingHours == 0) {
       return 'Listo';
@@ -193,7 +166,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
         final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[700]!;
 
         final Color borderColor = isDark
-            ? Colors.white.withValues(alpha: 0.08)
+            ? Colors.white.withOpacity(0.08)
             : Colors.transparent;
 
         return Scaffold(
@@ -217,99 +190,89 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                 stops: const [0.0, 0.34, 0.34],
               ),
             ),
-            child: Stack(
-              children: [
-                SafeArea(
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: Column(
-                        children: [
-                          _buildHeader(context, isDark),
-                          Expanded(
-                            child: FutureBuilder<Map<String, dynamic>>(
-                              future: recoveryFuture,
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return const Center(
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                    ),
-                                  );
-                                }
+            child: SafeArea(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Column(
+                    children: [
+                      _buildHeader(context, isDark),
+                      Expanded(
+                        child: FutureBuilder<Map<String, dynamic>>(
+                          future: recoveryFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
+                              );
+                            }
 
-                                if (snapshot.hasError) {
-                                  return _buildErrorState(
-                                    error: snapshot.error.toString(),
+                            if (snapshot.hasError) {
+                              return _buildErrorState(
+                                error: snapshot.error.toString(),
+                                isDark: isDark,
+                                cardColor: cardColor,
+                                titleColor: titleColor,
+                                subtitleColor: subtitleColor,
+                                borderColor: borderColor,
+                              );
+                            }
+
+                            final data = snapshot.data;
+                            final List recovery = data?['recovery'] ?? [];
+
+                            if (recovery.isEmpty) {
+                              return _buildEmptyState(
+                                isDark: isDark,
+                                cardColor: cardColor,
+                                titleColor: titleColor,
+                                subtitleColor: subtitleColor,
+                                borderColor: borderColor,
+                              );
+                            }
+
+                            return RefreshIndicator(
+                              onRefresh: _refreshRecovery,
+                              color: primaryColor,
+                              child: ListView(
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  8,
+                                  20,
+                                  24,
+                                ),
+                                children: [
+                                  _buildSummaryCard(
+                                    recovery: recovery,
                                     isDark: isDark,
                                     cardColor: cardColor,
                                     titleColor: titleColor,
                                     subtitleColor: subtitleColor,
                                     borderColor: borderColor,
-                                  );
-                                }
-
-                                final data = snapshot.data;
-                                final List recovery = data?['recovery'] ?? [];
-
-                                if (recovery.isEmpty) {
-                                  return _buildEmptyState(
-                                    isDark: isDark,
-                                    cardColor: cardColor,
-                                    titleColor: titleColor,
-                                    subtitleColor: subtitleColor,
-                                    borderColor: borderColor,
-                                  );
-                                }
-
-                                return RefreshIndicator(
-                                  onRefresh: _refreshRecovery,
-                                  color: primaryColor,
-                                  child: ListView(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      20,
-                                      8,
-                                      20,
-                                      24,
-                                    ),
-                                    children: [
-                                      _buildSummaryCard(
-                                        recovery: recovery,
-                                        isDark: isDark,
-                                        cardColor: cardColor,
-                                        titleColor: titleColor,
-                                        subtitleColor: subtitleColor,
-                                        borderColor: borderColor,
-                                      ),
-                                      const SizedBox(height: 18),
-                                      _buildMuscleDashboard(
-                                        recovery: recovery,
-                                        isDark: isDark,
-                                        cardColor: cardColor,
-                                        titleColor: titleColor,
-                                        subtitleColor: subtitleColor,
-                                        borderColor: borderColor,
-                                      ),
-                                    ],
                                   ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
+                                  const SizedBox(height: 18),
+                                  _buildMuscleDashboard(
+                                    recovery: recovery,
+                                    isDark: isDark,
+                                    cardColor: cardColor,
+                                    titleColor: titleColor,
+                                    subtitleColor: subtitleColor,
+                                    borderColor: borderColor,
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
-                if (_openMuscleGroup != null)
-                  _buildInPageMuscleOverlay(
-                    isDark: isDark,
-                    titleColor: titleColor,
-                    subtitleColor: subtitleColor,
-                  ),
-              ],
+              ),
             ),
           ),
         );
@@ -369,7 +332,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
+            color: Colors.black.withOpacity(isDark ? 0.35 : 0.12),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -380,7 +343,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: secondaryColor.withValues(alpha: isDark ? 0.20 : 0.12),
+              color: secondaryColor.withOpacity(isDark ? 0.20 : 0.12),
               borderRadius: BorderRadius.circular(18),
             ),
             child: const Icon(
@@ -451,7 +414,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.045),
+            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -465,7 +428,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: isDark ? 0.22 : 0.1),
+                  color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
@@ -489,7 +452,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Toca los grupos con varias zonas para ver cada músculo.',
+                      'Vista rapida por grupo muscular.',
                       style: TextStyle(
                         fontSize: 12,
                         color: subtitleColor,
@@ -516,232 +479,65 @@ class _RecoveryScreenState extends State<RecoveryScreen>
 
           const SizedBox(height: 18),
 
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            itemCount: groups.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 14,
-              crossAxisSpacing: 14,
-              childAspectRatio: 0.86,
-            ),
-            itemBuilder: (context, index) {
-              final entry = groups.entries.elementAt(index);
-              final isExpandable = entry.value.length > 1;
+          ...groups.entries.map((entry) {
+            final isExpandable = entry.value.length > 1;
 
-              return _buildMuscleTile(
-                item: _groupRecoveryItem(recovery, entry.key, entry.value),
-                displayName: entry.key,
-                childCount: isExpandable ? entry.value.length : null,
-                onTap: isExpandable
-                    ? () => _openMuscleGroupOverlay(
-                        group: entry.key,
-                        muscles: entry.value,
-                        recovery: recovery,
-                      )
-                    : null,
-                isDark: isDark,
-                titleColor: titleColor,
-                subtitleColor: subtitleColor,
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Map<String, dynamic> _groupRecoveryItem(
-    List recovery,
-    String group,
-    List<String> muscles,
-  ) {
-    final candidates = <Map<String, dynamic>>[
-      _recoveryItemFor(recovery, group),
-      ...muscles.map((muscle) => _childRecoveryItem(recovery, group, muscle)),
-    ];
-
-    candidates.sort(
-      (a, b) =>
-          _asInt(b['remainingHours']).compareTo(_asInt(a['remainingHours'])),
-    );
-
-    return {...candidates.first, 'muscleGroup': group};
-  }
-
-  void _openMuscleGroupOverlay({
-    required String group,
-    required List<String> muscles,
-    required List recovery,
-  }) {
-    setState(() {
-      _openMuscleGroup = group;
-      _openMuscles = List<String>.from(muscles);
-      _overlayRecovery = List<dynamic>.from(recovery);
-    });
-  }
-
-  void _closeMuscleGroupOverlay() {
-    setState(() {
-      _openMuscleGroup = null;
-      _openMuscles = const [];
-      _overlayRecovery = const [];
-    });
-  }
-
-  Widget _buildInPageMuscleOverlay({
-    required bool isDark,
-    required Color titleColor,
-    required Color subtitleColor,
-  }) {
-    final group = _openMuscleGroup!;
-    final sheetColor = isDark
-        ? const Color(0xFF0F172A).withValues(alpha: 0.97)
-        : Colors.white.withValues(alpha: 0.97);
-
-    return Positioned.fill(
-      child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0, end: 1),
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-        builder: (context, value, child) {
-          return Stack(
-            children: [
-              Positioned.fill(
-                child: GestureDetector(
-                  onTap: _closeMuscleGroupOverlay,
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(
-                      sigmaX: 7 * value,
-                      sigmaY: 7 * value,
-                    ),
-                    child: Container(
-                      color: Colors.black.withValues(alpha: 0.30 * value),
-                    ),
+            if (!isExpandable) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: SizedBox(
+                  height: 170,
+                  child: _buildMuscleTile(
+                    item: _recoveryItemFor(recovery, entry.value.first),
+                    isDark: isDark,
+                    titleColor: titleColor,
+                    subtitleColor: subtitleColor,
                   ),
                 ),
+              );
+            }
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.04)
+                    : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(22),
               ),
-              SafeArea(
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Transform.translate(
-                    offset: Offset(0, 55 * (1 - value)),
-                    child: Opacity(
-                      opacity: value,
-                      child: Container(
-                        width: MediaQuery.of(context).size.width * 0.88,
-                        constraints: BoxConstraints(
-                          maxWidth: 390,
-                          maxHeight: MediaQuery.of(context).size.height * 0.72,
-                        ),
-                        padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
-                        decoration: BoxDecoration(
-                          color: sheetColor,
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.12)
-                                : Colors.white,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.30),
-                              blurRadius: 34,
-                              offset: const Offset(0, 16),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  width: 46,
-                                  height: 46,
-                                  decoration: BoxDecoration(
-                                    color: warningColor.withValues(alpha: 0.14),
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                  child: Icon(
-                                    _getMuscleIcon(group),
-                                    color: warningColor,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _capitalize(group),
-                                        style: TextStyle(
-                                          color: titleColor,
-                                          fontSize: 21,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Descanso individual de ${_openMuscles.length} músculos',
-                                        style: TextStyle(
-                                          color: subtitleColor,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: _closeMuscleGroupOverlay,
-                                  icon: const Icon(Icons.close_rounded),
-                                  color: subtitleColor,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 18),
-                            Expanded(
-                              child: GridView.builder(
-                                padding: const EdgeInsets.only(
-                                  left: 6,
-                                  right: 6,
-                                  bottom: 8,
-                                ),
-                                itemCount: _openMuscles.length,
-                                gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 2,
-                                      mainAxisSpacing: 12,
-                                      crossAxisSpacing: 12,
-                                      childAspectRatio: 0.86,
-                                    ),
-                                itemBuilder: (context, index) {
-                                  return _buildMuscleTile(
-                                    item: _childRecoveryItem(
-                                      _overlayRecovery,
-                                      group,
-                                      _openMuscles[index],
-                                    ),
-                                    isDark: isDark,
-                                    titleColor: titleColor,
-                                    subtitleColor: subtitleColor,
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
+              child: ExpansionTile(
+                shape: const Border(),
+                collapsedShape: const Border(),
+                leading: Icon(_getMuscleIcon(entry.key), color: warningColor),
+                title: Text(
+                  _capitalize(entry.key),
+                  style: TextStyle(
+                    color: titleColor,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                subtitle: Text(
+                  '${entry.value.length} músculos específicos',
+                  style: TextStyle(color: subtitleColor),
+                ),
+                children: entry.value.map((muscle) {
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    child: SizedBox(
+                      height: 170,
+                      child: _buildMuscleTile(
+                        item: _recoveryItemFor(recovery, muscle),
+                        isDark: isDark,
+                        titleColor: titleColor,
+                        subtitleColor: subtitleColor,
                       ),
                     ),
-                  ),
-                ),
+                  );
+                }).toList(),
               ),
-            ],
-          );
-        },
+            );
+          }),
+        ],
       ),
     );
   }
@@ -751,9 +547,6 @@ class _RecoveryScreenState extends State<RecoveryScreen>
     required bool isDark,
     required Color titleColor,
     required Color subtitleColor,
-    String? displayName,
-    int? childCount,
-    VoidCallback? onTap,
   }) {
     final String muscleGroup = item['muscleGroup'] ?? 'grupo';
     final String status = item['status'] ?? 'ready';
@@ -763,129 +556,106 @@ class _RecoveryScreenState extends State<RecoveryScreen>
     final Color statusColor = _getStatusColor(status, remainingHours);
     final double progress = _recoveryProgress(remainingHours);
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark
+            ? statusColor.withOpacity(0.12)
+            : statusColor.withOpacity(0.08),
         borderRadius: BorderRadius.circular(24),
-        child: Ink(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: isDark
-                ? statusColor.withValues(alpha: 0.12)
-                : statusColor.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: statusColor.withValues(alpha: isDark ? 0.45 : 0.35),
-              width: 1.4,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        border: Border.all(
+          color: statusColor.withOpacity(isDark ? 0.45 : 0.35),
+          width: 1.4,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(
-                        alpha: isDark ? 0.20 : 0.14,
-                      ),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Icon(
-                      _getMuscleIcon(displayName ?? muscleGroup),
-                      color: statusColor,
-                      size: 24,
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF020617).withValues(alpha: 0.85)
-                          : Colors.white.withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      remainingHours == 0 ? 'OK' : '${remainingHours}h',
-                      style: TextStyle(
-                        color: statusColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                ],
+              Container(
+                width: 42,
+                height: 42,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(isDark ? 0.20 : 0.14),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Icon(
+                  _getMuscleIcon(muscleGroup),
+                  color: statusColor,
+                  size: 24,
+                ),
               ),
               const Spacer(),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _capitalize(displayName ?? muscleGroup),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                        color: titleColor,
-                      ),
-                    ),
-                  ),
-                  if (onTap != null)
-                    Icon(
-                      Icons.keyboard_arrow_right_rounded,
-                      size: 17,
-                      color: statusColor,
-                    ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                childCount == null
-                    ? _statusText(status, remainingHours)
-                    : 'Incluye $childCount músculos · Ver detalle',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: childCount == null ? 12 : 10,
-                  fontWeight: FontWeight.w800,
-                  color: statusColor,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF020617).withOpacity(0.85)
+                      : Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(999),
                 ),
-              ),
-              const SizedBox(height: 9),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(999),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 7,
-                  backgroundColor: isDark
-                      ? Colors.white.withValues(alpha: 0.12)
-                      : Colors.white.withValues(alpha: 0.8),
-                  valueColor: AlwaysStoppedAnimation<Color>(statusColor),
-                ),
-              ),
-              if (lastRpe != null && childCount == null) ...[
-                const SizedBox(height: 7),
-                Text(
-                  'Ultimo RPE: $lastRpe',
+                child: Text(
+                  remainingHours == 0 ? 'OK' : '${remainingHours}h',
                   style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: subtitleColor,
+                    color: statusColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-              ],
+              ),
             ],
           ),
-        ),
+
+          const Spacer(),
+
+          Text(
+            _capitalize(muscleGroup),
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+              color: titleColor,
+            ),
+          ),
+
+          const SizedBox(height: 4),
+
+          Text(
+            _statusText(status, remainingHours),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: statusColor,
+            ),
+          ),
+
+          const SizedBox(height: 9),
+
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 7,
+              backgroundColor: isDark
+                  ? Colors.white.withOpacity(0.12)
+                  : Colors.white.withOpacity(0.8),
+              valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+            ),
+          ),
+
+          if (lastRpe != null) ...[
+            const SizedBox(height: 7),
+            Text(
+              'Ultimo RPE: $lastRpe',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: subtitleColor,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -933,7 +703,7 @@ class _RecoveryScreenState extends State<RecoveryScreen>
             border: Border.all(color: borderColor),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.08),
+                color: Colors.black.withOpacity(isDark ? 0.30 : 0.08),
                 blurRadius: 22,
                 offset: const Offset(0, 10),
               ),
@@ -992,8 +762,8 @@ class _RecoveryScreenState extends State<RecoveryScreen>
             borderRadius: BorderRadius.circular(28),
             border: Border.all(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : dangerColor.withValues(alpha: 0.2),
+                  ? Colors.white.withOpacity(0.08)
+                  : dangerColor.withOpacity(0.2),
             ),
           ),
           child: Column(
@@ -1042,9 +812,9 @@ class _RecoveryScreenState extends State<RecoveryScreen>
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
+        color: Colors.white.withOpacity(0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+        border: Border.all(color: Colors.white.withOpacity(0.22)),
       ),
       child: IconButton(
         onPressed: AppThemeController.toggleTheme,
