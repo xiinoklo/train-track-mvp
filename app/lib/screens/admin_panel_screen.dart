@@ -1395,183 +1395,161 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   }
 
   void _showUserRoutines({required String userId, required String name}) {
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
+      builder: (dialogContext) {
         final isDark = AppThemeController.themeMode.value == ThemeMode.dark;
+        final dialogColor = isDark ? darkCard : Colors.white;
         final titleColor = isDark ? Colors.white : darkText;
         final subtitleColor = isDark ? Colors.white70 : Colors.grey[700]!;
-
         final innerCardColor = isDark
             ? const Color(0xFF111827)
-            : const Color(0xFFFFFFFF);
+            : const Color(0xFFF8FAFC);
         final innerBorderColor = isDark
             ? Colors.white.withValues(alpha: 0.10)
             : const Color(0xFFE2E8F0);
 
-        return SafeArea(
-          top: false,
-          child: Container(
-            height: MediaQuery.of(sheetContext).size.height * 0.86,
-            padding: const EdgeInsets.fromLTRB(18, 10, 18, 20),
-            decoration: BoxDecoration(
-              color: isDark ? darkCard : const Color(0xFFF8FAFC),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(30),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 46,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: subtitleColor.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
+        return AlertDialog(
+          backgroundColor: dialogColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.bookmark_added_rounded, color: warningColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Rutinas creadas de $name',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Rutinas creadas de $name',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: titleColor,
-                              fontSize: 21,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            'Solo rutinas guardadas por el usuario',
-                            style: TextStyle(
-                              color: subtitleColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
+              ),
+            ],
+          ),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 420,
+              maxHeight: MediaQuery.of(dialogContext).size.height * 0.68,
+            ),
+            child: SizedBox(
+              width: MediaQuery.of(dialogContext).size.width * 0.82,
+              child: FutureBuilder<Map<String, dynamic>>(
+                future: ApiService.getAdminUserRoutines(userId),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SizedBox(
+                      height: 180,
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return SizedBox(
+                      height: 180,
+                      child: Center(
+                        child: Text(
+                          'No se pudieron cargar las rutinas creadas',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: subtitleColor),
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(sheetContext),
-                      icon: const Icon(Icons.close_rounded),
-                      color: titleColor,
-                      tooltip: 'Cerrar',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Expanded(
-                  child: FutureBuilder<Map<String, dynamic>>(
-                    future: ApiService.getAdminUserRoutines(userId),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {
-                        return Center(
-                          child: Text(
-                            'No se pudieron cargar las rutinas creadas',
-                            style: TextStyle(color: subtitleColor),
-                          ),
-                        );
-                      }
+                    );
+                  }
 
-                      final saved = _asMapList(snapshot.data?['savedRoutines']);
-                      final totalExercises = saved.fold<int>(0, (sum, item) {
-                        return sum + _asMapList(item['exercises']).length;
-                      });
+                  final saved = _asMapList(snapshot.data?['savedRoutines']);
+                  final totalExercises = saved.fold<int>(0, (sum, item) {
+                    return sum + _asMapList(item['exercises']).length;
+                  });
 
-                      if (saved.isEmpty) {
-                        return _buildCreatedRoutinesEmptyState(
+                  if (saved.isEmpty) {
+                    return SizedBox(
+                      height: 260,
+                      child: _buildCreatedRoutinesEmptyState(
+                        isDark: isDark,
+                        titleColor: titleColor,
+                        subtitleColor: subtitleColor,
+                      ),
+                    );
+                  }
+
+                  return SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildRoutinesOverview(
+                          routineCount: saved.length,
+                          exerciseCount: totalExercises,
                           isDark: isDark,
                           titleColor: titleColor,
                           subtitleColor: subtitleColor,
-                        );
-                      }
+                        ),
+                        const SizedBox(height: 12),
+                        ...saved.asMap().entries.map((entry) {
+                          final item = entry.value;
 
-                      return Column(
-                        children: [
-                          _buildRoutinesOverview(
-                            routineCount: saved.length,
-                            exerciseCount: totalExercises,
-                            isDark: isDark,
-                            titleColor: titleColor,
-                            subtitleColor: subtitleColor,
-                          ),
-                          const SizedBox(height: 12),
-                          Expanded(
-                            child: ListView.separated(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              itemCount: saved.length,
-                              separatorBuilder: (_, index) =>
-                                  const SizedBox(height: 12),
-                              itemBuilder: (context, index) {
-                                final item = saved[index];
-
-                                return _buildCreatedRoutineCard(
-                                  routine: item,
-                                  index: index,
-                                  isDark: isDark,
-                                  titleColor: titleColor,
-                                  subtitleColor: subtitleColor,
-                                  innerCardColor: innerCardColor,
-                                  innerBorderColor: innerBorderColor,
-                                  onDelete: () async {
-                                    final navigator = Navigator.of(
-                                      sheetContext,
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              bottom: entry.key == saved.length - 1 ? 0 : 12,
+                            ),
+                            child: _buildCreatedRoutineCard(
+                              routine: item,
+                              index: entry.key,
+                              isDark: isDark,
+                              titleColor: titleColor,
+                              subtitleColor: subtitleColor,
+                              innerCardColor: innerCardColor,
+                              innerBorderColor: innerBorderColor,
+                              onDelete: () async {
+                                final navigator = Navigator.of(dialogContext);
+                                final messenger = ScaffoldMessenger.of(context);
+                                final success =
+                                    await ApiService.deleteAdminRoutine(
+                                      routineId: item['_id'].toString(),
+                                      type: 'saved',
                                     );
-                                    final messenger = ScaffoldMessenger.of(
-                                      context,
-                                    );
-                                    final success =
-                                        await ApiService.deleteAdminRoutine(
-                                          routineId: item['_id'].toString(),
-                                          type: 'saved',
-                                        );
-                                    if (!mounted) return;
-                                    navigator.pop();
-                                    if (success) {
-                                      _refreshUsers();
-                                      _showUserRoutines(
-                                        userId: userId,
-                                        name: name,
-                                      );
-                                    } else {
-                                      messenger.showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'No se pudo eliminar la rutina',
-                                          ),
-                                          backgroundColor: dangerColor,
-                                        ),
-                                      );
-                                    }
-                                  },
-                                );
+                                if (!mounted) return;
+                                navigator.pop();
+                                if (success) {
+                                  _refreshUsers();
+                                  _showUserRoutines(userId: userId, name: name);
+                                } else {
+                                  messenger.showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'No se pudo eliminar la rutina',
+                                      ),
+                                      backgroundColor: dangerColor,
+                                    ),
+                                  );
+                                }
                               },
                             ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
+                          );
+                        }),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Cerrar',
+                style: TextStyle(
+                  color: titleColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         );
       },
     );
