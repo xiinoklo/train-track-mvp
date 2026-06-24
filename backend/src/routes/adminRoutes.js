@@ -611,16 +611,11 @@ router.delete("/users/:id", protect, requireAdmin, async (req, res) => {
 
 router.get("/users/:id/routines", protect, requireAdmin, async (req, res) => {
   try {
-    const [sessions, savedRoutines] = await Promise.all([
-      WorkoutSession.find({ userId: req.params.id })
-        .sort({ createdAt: -1 })
-        .lean(),
-      SavedRoutine.find({ userId: req.params.id })
-        .sort({ createdAt: -1 })
-        .lean()
-    ]);
+    const savedRoutines = await SavedRoutine.find({ userId: req.params.id })
+      .sort({ createdAt: -1 })
+      .lean();
 
-    res.json({ sessions, savedRoutines });
+    res.json({ sessions: [], savedRoutines });
   } catch (error) {
     res.status(500).json({ message: "Error al obtener rutinas del usuario" });
   }
@@ -628,8 +623,13 @@ router.get("/users/:id/routines", protect, requireAdmin, async (req, res) => {
 
 router.delete("/routines/:type/:id", protect, requireAdmin, async (req, res) => {
   try {
-    const model = req.params.type === "saved" ? SavedRoutine : WorkoutSession;
-    const routine = await model.findByIdAndDelete(req.params.id);
+    if (req.params.type !== "saved") {
+      return res.status(400).json({
+        message: "Solo se pueden eliminar rutinas creadas"
+      });
+    }
+
+    const routine = await SavedRoutine.findByIdAndDelete(req.params.id);
 
     if (!routine) {
       return res.status(404).json({ message: "Rutina no encontrada" });

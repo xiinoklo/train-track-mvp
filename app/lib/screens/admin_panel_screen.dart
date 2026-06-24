@@ -455,8 +455,6 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   final email = (user['email'] ?? 'Sin correo').toString();
                   final username = (user['username'] ?? '').toString();
                   final role = (user['role'] ?? 'user').toString();
-                  final workoutCount =
-                      (user['workoutCount'] as num?)?.toInt() ?? 0;
                   final savedRoutineCount =
                       (user['savedRoutineCount'] as num?)?.toInt() ?? 0;
                   final name = username.isNotEmpty ? username : email;
@@ -465,7 +463,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     name: name,
                     email: email,
                     role: role,
-                    routineCount: workoutCount + savedRoutineCount,
+                    routineCount: savedRoutineCount,
                     isDark: isDark,
                     titleColor: titleColor,
                     subtitleColor: subtitleColor,
@@ -571,7 +569,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '$routineCount rutinas',
+                  '$routineCount ${routineCount == 1 ? 'rutina creada' : 'rutinas creadas'}',
                   style: const TextStyle(
                     color: warningColor,
                     fontSize: 11,
@@ -588,7 +586,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   : () => _showUserRoutines(userId: userId, name: name),
               icon: const Icon(Icons.list_alt_rounded),
               color: primaryColor,
-              tooltip: 'Ver rutinas',
+              tooltip: 'Ver rutinas creadas',
             ),
           if (!isAdmin)
             IconButton(
@@ -991,6 +989,411 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     );
   }
 
+  String _formatShortDate(dynamic value) {
+    final raw = value?.toString() ?? '';
+    if (raw.isEmpty) return '';
+
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return '';
+
+    final localDate = parsed.toLocal();
+    final day = localDate.day.toString().padLeft(2, '0');
+    final month = localDate.month.toString().padLeft(2, '0');
+
+    return '$day/$month/${localDate.year}';
+  }
+
+  String _routineExerciseDetails(Map<String, dynamic> exercise) {
+    final parts = <String>[];
+    final sets = _asInt(exercise['sets']);
+    final reps = (exercise['reps'] ?? '').toString().trim();
+    final weight = (exercise['weight'] ?? '').toString().trim();
+    final xp = _asInt(exercise['xp']);
+
+    if (sets > 0) parts.add('$sets series');
+    if (reps.isNotEmpty) parts.add('$reps reps');
+    if (weight.isNotEmpty) {
+      final numericWeight = double.tryParse(weight.replaceAll(',', '.'));
+      parts.add(numericWeight == null ? weight : '$weight kg');
+    }
+    if (xp > 0) parts.add('$xp XP');
+
+    return parts.join(' • ');
+  }
+
+  Widget _buildRoutineInfoPill({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.20 : 0.10),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 15),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoutinesOverview({
+    required int routineCount,
+    required int exerciseCount,
+    required bool isDark,
+    required Color titleColor,
+    required Color subtitleColor,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark
+            ? primaryColor.withValues(alpha: 0.18)
+            : const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : const Color(0xFFDBEAFE),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: primaryColor.withValues(alpha: isDark ? 0.32 : 0.12),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.bookmark_added_rounded,
+              color: primaryColor,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Rutinas creadas',
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$routineCount ${routineCount == 1 ? 'rutina' : 'rutinas'} con $exerciseCount ${exerciseCount == 1 ? 'ejercicio' : 'ejercicios'} en total',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: subtitleColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoutineExerciseRow({
+    required Map<String, dynamic> exercise,
+    required int index,
+    required bool isDark,
+    required Color titleColor,
+    required Color subtitleColor,
+  }) {
+    final name = (exercise['name'] ?? 'Ejercicio sin nombre').toString();
+    final muscleGroup = (exercise['muscleGroup'] ?? '').toString().trim();
+    final details = _routineExerciseDetails(exercise);
+    final subtitle = [
+      if (muscleGroup.isNotEmpty) muscleGroup,
+      if (details.isNotEmpty) details,
+    ].join(' • ');
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: secondaryColor.withValues(alpha: isDark ? 0.22 : 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '${index + 1}',
+              style: const TextStyle(
+                color: secondaryColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                if (subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: subtitleColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCreatedRoutineCard({
+    required Map<String, dynamic> routine,
+    required int index,
+    required bool isDark,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color innerCardColor,
+    required Color innerBorderColor,
+    required VoidCallback onDelete,
+  }) {
+    final exercises = _asMapList(routine['exercises']);
+    final routineName = (routine['name'] ?? 'Rutina creada').toString();
+    final createdAt = _formatShortDate(routine['createdAt']);
+    final totalXp = exercises.fold<int>(
+      0,
+      (sum, exercise) => sum + _asInt(exercise['xp']),
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: innerCardColor,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: innerBorderColor),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: warningColor.withValues(alpha: isDark ? 0.22 : 0.12),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Text(
+                  '${index + 1}',
+                  style: const TextStyle(
+                    color: warningColor,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      routineName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: titleColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      createdAt.isEmpty
+                          ? 'Rutina guardada'
+                          : 'Creada $createdAt',
+                      style: TextStyle(
+                        color: subtitleColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_outline_rounded),
+                color: dangerColor,
+                tooltip: 'Eliminar rutina',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildRoutineInfoPill(
+                icon: Icons.fitness_center_rounded,
+                label:
+                    '${exercises.length} ${exercises.length == 1 ? 'ejercicio' : 'ejercicios'}',
+                color: primaryColor,
+                isDark: isDark,
+              ),
+              if (totalXp > 0)
+                _buildRoutineInfoPill(
+                  icon: Icons.auto_awesome_rounded,
+                  label: '$totalXp XP',
+                  color: secondaryColor,
+                  isDark: isDark,
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Divider(
+            height: 1,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : const Color(0xFFE2E8F0),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Ejercicios de la rutina',
+            style: TextStyle(
+              color: titleColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          if (exercises.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Text(
+                'Esta rutina no tiene ejercicios registrados.',
+                style: TextStyle(color: subtitleColor, fontSize: 12),
+              ),
+            )
+          else
+            ...exercises.asMap().entries.map((entry) {
+              return _buildRoutineExerciseRow(
+                exercise: entry.value,
+                index: entry.key,
+                isDark: isDark,
+                titleColor: titleColor,
+                subtitleColor: subtitleColor,
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCreatedRoutinesEmptyState({
+    required bool isDark,
+    required Color titleColor,
+    required Color subtitleColor,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: warningColor.withValues(alpha: isDark ? 0.20 : 0.12),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: const Icon(
+                Icons.bookmark_border_rounded,
+                color: warningColor,
+                size: 30,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'No hay rutinas creadas',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: titleColor,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Cuando el usuario guarde una rutina, aparecerá aquí con sus ejercicios.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: subtitleColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showUserRoutines({required String userId, required String name}) {
     showModalBottomSheet(
       context: context,
@@ -1001,115 +1404,173 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         final titleColor = isDark ? Colors.white : darkText;
         final subtitleColor = isDark ? Colors.white70 : Colors.grey[700]!;
 
-        return Container(
-          height: MediaQuery.of(sheetContext).size.height * 0.78,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDark ? darkCard : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Rutinas de $name',
-                style: TextStyle(
-                  color: titleColor,
-                  fontSize: 21,
-                  fontWeight: FontWeight.w900,
-                ),
+        final innerCardColor = isDark
+            ? const Color(0xFF111827)
+            : const Color(0xFFFFFFFF);
+        final innerBorderColor = isDark
+            ? Colors.white.withValues(alpha: 0.10)
+            : const Color(0xFFE2E8F0);
+
+        return SafeArea(
+          top: false,
+          child: Container(
+            height: MediaQuery.of(sheetContext).size.height * 0.86,
+            padding: const EdgeInsets.fromLTRB(18, 10, 18, 20),
+            decoration: BoxDecoration(
+              color: isDark ? darkCard : const Color(0xFFF8FAFC),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(30),
               ),
-              const SizedBox(height: 14),
-              Expanded(
-                child: FutureBuilder<Map<String, dynamic>>(
-                  future: ApiService.getAdminUserRoutines(userId),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return Center(
-                        child: Text(
-                          'No se pudieron cargar las rutinas',
-                          style: TextStyle(color: subtitleColor),
-                        ),
-                      );
-                    }
-
-                    final sessions = List<Map<String, dynamic>>.from(
-                      snapshot.data?['sessions'] ?? [],
-                    );
-                    final saved = List<Map<String, dynamic>>.from(
-                      snapshot.data?['savedRoutines'] ?? [],
-                    );
-                    final items = [
-                      ...saved.map((item) => {...item, '_type': 'saved'}),
-                      ...sessions.map((item) => {...item, '_type': 'session'}),
-                    ];
-
-                    if (items.isEmpty) {
-                      return Center(
-                        child: Text(
-                          'Este usuario no tiene rutinas.',
-                          style: TextStyle(color: subtitleColor),
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      itemCount: items.length,
-                      itemBuilder: (context, index) {
-                        final item = items[index];
-                        final type = item['_type'].toString();
-                        final exercises = List.from(item['exercises'] ?? []);
-                        final label = type == 'saved'
-                            ? (item['name'] ?? 'Rutina guardada').toString()
-                            : (item['recommendationLabel'] ?? 'Sesión')
-                                  .toString();
-
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: Icon(
-                            type == 'saved'
-                                ? Icons.bookmark_rounded
-                                : Icons.fitness_center_rounded,
-                            color: warningColor,
-                          ),
-                          title: Text(
-                            label,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 46,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: subtitleColor.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Rutinas creadas de $name',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: titleColor,
-                              fontWeight: FontWeight.w800,
+                              fontSize: 21,
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
-                          subtitle: Text(
-                            '${exercises.length} ejercicios',
+                          const SizedBox(height: 3),
+                          Text(
+                            'Solo rutinas guardadas por el usuario',
+                            style: TextStyle(
+                              color: subtitleColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(sheetContext),
+                      icon: const Icon(Icons.close_rounded),
+                      color: titleColor,
+                      tooltip: 'Cerrar',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Expanded(
+                  child: FutureBuilder<Map<String, dynamic>>(
+                    future: ApiService.getAdminUserRoutines(userId),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Text(
+                            'No se pudieron cargar las rutinas creadas',
                             style: TextStyle(color: subtitleColor),
                           ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline_rounded),
-                            color: dangerColor,
-                            onPressed: () async {
-                              final success =
-                                  await ApiService.deleteAdminRoutine(
-                                    routineId: item['_id'].toString(),
-                                    type: type,
-                                  );
-                              if (!mounted) return;
-                              Navigator.pop(sheetContext);
-                              if (success) {
-                                _refreshUsers();
-                                _showUserRoutines(userId: userId, name: name);
-                              }
-                            },
-                          ),
                         );
-                      },
-                    );
-                  },
+                      }
+
+                      final saved = _asMapList(snapshot.data?['savedRoutines']);
+                      final totalExercises = saved.fold<int>(0, (sum, item) {
+                        return sum + _asMapList(item['exercises']).length;
+                      });
+
+                      if (saved.isEmpty) {
+                        return _buildCreatedRoutinesEmptyState(
+                          isDark: isDark,
+                          titleColor: titleColor,
+                          subtitleColor: subtitleColor,
+                        );
+                      }
+
+                      return Column(
+                        children: [
+                          _buildRoutinesOverview(
+                            routineCount: saved.length,
+                            exerciseCount: totalExercises,
+                            isDark: isDark,
+                            titleColor: titleColor,
+                            subtitleColor: subtitleColor,
+                          ),
+                          const SizedBox(height: 12),
+                          Expanded(
+                            child: ListView.separated(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              itemCount: saved.length,
+                              separatorBuilder: (_, index) =>
+                                  const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final item = saved[index];
+
+                                return _buildCreatedRoutineCard(
+                                  routine: item,
+                                  index: index,
+                                  isDark: isDark,
+                                  titleColor: titleColor,
+                                  subtitleColor: subtitleColor,
+                                  innerCardColor: innerCardColor,
+                                  innerBorderColor: innerBorderColor,
+                                  onDelete: () async {
+                                    final navigator = Navigator.of(
+                                      sheetContext,
+                                    );
+                                    final messenger = ScaffoldMessenger.of(
+                                      context,
+                                    );
+                                    final success =
+                                        await ApiService.deleteAdminRoutine(
+                                          routineId: item['_id'].toString(),
+                                          type: 'saved',
+                                        );
+                                    if (!mounted) return;
+                                    navigator.pop();
+                                    if (success) {
+                                      _refreshUsers();
+                                      _showUserRoutines(
+                                        userId: userId,
+                                        name: name,
+                                      );
+                                    } else {
+                                      messenger.showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'No se pudo eliminar la rutina',
+                                          ),
+                                          backgroundColor: dangerColor,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
