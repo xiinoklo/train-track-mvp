@@ -15,7 +15,7 @@ class WorkoutScreen extends StatefulWidget {
   final bool canSaveCustomRoutine;
 
   const WorkoutScreen({
-    Key? key,
+    super.key,
     required this.sessionId,
     required this.loadFactor,
     required this.recommendation,
@@ -23,7 +23,7 @@ class WorkoutScreen extends StatefulWidget {
     required this.exercises,
     this.canCustomizeWorkout = false,
     this.canSaveCustomRoutine = false,
-  }) : super(key: key);
+  });
 
   @override
   State<WorkoutScreen> createState() => _WorkoutScreenState();
@@ -157,7 +157,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
         final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[700]!;
 
         final Color borderColor = isDark
-            ? Colors.white.withOpacity(0.08)
+            ? Colors.white.withValues(alpha: 0.08)
             : Colors.transparent;
 
         return Scaffold(
@@ -310,7 +310,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.35 : 0.12),
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -321,7 +321,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: color.withOpacity(isDark ? 0.20 : 0.12),
+              color: color.withValues(alpha: isDark ? 0.20 : 0.12),
               borderRadius: BorderRadius.circular(18),
             ),
             child: Icon(_sessionIcon, color: color, size: 34),
@@ -436,7 +436,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
+            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -481,12 +481,12 @@ class _WorkoutScreenState extends State<WorkoutScreen>
         color: cardColor,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: dangerColor.withOpacity(isDark ? 0.35 : 0.18),
+          color: dangerColor.withValues(alpha: isDark ? 0.35 : 0.18),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
+            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -497,7 +497,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: dangerColor.withOpacity(isDark ? 0.20 : 0.12),
+              color: dangerColor.withValues(alpha: isDark ? 0.20 : 0.12),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Icon(
@@ -568,7 +568,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
+            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -579,7 +579,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
           Container(
             padding: const EdgeInsets.all(11),
             decoration: BoxDecoration(
-              color: warningColor.withOpacity(isDark ? 0.20 : 0.12),
+              color: warningColor.withValues(alpha: isDark ? 0.20 : 0.12),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
@@ -656,7 +656,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.30 : 0.045),
+            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.045),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -670,7 +670,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
               Container(
                 padding: const EdgeInsets.all(11),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
+                  color: primaryColor.withValues(alpha: isDark ? 0.22 : 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
@@ -696,7 +696,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                   vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(isDark ? 0.20 : 0.08),
+                  color: primaryColor.withValues(alpha: isDark ? 0.20 : 0.08),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -727,7 +727,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
                 color: isDark
-                    ? Colors.white.withOpacity(0.08)
+                    ? Colors.white.withValues(alpha: 0.08)
                     : const Color(0xFFE2E8F0),
               ),
             ),
@@ -751,7 +751,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                   width: 1,
                   height: 18,
                   color: isDark
-                      ? Colors.white.withOpacity(0.16)
+                      ? Colors.white.withValues(alpha: 0.16)
                       : Colors.grey[300],
                 ),
                 const SizedBox(width: 12),
@@ -824,12 +824,12 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                         Container(
                           width: double.infinity,
                           height: 170,
-                          color: Colors.black.withOpacity(0.35),
+                          color: Colors.black.withValues(alpha: 0.35),
                         ),
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: dangerColor.withOpacity(0.9),
+                            color: dangerColor.withValues(alpha: 0.9),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -848,7 +848,9 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: dangerColor.withOpacity(isDark ? 0.20 : 0.12),
+                          color: dangerColor.withValues(
+                            alpha: isDark ? 0.20 : 0.12,
+                          ),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -887,7 +889,7 @@ class _WorkoutScreenState extends State<WorkoutScreen>
   }) {
     final Color fieldColor = isDark ? const Color(0xFF111827) : Colors.white;
     final Color borderColor = isDark
-        ? Colors.white.withOpacity(0.12)
+        ? Colors.white.withValues(alpha: 0.12)
         : const Color(0xFFE2E8F0);
 
     return Container(
@@ -1229,7 +1231,9 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                     height: 72,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(isDark ? 0.22 : 0.1),
+                      color: primaryColor.withValues(
+                        alpha: isDark ? 0.22 : 0.1,
+                      ),
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Text(
@@ -1359,9 +1363,9 @@ class _WorkoutScreenState extends State<WorkoutScreen>
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.16),
+        color: Colors.white.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.22)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
       ),
       child: IconButton(
         onPressed: AppThemeController.toggleTheme,
@@ -1422,7 +1426,7 @@ class _VideoPlayerModalState extends State<_VideoPlayerModal> {
         final Color modalColor = isDark ? darkCard : Colors.white;
         final Color titleColor = isDark ? Colors.white : darkText;
         final Color handleColor = isDark
-            ? Colors.white.withOpacity(0.18)
+            ? Colors.white.withValues(alpha: 0.18)
             : Colors.grey[300]!;
 
         return Container(

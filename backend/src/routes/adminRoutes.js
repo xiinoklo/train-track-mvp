@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 const User = require("../models/User");
 const Wellness = require("../models/Wellness");
@@ -164,73 +165,46 @@ router.get("/users", protect, requireAdmin, async (req, res) => {
   }
 });
 
-router.delete("/users/:id", protect, requireAdmin, async (req, res) => {
-  try {
-    const userId = req.params.id;
-
-    if (userId === req.user.id) {
-      return res.status(400).json({
-        message: "No puedes eliminar tu propio usuario admin"
-      });
-    }
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({
-        message: "Usuario no encontrado"
-      });
-    }
-
-    await Wellness.deleteMany({
-      userId: userId
-    });
-
-    await WorkoutSession.deleteMany({
-      userId: userId
-    });
-
-    await SavedRoutine.deleteMany({
-      userId: userId
-    });
-
-    await User.findByIdAndDelete(userId);
-
-    res.json({
-      message: "Usuario y datos asociados eliminados correctamente",
-      deletedUserId: userId
-    });
-  } catch (error) {
-    console.error("Error eliminando usuario admin:", error);
-
-    res.status(500).json({
-      message: "Error al eliminar usuario"
-    });
-  }
-});
-
-router.get("/analytics", protect, requireAdmin, async (req, res) => {
+router.get("/stats", protect, requireAdmin, async (req, res) => {
   try {
     const completedSessionMatch = {
       completedAt: { $ne: null, $exists: true }
     };
-
     const [
       totalUsers,
-      totalWorkoutSessions,
       completedWorkoutSessions,
-      totalSavedRoutines,
-      totalWellnessEntries,
+      usersPerRank,
+      topExercises,
       commonExerciseDays,
       weeklyTrainingDays,
       rpeFrequency,
       preWorkoutMood
     ] = await Promise.all([
       User.countDocuments(),
-      WorkoutSession.countDocuments(),
       WorkoutSession.countDocuments(completedSessionMatch),
-      SavedRoutine.countDocuments(),
-      Wellness.countDocuments(),
+      User.aggregate([
+        { $group: { _id: "$level", count: { $sum: 1 } } },
+        { $sort: { _id: 1 } }
+      ]),
+      WorkoutSession.aggregate([
+        { $unwind: "$exercises" },
+        {
+          $group: {
+            _id: { id: "$exercises.exerciseId", name: "$exercises.name" },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { count: -1 } },
+        { $limit: 5 },
+        {
+          $project: {
+            _id: 0,
+            exerciseId: "$_id.id",
+            name: "$_id.name",
+            count: 1
+          }
+        }
+      ]),
       WorkoutSession.aggregate([
         { $match: completedSessionMatch },
         {
@@ -333,7 +307,6 @@ router.get("/analytics", protect, requireAdmin, async (req, res) => {
         { $sort: { _id: 1 } }
       ])
     ]);
-
     const totalUserWeeks = weeklyTrainingDays.reduce(
       (total, item) => total + item.count,
       0
@@ -346,37 +319,11 @@ router.get("/analytics", protect, requireAdmin, async (req, res) => {
       (total, item) => total + item.count,
       0
     );
-    const totalWeeklyDays = weeklyTrainingDays.reduce(
-      (total, item) => total + Number(item._id) * item.count,
-      0
-    );
-    const totalRpeScore = rpeFrequency.reduce(
-      (total, item) => total + Number(item._id) * item.count,
-      0
-    );
-    const totalMoodScore = preWorkoutMood.reduce(
-      (total, item) => total + Number(item._id) * item.count,
-      0
-    );
 
     res.json({
-      totals: {
-        totalUsers,
-        totalWorkoutSessions,
-        completedWorkoutSessions,
-        totalSavedRoutines,
-        totalWellnessEntries,
-        totalUserWeeks,
-        averageDaysPerWeek: totalUserWeeks
-          ? Math.round((totalWeeklyDays / totalUserWeeks) * 10) / 10
-          : 0,
-        averageRpe: totalRpeAnswers
-          ? Math.round((totalRpeScore / totalRpeAnswers) * 10) / 10
-          : 0,
-        averagePreWorkoutMood: totalMoodMatches
-          ? Math.round((totalMoodScore / totalMoodMatches) * 10) / 10
-          : 0
-      },
+      totalUsers,
+      usersPerRank,
+      topExercises,
       commonExerciseDays: seriesFromRange({
         items: commonExerciseDays,
         min: 1,
@@ -408,14 +355,95 @@ router.get("/analytics", protect, requireAdmin, async (req, res) => {
         keyName: "mood",
         labelFor: (key) => moodLabels[key],
         total: totalMoodMatches
-      }),
-      generatedAt: new Date()
+      })
     });
   } catch (error) {
-    console.error("Error obteniendo analitica admin:", error);
+    console.error("Error obteniendo estadisticas admin:", error);
+    res.status(500).json({
+      message: "Error al obtener estadisticas"
+    });
+  }
+});
+
+router.get("/users/:id/stats", protect, requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("level xp");
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    const topExercises = await WorkoutSession.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(req.params.id) } },
+      { $unwind: "$exercises" },
+      {
+        $group: {
+          _id: { id: "$exercises.exerciseId", name: "$exercises.name" },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: 5 },
+      {
+        $project: {
+          _id: 0,
+          exerciseId: "$_id.id",
+          name: "$_id.name",
+          count: 1
+        }
+      }
+    ]);
+
+    res.json({ level: user.level, xp: user.xp, topExercises });
+  } catch (error) {
+    console.error("Error obteniendo estadisticas de usuario:", error);
+    res.status(500).json({
+      message: "Error al obtener estadisticas de usuario"
+    });
+  }
+});
+
+router.delete("/users/:id", protect, requireAdmin, async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    if (userId === req.user.id) {
+      return res.status(400).json({
+        message: "No puedes eliminar tu propio usuario admin"
+      });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Usuario no encontrado"
+      });
+    }
+
+    await Wellness.deleteMany({
+      userId: userId
+    });
+
+    await WorkoutSession.deleteMany({
+      userId: userId
+    });
+
+    await SavedRoutine.deleteMany({
+      userId: userId
+    });
+
+    await User.findByIdAndDelete(userId);
+
+    res.json({
+      message: "Usuario y datos asociados eliminados correctamente",
+      deletedUserId: userId
+    });
+  } catch (error) {
+    console.error("Error eliminando usuario admin:", error);
 
     res.status(500).json({
-      message: "Error al obtener analitica"
+      message: "Error al eliminar usuario"
     });
   }
 });

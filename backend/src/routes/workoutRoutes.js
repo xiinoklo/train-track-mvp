@@ -13,7 +13,7 @@ const {
 const {
   calculateWorkoutXp,
   getExperienceFromLevel,
-  getLevelFromXp,
+  getProgressLevel,
   getRankFromLevel,
   getStartingLevel,
   XP_PER_LEVEL,
@@ -169,7 +169,9 @@ router.post("/generate", protect, async (req, res) => {
       mood
     });
 
-    const user = await User.findById(userId).select("experienceLevel level");
+    const user = await User.findById(userId).select(
+      "experienceLevel level xp createdAt"
+    );
 
     if (!user) {
       return res.status(404).json({
@@ -177,8 +179,12 @@ router.post("/generate", protect, async (req, res) => {
       });
     }
 
-    const experienceLevel =
-      user.experienceLevel || getExperienceFromLevel(user.level || 1);
+    const progressLevel = getProgressLevel({
+      xp: user.xp,
+      experienceLevel: user.experienceLevel,
+      createdAt: user.createdAt
+    });
+    const experienceLevel = getExperienceFromLevel(progressLevel);
     const canCustomizeWorkout = experienceLevel !== "principiante";
     const canSaveCustomRoutine = experienceLevel === "avanzado";
     const muscleStatus = await getMuscleRecoveryStatus(userId);
@@ -317,8 +323,8 @@ router.post("/:sessionId/rpe", protect, async (req, res) => {
       });
     }
 
-    const user = await User.findById(req.user.id).select(
-      "experienceLevel level xp"
+    let user = await User.findById(req.user.id).select(
+      "experienceLevel level xp createdAt lastXpAwardedAt"
     );
 
     if (!user) {
@@ -327,16 +333,22 @@ router.post("/:sessionId/rpe", protect, async (req, res) => {
       });
     }
 
-    const experienceLevel =
-      user.experienceLevel || getExperienceFromLevel(user.level || 1);
+    const progressLevel = getProgressLevel({
+      xp: user.xp,
+      experienceLevel: user.experienceLevel,
+      createdAt: user.createdAt
+    });
+    const experienceLevel = getExperienceFromLevel(progressLevel);
     const canCustomizeWorkout = experienceLevel !== "principiante";
     const customExercises = canCustomizeWorkout
       ? sanitizeCustomExercises(exercises, session.exercises)
       : null;
-    const alreadyAwardedXp = (session.xpAwarded || 0) > 0;
+    const wasAlreadyCompleted = session.completedAt != null;
 
     session.rpe = rpe;
-    session.completedAt = new Date();
+    if (!wasAlreadyCompleted) {
+      session.completedAt = new Date();
+    }
 
     if (customExercises && customExercises.length > 0) {
       session.exercises = customExercises;
@@ -347,35 +359,67 @@ router.post("/:sessionId/rpe", protect, async (req, res) => {
 
     let xpGained = 0;
 
-    if (!alreadyAwardedXp) {
-      xpGained = calculateWorkoutXp({
+    if (!wasAlreadyCompleted) {
+      const calculatedXp = calculateWorkoutXp({
         exercises: session.exercises,
         loadFactor: session.loadFactor,
         rpe
       });
 
       const { start, end } = getTodayRange();
-      const dailyXpResult = await WorkoutSession.aggregate([
-        {
-          $match: {
-            userId: user._id,
-            _id: { $ne: session._id },
-            completedAt: { $gte: start, $lt: end }
+      const xpForFirstWorkout = Math.min(calculatedXp, DAILY_XP_LIMIT);
+
+      if (xpForFirstWorkout > 0) {
+        const legacyXpSession = user.lastXpAwardedAt
+          ? null
+          : await WorkoutSession.findOne({
+              userId: user._id,
+              _id: { $ne: session._id },
+              completedAt: { $gte: start, $lt: end },
+              xpAwarded: { $gt: 0 }
+            })
+              .sort({ completedAt: -1 })
+              .select("completedAt");
+
+        if (legacyXpSession) {
+          user.lastXpAwardedAt = legacyXpSession.completedAt;
+        } else {
+          const updatedUser = await User.findOneAndUpdate(
+            {
+              _id: user._id,
+              $or: [
+                { lastXpAwardedAt: null },
+                { lastXpAwardedAt: { $exists: false } },
+                { lastXpAwardedAt: { $lt: start } },
+                { lastXpAwardedAt: { $gte: end } }
+              ]
+            },
+            {
+              $inc: { xp: xpForFirstWorkout },
+              $set: { lastXpAwardedAt: new Date() }
+            },
+            { new: true }
+          ).select("experienceLevel level xp createdAt lastXpAwardedAt");
+
+          if (updatedUser) {
+            user = updatedUser;
+            xpGained = xpForFirstWorkout;
+          } else {
+            user = await User.findById(user._id).select(
+              "experienceLevel level xp createdAt lastXpAwardedAt"
+            );
           }
-        },
-        { $group: { _id: null, total: { $sum: "$xpAwarded" } } }
-      ]);
-      const xpAwardedToday = dailyXpResult[0]?.total || 0;
-      xpGained = Math.min(
-        xpGained,
-        Math.max(0, DAILY_XP_LIMIT - xpAwardedToday)
-      );
+        }
+      }
 
       const minimumXp =
         (getStartingLevel(experienceLevel) - 1) * XP_PER_LEVEL;
-
-      user.xp = Math.max(user.xp || 0, minimumXp) + xpGained;
-      user.level = getLevelFromXp(user.xp);
+      user.xp = Math.max(user.xp || 0, minimumXp);
+      user.level = getProgressLevel({
+        xp: user.xp,
+        experienceLevel,
+        createdAt: user.createdAt
+      });
       user.experienceLevel = getExperienceFromLevel(user.level);
       session.xpAwarded = xpGained;
 
@@ -393,7 +437,10 @@ router.post("/:sessionId/rpe", protect, async (req, res) => {
         level: user.level,
         rank: getRankFromLevel(user.level),
         experienceLevel: user.experienceLevel,
-        xpInLevel: user.xp % XP_PER_LEVEL,
+        xpInLevel: Math.min(
+          XP_PER_LEVEL,
+          Math.max(0, user.xp - (user.level - 1) * XP_PER_LEVEL)
+        ),
         xpNeeded: XP_PER_LEVEL,
         dailyXpLimit: DAILY_XP_LIMIT
       }
