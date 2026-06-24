@@ -367,34 +367,195 @@ router.get("/stats", protect, requireAdmin, async (req, res) => {
 
 router.get("/users/:id/stats", protect, requireAdmin, async (req, res) => {
   try {
+    const userObjectId = new mongoose.Types.ObjectId(req.params.id);
     const user = await User.findById(req.params.id).select("level xp");
 
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    const topExercises = await WorkoutSession.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(req.params.id) } },
-      { $unwind: "$exercises" },
-      {
-        $group: {
-          _id: { id: "$exercises.exerciseId", name: "$exercises.name" },
-          count: { $sum: 1 }
+    const completedSessionMatch = {
+      userId: userObjectId,
+      completedAt: { $ne: null, $exists: true }
+    };
+    const [
+      completedWorkoutSessions,
+      topExercises,
+      commonExerciseDays,
+      weeklyTrainingDays,
+      rpeFrequency,
+      preWorkoutMood
+    ] = await Promise.all([
+      WorkoutSession.countDocuments(completedSessionMatch),
+      WorkoutSession.aggregate([
+        { $match: { userId: userObjectId } },
+        { $unwind: "$exercises" },
+        {
+          $group: {
+            _id: { id: "$exercises.exerciseId", name: "$exercises.name" },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { count: -1 } },
+        { $limit: 5 },
+        {
+          $project: {
+            _id: 0,
+            exerciseId: "$_id.id",
+            name: "$_id.name",
+            count: 1
+          }
         }
-      },
-      { $sort: { count: -1 } },
-      { $limit: 5 },
-      {
-        $project: {
-          _id: 0,
-          exerciseId: "$_id.id",
-          name: "$_id.name",
-          count: 1
-        }
-      }
+      ]),
+      WorkoutSession.aggregate([
+        { $match: completedSessionMatch },
+        {
+          $project: {
+            dayOfWeek: {
+              $dayOfWeek: {
+                date: "$completedAt",
+                timezone: ANALYTICS_TIMEZONE
+              }
+            }
+          }
+        },
+        { $group: { _id: "$dayOfWeek", count: { $sum: 1 } } },
+        { $sort: { _id: 1 } }
+      ]),
+      WorkoutSession.aggregate([
+        { $match: completedSessionMatch },
+        {
+          $project: {
+            isoYear: {
+              $isoWeekYear: {
+                date: "$completedAt",
+                timezone: ANALYTICS_TIMEZONE
+              }
+            },
+            isoWeek: {
+              $isoWeek: {
+                date: "$completedAt",
+                timezone: ANALYTICS_TIMEZONE
+              }
+            },
+            dayKey: {
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$completedAt",
+                timezone: ANALYTICS_TIMEZONE
+              }
+            }
+          }
+        },
+        {
+          $group: {
+            _id: {
+              isoYear: "$isoYear",
+              isoWeek: "$isoWeek"
+            },
+            days: { $addToSet: "$dayKey" }
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            daysPerWeek: { $size: "$days" }
+          }
+        },
+        { $group: { _id: "$daysPerWeek", count: { $sum: 1 } } },
+        { $sort: { _id: 1 } }
+      ]),
+      WorkoutSession.aggregate([
+        {
+          $match: {
+            ...completedSessionMatch,
+            rpe: { $gte: 1, $lte: 10 }
+          }
+        },
+        { $group: { _id: "$rpe", count: { $sum: 1 } } },
+        { $sort: { _id: 1 } }
+      ]),
+      WorkoutSession.aggregate([
+        { $match: completedSessionMatch },
+        {
+          $lookup: {
+            from: Wellness.collection.name,
+            let: {
+              sessionCreatedAt: "$createdAt"
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$userId", req.params.id] },
+                      { $lte: ["$createdAt", "$$sessionCreatedAt"] }
+                    ]
+                  }
+                }
+              },
+              { $sort: { createdAt: -1 } },
+              { $limit: 1 },
+              { $project: { mood: 1 } }
+            ],
+            as: "preWorkoutWellness"
+          }
+        },
+        { $unwind: "$preWorkoutWellness" },
+        { $group: { _id: "$preWorkoutWellness.mood", count: { $sum: 1 } } },
+        { $sort: { _id: 1 } }
+      ])
     ]);
+    const totalUserWeeks = weeklyTrainingDays.reduce(
+      (total, item) => total + item.count,
+      0
+    );
+    const totalRpeAnswers = rpeFrequency.reduce(
+      (total, item) => total + item.count,
+      0
+    );
+    const totalMoodMatches = preWorkoutMood.reduce(
+      (total, item) => total + item.count,
+      0
+    );
 
-    res.json({ level: user.level, xp: user.xp, topExercises });
+    res.json({
+      level: user.level,
+      xp: user.xp,
+      topExercises,
+      commonExerciseDays: seriesFromRange({
+        items: commonExerciseDays,
+        min: 1,
+        max: 7,
+        keyName: "dayOfWeek",
+        labelFor: (key) => dayLabels[key],
+        total: completedWorkoutSessions
+      }),
+      weeklyDayFrequency: seriesFromRange({
+        items: weeklyTrainingDays,
+        min: 1,
+        max: 7,
+        keyName: "daysPerWeek",
+        labelFor: (key) => `${key} ${key === 1 ? "dia" : "dias"}`,
+        total: totalUserWeeks
+      }),
+      rpeFrequency: seriesFromRange({
+        items: rpeFrequency,
+        min: 1,
+        max: 10,
+        keyName: "rpe",
+        labelFor: (key) => `RPE ${key}`,
+        total: totalRpeAnswers
+      }),
+      preWorkoutMood: seriesFromRange({
+        items: preWorkoutMood,
+        min: 1,
+        max: 5,
+        keyName: "mood",
+        labelFor: (key) => moodLabels[key],
+        total: totalMoodMatches
+      })
+    });
   } catch (error) {
     console.error("Error obteniendo estadisticas de usuario:", error);
     res.status(500).json({

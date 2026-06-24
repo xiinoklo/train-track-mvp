@@ -1698,6 +1698,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         final Color dialogColor = isDark ? darkCard : Colors.white;
         final Color titleColor = isDark ? Colors.white : darkText;
         final Color subtitleColor = isDark ? Colors.white70 : Colors.grey[700]!;
+        final Color innerCardColor = isDark
+            ? const Color(0xFF111827)
+            : const Color(0xFFF8FAFC);
+        final Color innerBorderColor = isDark
+            ? Colors.white.withValues(alpha: 0.10)
+            : const Color(0xFFE2E8F0);
 
         return AlertDialog(
           backgroundColor: dialogColor,
@@ -1722,8 +1728,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               ),
             ],
           ),
-          content: SizedBox(
-            width: double.maxFinite,
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(dialogContext).size.height * 0.68,
+            ),
             child: FutureBuilder<Map<String, dynamic>>(
               future: ApiService.getAdminUserStats(userId),
               builder: (ctx, snapshot) {
@@ -1747,77 +1755,139 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 final topExercises = List<Map<String, dynamic>>.from(
                   data['topExercises'] ?? [],
                 );
+                final commonDays = _asMapList(data['commonExerciseDays']);
+                final weeklyFrequency = _asMapList(data['weeklyDayFrequency']);
+                final rpeFrequency = _asMapList(data['rpeFrequency']);
+                final preWorkoutMood = _asMapList(data['preWorkoutMood']);
 
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildMiniStatCard(
-                            'Nivel',
-                            '$level',
-                            isDark,
-                            warningColor,
+                return SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildMiniStatCard(
+                              'Nivel',
+                              '$level',
+                              isDark,
+                              warningColor,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildMiniStatCard(
-                            'XP Total',
-                            '$xp',
-                            isDark,
-                            primaryColor,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildMiniStatCard(
+                              'XP Total',
+                              '$xp',
+                              isDark,
+                              primaryColor,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Ejercicios más repetidos',
-                      style: TextStyle(
-                        color: titleColor,
-                        fontWeight: FontWeight.bold,
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    if (topExercises.isEmpty)
+                      const SizedBox(height: 20),
                       Text(
-                        'No hay historial de ejercicios',
-                        style: TextStyle(color: subtitleColor, fontSize: 13),
-                      )
-                    else
-                      ...topExercises.map((ex) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  ex['name'] ?? 'Desconocido',
+                        'Ejercicios más repetidos',
+                        style: TextStyle(
+                          color: titleColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      if (topExercises.isEmpty)
+                        Text(
+                          'No hay historial de ejercicios',
+                          style: TextStyle(color: subtitleColor, fontSize: 13),
+                        )
+                      else
+                        ...topExercises.map((ex) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    ex['name'] ?? 'Desconocido',
+                                    style: TextStyle(
+                                      color: subtitleColor,
+                                      fontSize: 13,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Text(
+                                  '${ex['count']}x',
                                   style: TextStyle(
-                                    color: subtitleColor,
+                                    color: titleColor,
+                                    fontWeight: FontWeight.bold,
                                     fontSize: 13,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              Text(
-                                '${ex['count']}x',
-                                style: TextStyle(
-                                  color: titleColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                  ],
+                              ],
+                            ),
+                          );
+                        }),
+                      const SizedBox(height: 18),
+                      _buildAnalyticsBlock(
+                        title: 'Dias mas comunes de ejercitacion',
+                        subtitle: 'Dias mas comunes del usuario',
+                        icon: Icons.calendar_month_rounded,
+                        color: primaryColor,
+                        items: commonDays,
+                        emptyMessage: 'No hay rutinas completadas.',
+                        isDark: isDark,
+                        titleColor: titleColor,
+                        subtitleColor: subtitleColor,
+                        innerCardColor: innerCardColor,
+                        innerBorderColor: innerBorderColor,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildAnalyticsBlock(
+                        title: 'Frecuencia de dias por semana',
+                        subtitle: 'Semanas agrupadas por dias entrenados',
+                        icon: Icons.view_week_rounded,
+                        color: secondaryColor,
+                        items: weeklyFrequency,
+                        emptyMessage: 'No hay semanas con entrenamiento.',
+                        isDark: isDark,
+                        titleColor: titleColor,
+                        subtitleColor: subtitleColor,
+                        innerCardColor: innerCardColor,
+                        innerBorderColor: innerBorderColor,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildAnalyticsBlock(
+                        title: 'Frecuencia de RPE por rutina',
+                        subtitle: 'RPE registrado al finalizar cada rutina',
+                        icon: Icons.speed_rounded,
+                        color: warningColor,
+                        items: rpeFrequency,
+                        emptyMessage: 'No hay RPE registrado.',
+                        isDark: isDark,
+                        titleColor: titleColor,
+                        subtitleColor: subtitleColor,
+                        innerCardColor: innerCardColor,
+                        innerBorderColor: innerBorderColor,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildAnalyticsBlock(
+                        title: 'Sentimientos antes de la rutina',
+                        subtitle: 'Plano general del animo previo registrado',
+                        icon: Icons.sentiment_satisfied_alt_rounded,
+                        color: const Color(0xFFEC4899),
+                        items: preWorkoutMood,
+                        emptyMessage: 'No hay bienestar asociado a rutinas.',
+                        isDark: isDark,
+                        titleColor: titleColor,
+                        subtitleColor: subtitleColor,
+                        innerCardColor: innerCardColor,
+                        innerBorderColor: innerBorderColor,
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
