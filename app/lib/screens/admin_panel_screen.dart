@@ -1427,6 +1427,303 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     );
   }
 
+  Widget _buildUserTopExercisesTable({
+    required List<Map<String, dynamic>> exercises,
+    required bool isDark,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color innerCardColor,
+    required Color innerBorderColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: innerCardColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: innerBorderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _buildTableHeaderCell('#', width: 34, color: subtitleColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildTableHeaderCell('Ejercicio', color: subtitleColor),
+              ),
+              const SizedBox(width: 8),
+              _buildTableHeaderCell('Veces', width: 56, color: subtitleColor),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (exercises.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Text(
+                'No hay historial de ejercicios',
+                style: TextStyle(color: subtitleColor, fontSize: 13),
+              ),
+            )
+          else
+            ...exercises.asMap().entries.map((entry) {
+              final index = entry.key;
+              final exercise = entry.value;
+              final rowColor = isDark
+                  ? Colors.white.withValues(alpha: index.isEven ? 0.04 : 0.02)
+                  : (index.isEven ? Colors.white : const Color(0xFFF1F5F9));
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 7),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+                decoration: BoxDecoration(
+                  color: rowColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.06)
+                        : const Color(0xFFE2E8F0),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: warningColor.withValues(
+                          alpha: isDark ? 0.24 : 0.16,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${index + 1}',
+                        style: const TextStyle(
+                          color: warningColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        (exercise['name'] ?? 'Desconocido').toString(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: titleColor,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      width: 54,
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(
+                          alpha: isDark ? 0.28 : 0.10,
+                        ),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        '${_asInt(exercise['count'])}x',
+                        style: const TextStyle(
+                          color: primaryColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserMetricTable({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required List<Map<String, dynamic>> items,
+    required String emptyMessage,
+    required bool isDark,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color innerCardColor,
+    required Color innerBorderColor,
+  }) {
+    final rows = items.where((item) => _asInt(item['count']) > 0).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: innerCardColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: innerBorderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: isDark ? 0.22 : 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 19),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: titleColor,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: subtitleColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildTableHeaderCell('Detalle', color: subtitleColor),
+              ),
+              const SizedBox(width: 8),
+              _buildTableHeaderCell('N', width: 40, color: subtitleColor),
+              const SizedBox(width: 8),
+              _buildTableHeaderCell('%', width: 48, color: subtitleColor),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (rows.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                emptyMessage,
+                style: TextStyle(color: subtitleColor, fontSize: 13),
+              ),
+            )
+          else
+            ...rows.map((item) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 7),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        (item['label'] ?? '').toString(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: titleColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildTableValueCell(
+                      _asInt(item['count']).toString(),
+                      width: 40,
+                      color: color,
+                      isDark: isDark,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildTableValueCell(
+                      '${_formatDecimal(_asDouble(item['percentage']))}%',
+                      width: 48,
+                      color: color,
+                      isDark: isDark,
+                    ),
+                  ],
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTableHeaderCell(
+    String text, {
+    double? width,
+    required Color color,
+  }) {
+    final child = Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        color: color,
+        fontSize: 10,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 0,
+      ),
+    );
+
+    if (width == null) return child;
+    return SizedBox(width: width, child: child);
+  }
+
+  Widget _buildTableValueCell(
+    String text, {
+    required double width,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Container(
+      width: width,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.22 : 0.10),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+
   Widget _buildStatsSection({
     required bool isDark,
     required Color cardColor,
@@ -1795,43 +2092,16 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      if (topExercises.isEmpty)
-                        Text(
-                          'No hay historial de ejercicios',
-                          style: TextStyle(color: subtitleColor, fontSize: 13),
-                        )
-                      else
-                        ...topExercises.map((ex) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    ex['name'] ?? 'Desconocido',
-                                    style: TextStyle(
-                                      color: subtitleColor,
-                                      fontSize: 13,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Text(
-                                  '${ex['count']}x',
-                                  style: TextStyle(
-                                    color: titleColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
+                      _buildUserTopExercisesTable(
+                        exercises: topExercises,
+                        isDark: isDark,
+                        titleColor: titleColor,
+                        subtitleColor: subtitleColor,
+                        innerCardColor: innerCardColor,
+                        innerBorderColor: innerBorderColor,
+                      ),
                       const SizedBox(height: 18),
-                      _buildAnalyticsBlock(
+                      _buildUserMetricTable(
                         title: 'Dias mas comunes de ejercitacion',
                         subtitle: 'Dias mas comunes del usuario',
                         icon: Icons.calendar_month_rounded,
@@ -1845,7 +2115,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         innerBorderColor: innerBorderColor,
                       ),
                       const SizedBox(height: 12),
-                      _buildAnalyticsBlock(
+                      _buildUserMetricTable(
                         title: 'Frecuencia de dias por semana',
                         subtitle: 'Semanas agrupadas por dias entrenados',
                         icon: Icons.view_week_rounded,
@@ -1859,7 +2129,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         innerBorderColor: innerBorderColor,
                       ),
                       const SizedBox(height: 12),
-                      _buildAnalyticsBlock(
+                      _buildUserMetricTable(
                         title: 'Frecuencia de RPE por rutina',
                         subtitle: 'RPE registrado al finalizar cada rutina',
                         icon: Icons.speed_rounded,
@@ -1873,7 +2143,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         innerBorderColor: innerBorderColor,
                       ),
                       const SizedBox(height: 12),
-                      _buildAnalyticsBlock(
+                      _buildUserMetricTable(
                         title: 'Sentimientos antes de la rutina',
                         subtitle: 'Plano general del animo previo registrado',
                         icon: Icons.sentiment_satisfied_alt_rounded,
