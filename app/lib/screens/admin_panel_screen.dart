@@ -457,6 +457,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   final role = (user['role'] ?? 'user').toString();
                   final savedRoutineCount =
                       (user['savedRoutineCount'] as num?)?.toInt() ?? 0;
+                  final accessCount =
+                      (user['accessCount'] as num?)?.toInt() ?? 0;
                   final name = username.isNotEmpty ? username : email;
                   return _buildUserItem(
                     userId: id,
@@ -464,6 +466,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     email: email,
                     role: role,
                     routineCount: savedRoutineCount,
+                    accessCount: accessCount,
+                    lastAccessAt: user['lastAccessAt'],
                     isDark: isDark,
                     titleColor: titleColor,
                     subtitleColor: subtitleColor,
@@ -485,6 +489,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     required String email,
     required String role,
     required int routineCount,
+    required int accessCount,
+    required dynamic lastAccessAt,
     required bool isDark,
     required Color titleColor,
     required Color subtitleColor,
@@ -492,6 +498,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     required Color innerBorderColor,
   }) {
     final bool isAdmin = role == 'admin';
+    final lastAccessLabel = _formatShortDate(lastAccessAt);
+    final accessSummary = lastAccessLabel.isEmpty
+        ? 'Sin accesos registrados'
+        : '$accessCount ${accessCount == 1 ? 'acceso' : 'accesos'} | Ultimo: $lastAccessLabel';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -574,6 +585,17 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     color: warningColor,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  accessSummary,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: subtitleColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -845,22 +867,28 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   onPressed: isDeleting
                       ? null
                       : () async {
+                          final dialogNavigator = Navigator.of(dialogContext);
+                          final messenger = ScaffoldMessenger.of(parentContext);
                           setDialogState(() => isDeleting = true);
                           final success = await ApiService.deleteAdminUser(
                             userId,
                           );
-                          if (!mounted) return;
-                          Navigator.of(dialogContext).pop();
+                          if (!mounted ||
+                              !dialogNavigator.mounted ||
+                              !messenger.mounted) {
+                            return;
+                          }
+                          dialogNavigator.pop();
                           if (success) {
                             _refreshUsers();
-                            ScaffoldMessenger.of(parentContext).showSnackBar(
+                            messenger.showSnackBar(
                               SnackBar(
                                 content: Text('$name eliminado correctamente'),
                                 backgroundColor: secondaryColor,
                               ),
                             );
                           } else {
-                            ScaffoldMessenger.of(parentContext).showSnackBar(
+                            messenger.showSnackBar(
                               const SnackBar(
                                 content: Text('No se pudo eliminar el usuario'),
                                 backgroundColor: dangerColor,
@@ -939,15 +967,21 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   onPressed: isDeleting
                       ? null
                       : () async {
+                          final dialogNavigator = Navigator.of(dialogContext);
+                          final messenger = ScaffoldMessenger.of(parentContext);
                           setDialogState(() => isDeleting = true);
                           final success = await ApiService.deleteAdminExercise(
                             exerciseId,
                           );
-                          if (!mounted) return;
-                          Navigator.of(dialogContext).pop();
+                          if (!mounted ||
+                              !dialogNavigator.mounted ||
+                              !messenger.mounted) {
+                            return;
+                          }
+                          dialogNavigator.pop();
                           if (success) {
                             _refreshExercises();
-                            ScaffoldMessenger.of(parentContext).showSnackBar(
+                            messenger.showSnackBar(
                               SnackBar(
                                 content: Text(
                                   '"$name" eliminado correctamente',
@@ -956,7 +990,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                               ),
                             );
                           } else {
-                            ScaffoldMessenger.of(parentContext).showSnackBar(
+                            messenger.showSnackBar(
                               const SnackBar(
                                 content: Text(
                                   'No se pudo eliminar el ejercicio',
@@ -1512,7 +1546,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                                       routineId: item['_id'].toString(),
                                       type: 'saved',
                                     );
-                                if (!mounted) return;
+                                if (!mounted ||
+                                    !navigator.mounted ||
+                                    !messenger.mounted) {
+                                  return;
+                                }
                                 navigator.pop();
                                 if (success) {
                                   _refreshUsers();
@@ -2731,16 +2769,44 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
     return valid.contains(v) ? v : 'principiante';
   }
 
+  bool _isValidYoutubeUrl(String value) {
+    final url = value.trim().toLowerCase();
+
+    if (url.isEmpty) return true;
+
+    return url.startsWith('https://www.youtube.com/watch?v=') ||
+        url.startsWith('http://www.youtube.com/watch?v=') ||
+        url.startsWith('https://youtube.com/watch?v=') ||
+        url.startsWith('http://youtube.com/watch?v=') ||
+        url.startsWith('https://youtu.be/') ||
+        url.startsWith('http://youtu.be/') ||
+        url.startsWith('https://www.youtube.com/shorts/') ||
+        url.startsWith('http://www.youtube.com/shorts/') ||
+        url.startsWith('https://youtube.com/shorts/') ||
+        url.startsWith('http://youtube.com/shorts/');
+  }
+
   Future<void> _save() async {
     final name = nameController.text.trim();
     final description = descriptionController.text.trim();
     final instructions = instructionsController.text.trim();
+    final videoUrl = videoController.text.trim();
     final xp = (int.tryParse(xpController.text.trim()) ?? 10).clamp(0, 100);
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Ingresa el nombre del ejercicio'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!_isValidYoutubeUrl(videoUrl)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pega una URL valida de YouTube o deja el campo vacio'),
           backgroundColor: Colors.red,
         ),
       );
@@ -2764,7 +2830,7 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
               : description.isNotEmpty
               ? description
               : 'Sin instrucciones',
-          'videoUrl': videoController.text.trim(),
+          'videoUrl': videoUrl,
           'xp': xp,
         },
       );
@@ -2779,7 +2845,7 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
             : description.isNotEmpty
             ? description
             : 'Sin instrucciones',
-        videoUrl: videoController.text.trim(),
+        videoUrl: videoUrl,
         xp: xp,
       );
     }
@@ -2999,11 +3065,22 @@ class _ExerciseFormSheetState extends State<_ExerciseFormSheet> {
                   controller: videoController,
                   style: TextStyle(color: titleColor),
                   decoration: _inputDeco(
-                    'URL video YouTube (opcional)',
+                    'URL YouTube o Shorts (opcional)',
                     isDark,
                     subtitleColor,
                     inputFillColor,
                     inputBorderColor,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 7),
+                  child: Text(
+                    'Sube el video a YouTube y pega el enlace aqui. Render gratis no conserva archivos subidos.',
+                    style: TextStyle(
+                      color: subtitleColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 22),

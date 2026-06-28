@@ -17,7 +17,7 @@ backend/.env
 .DS_Store
 .vscode/
 .idea/
-app/lib/services/api_service.dart
+
 # Documentos de entrega / archivos pesados
 *.pdf
 *.docx

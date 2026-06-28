@@ -16,7 +16,7 @@ const exercises = [
     description: "Ejercicio de empuje con peso corporal para pecho y triceps.",
     instructions:
       "Mantén el cuerpo alineado, baja el pecho hacia el suelo y empuja con control.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=IODxDxX7oi4",
     isActive: true
   },
   {
@@ -26,7 +26,7 @@ const exercises = [
     description: "Empuje inclinado con énfasis en la parte superior del pecho.",
     instructions:
       "Mantén las escápulas estables, baja las mancuernas hasta una posición cómoda y empuja sin perder control.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=8iPEnn-ltC8",
     isActive: true
   },
   {
@@ -46,7 +46,7 @@ const exercises = [
     description: "Tracción vertical para dorsales.",
     instructions:
       "Tira la barra hacia la parte alta del pecho, mantén el torso estable y controla la subida.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=CAwf7n6Luuc",
     isActive: true
   },
   {
@@ -56,7 +56,7 @@ const exercises = [
     description: "Remo unilateral para dorsales y espalda media.",
     instructions:
       "Apoya una mano, mantén la espalda neutra y lleva el codo hacia la cadera.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=pYcpY20QaE8",
     isActive: true
   },
   {
@@ -76,7 +76,7 @@ const exercises = [
     description: "Ejercicio guiado para fuerza general de piernas.",
     instructions:
       "Coloca los pies firmes, baja sin despegar la cadera y empuja sin bloquear las rodillas.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=IZxyjW7MPJQ",
     isActive: true
   },
   {
@@ -86,7 +86,7 @@ const exercises = [
     description: "Trabajo unilateral para piernas, gluteos y estabilidad.",
     instructions:
       "Da un paso largo, baja controlado y empuja con la pierna adelantada para avanzar.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=L8fvypPrzzs",
     isActive: true
   },
   {
@@ -96,7 +96,7 @@ const exercises = [
     description: "Empuje vertical para hombros.",
     instructions:
       "Empuja las mancuernas sobre la cabeza, mantén el abdomen firme y baja con control.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=B-aVuyhvLHU",
     isActive: true
   },
   {
@@ -106,7 +106,7 @@ const exercises = [
     description: "Aislamiento para deltoides lateral.",
     instructions:
       "Eleva los brazos hasta la línea de los hombros con codos suaves y sin balancear el torso.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=3VcKaXpzqRo",
     isActive: true
   },
   {
@@ -116,7 +116,7 @@ const exercises = [
     description: "Trabajo de deltoide posterior y estabilidad escapular.",
     instructions:
       "Tira la cuerda hacia la cara, separa las manos al final y controla el regreso.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=eIq5CB9JfKE",
     isActive: true
   },
   {
@@ -126,7 +126,7 @@ const exercises = [
     description: "Aislamiento básico para biceps.",
     instructions:
       "Mantén los codos cerca del cuerpo, sube sin balancearte y baja lento.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=sAq_ocpRh_I",
     isActive: true
   },
   {
@@ -136,7 +136,7 @@ const exercises = [
     description: "Curl con agarre neutro para biceps y braquial.",
     instructions:
       "Sube las mancuernas con las palmas enfrentadas y controla la bajada.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=zC3nLlEvin4",
     isActive: true
   },
   {
@@ -146,7 +146,7 @@ const exercises = [
     description: "Empuje para triceps, pecho y hombro anterior.",
     instructions:
       "Baja con control, mantén hombros estables y empuja hasta extender los codos.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=2z8JmcrW-As",
     isActive: true
   },
   {
@@ -156,7 +156,7 @@ const exercises = [
     description: "Aislamiento guiado para triceps.",
     instructions:
       "Fija los codos al costado, extiende hacia abajo y evita mover los hombros.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=2-LAMcpzODU",
     isActive: true
   },
   {
@@ -166,7 +166,7 @@ const exercises = [
     description: "Circuito simple para trabajo general de brazos.",
     instructions:
       "Alterna curl de biceps y extensión de triceps con poco peso y técnica limpia.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=ykJmrZ5v0Oo",
     isActive: true
   },
   {
@@ -176,7 +176,7 @@ const exercises = [
     description: "Ejercicio isométrico para estabilidad del tronco.",
     instructions:
       "Mantén abdomen firme, cadera alineada y respira sin perder la postura.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=pSHjTRCQxIw",
     isActive: true
   },
   {
@@ -186,7 +186,7 @@ const exercises = [
     description: "Control lumbo-pélvico para core.",
     instructions:
       "Mantén la espalda baja estable mientras extiendes brazo y pierna contraria.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=g_BYB0R-4Ws",
     isActive: true
   },
   {
@@ -196,7 +196,7 @@ const exercises = [
     description: "Anti-rotación para estabilidad central.",
     instructions:
       "Empuja la polea al frente, resiste la rotación y vuelve lento al pecho.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=AH_QZLm_0-s",
     isActive: true
   },
   {
@@ -206,7 +206,7 @@ const exercises = [
     description: "Extensión de cadera con énfasis en gluteos.",
     instructions:
       "Apoya la espalda alta, sube la cadera apretando gluteos y evita arquear la zona lumbar.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=SEdqd1n0cvg",
     isActive: true
   },
   {
@@ -216,7 +216,7 @@ const exercises = [
     description: "Activación básica de gluteos con peso corporal.",
     instructions:
       "Empuja con los talones, sube la cadera y mantén una pausa breve arriba.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=wPM8icPu6H8",
     isActive: true
   },
   {
@@ -226,7 +226,7 @@ const exercises = [
     description: "Aislamiento guiado para cuadriceps.",
     instructions:
       "Extiende las rodillas con control, pausa arriba y baja sin soltar el peso.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=YyvSfVjQeL0",
     isActive: true
   },
   {
@@ -236,7 +236,7 @@ const exercises = [
     description: "Variante de sentadilla con énfasis en cuadriceps.",
     instructions:
       "Mantén el torso erguido, codos altos y baja hasta una profundidad cómoda.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=uYumuL_G_V0",
     isActive: true
   },
   {
@@ -246,7 +246,7 @@ const exercises = [
     description: "Aislamiento para isquiotibiales.",
     instructions:
       "Flexiona las rodillas con control, evita levantar la cadera y baja lento.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=1Tq3QdYUuHs",
     isActive: true
   },
   {
@@ -256,7 +256,7 @@ const exercises = [
     description: "Bisagra de cadera para femorales, gluteos y espalda baja.",
     instructions:
       "Lleva la cadera hacia atrás, mantén espalda neutra y siente tensión en la parte posterior de las piernas.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=JCXUYuzwNrM",
     isActive: true
   },
   {
@@ -266,7 +266,7 @@ const exercises = [
     description: "Aislamiento básico para gemelos.",
     instructions:
       "Sube lo más alto posible, pausa arriba y baja controlado hasta estirar.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=-M4-G8p8fmc",
     isActive: true
   },
   {
@@ -276,7 +276,7 @@ const exercises = [
     description: "Trabajo de sóleo y pantorrilla en posición sentada.",
     instructions:
       "Empuja con la punta de los pies, pausa arriba y controla el descenso.",
-    videoUrl: "",
+    videoUrl: "https://www.youtube.com/watch?v=JbyjNymZOt0",
     isActive: true
   }
 ];

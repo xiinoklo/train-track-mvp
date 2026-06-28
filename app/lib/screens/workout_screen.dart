@@ -1153,14 +1153,20 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                   : () async {
                       final name = controller.text.trim();
                       if (name.isEmpty) return;
+                      final dialogNavigator = Navigator.of(dialogContext);
+                      final messenger = ScaffoldMessenger.of(context);
                       setDialogState(() => isSaving = true);
                       final success = await ApiService.saveRoutine(
                         name: name,
                         exercises: _exercisesForSave,
                       );
-                      if (!mounted) return;
-                      Navigator.pop(dialogContext);
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      if (!mounted ||
+                          !dialogNavigator.mounted ||
+                          !messenger.mounted) {
+                        return;
+                      }
+                      dialogNavigator.pop();
+                      messenger.showSnackBar(
                         SnackBar(
                           content: Text(
                             success
@@ -1284,6 +1290,9 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                   onPressed: isSaving
                       ? null
                       : () async {
+                          final dialogNavigator = Navigator.of(dialogContext);
+                          final rootNavigator = Navigator.of(context);
+                          final messenger = ScaffoldMessenger.of(context);
                           setDialogState(() {
                             isSaving = true;
                           });
@@ -1297,17 +1306,20 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                                   : null,
                             );
 
-                            if (!mounted) return;
+                            if (!mounted ||
+                                !dialogNavigator.mounted ||
+                                !rootNavigator.mounted) {
+                              return;
+                            }
 
-                            Navigator.pop(dialogContext);
+                            dialogNavigator.pop();
 
                             final int xpGained = _asInt(result['xpGained']);
                             final userProgress = Map<String, dynamic>.from(
                               result['userProgress'] ?? {},
                             );
 
-                            Navigator.pushAndRemoveUntil(
-                              context,
+                            rootNavigator.pushAndRemoveUntil(
                               MaterialPageRoute(
                                 builder: (context) => WorkoutSummaryScreen(
                                   xpGained: xpGained,
@@ -1321,11 +1333,15 @@ class _WorkoutScreenState extends State<WorkoutScreen>
                               (route) => false,
                             );
                           } catch (e) {
-                            if (!mounted) return;
+                            if (!mounted ||
+                                !dialogNavigator.mounted ||
+                                !messenger.mounted) {
+                              return;
+                            }
 
-                            Navigator.pop(dialogContext);
+                            dialogNavigator.pop();
 
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messenger.showSnackBar(
                               const SnackBar(
                                 content: Text(
                                   'Error al guardar RPE en el backend.',

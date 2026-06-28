@@ -43,6 +43,116 @@ const lowerBodyGroups = [
   "pantorrillas"
 ];
 
+const fullBodyPriorityGroups = [
+  "piernas",
+  "pecho",
+  "espalda",
+  "core",
+  "gluteos",
+  "hombros"
+];
+
+const upperBodyPriorityGroups = [
+  "pecho",
+  "espalda",
+  "hombros",
+  "biceps",
+  "triceps",
+  "brazos"
+];
+
+const lowerBodyPriorityGroups = [
+  "piernas",
+  "gluteos",
+  "cuadriceps",
+  "isquios",
+  "femorales",
+  "pantorrillas"
+];
+
+function isFullBodyTarget(targetMuscleGroup) {
+  const normalizedTarget = normalizeText(targetMuscleGroup || "full_body");
+  return normalizedTarget === "full_body" || normalizedTarget === "full body";
+}
+
+function getExerciseKey(exercise) {
+  return String(exercise._id || exercise.id || exercise.name);
+}
+
+function selectBalancedByGroups(exercises, priorityGroups, limit) {
+  const selected = [];
+  const selectedKeys = new Set();
+
+  for (const group of priorityGroups) {
+    if (selected.length >= limit) break;
+
+    const groupKey = normalizeText(group);
+    const match = exercises.find((exercise) => {
+      const exerciseKey = getExerciseKey(exercise);
+      return (
+        !selectedKeys.has(exerciseKey) &&
+        normalizeText(exercise.muscleGroup) === groupKey
+      );
+    });
+
+    if (match) {
+      selected.push(match);
+      selectedKeys.add(getExerciseKey(match));
+    }
+  }
+
+  for (const exercise of exercises) {
+    if (selected.length >= limit) break;
+
+    const exerciseKey = getExerciseKey(exercise);
+    if (!selectedKeys.has(exerciseKey)) {
+      selected.push(exercise);
+      selectedKeys.add(exerciseKey);
+    }
+  }
+
+  return selected;
+}
+
+function selectWorkoutExercises(exercises, targetMuscleGroup, loadFactor) {
+  const normalizedTarget = normalizeText(targetMuscleGroup || "full_body");
+  const isReduced = loadFactor < 1;
+
+  if (isFullBodyTarget(targetMuscleGroup)) {
+    return selectBalancedByGroups(
+      exercises,
+      fullBodyPriorityGroups,
+      isReduced ? 4 : 6
+    );
+  }
+
+  if (
+    normalizedTarget === "tren_superior" ||
+    normalizedTarget === "tren superior" ||
+    normalizedTarget === "upper"
+  ) {
+    return selectBalancedByGroups(
+      exercises,
+      upperBodyPriorityGroups,
+      isReduced ? 4 : 6
+    );
+  }
+
+  if (
+    normalizedTarget === "tren_inferior" ||
+    normalizedTarget === "tren inferior" ||
+    normalizedTarget === "lower"
+  ) {
+    return selectBalancedByGroups(
+      exercises,
+      lowerBodyPriorityGroups,
+      isReduced ? 4 : 6
+    );
+  }
+
+  return exercises.slice(0, isReduced ? 3 : 4);
+}
+
 function filterExercisesByTarget(exercises, targetMuscleGroup) {
   const normalizedTarget = normalizeText(targetMuscleGroup || "full_body");
 
@@ -255,7 +365,13 @@ router.post("/generate", protect, async (req, res) => {
         });
       }
 
-      workoutExercises = filteredExercises.map((exercise) => ({
+      const selectedExercises = selectWorkoutExercises(
+        filteredExercises,
+        targetMuscleGroup,
+        result.factor
+      );
+
+      workoutExercises = selectedExercises.map((exercise) => ({
         exerciseId: exercise._id,
         name: exercise.name,
         muscleGroup: exercise.muscleGroup,

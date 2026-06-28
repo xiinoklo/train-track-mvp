@@ -8,7 +8,9 @@ const Wellness = require("../models/Wellness");
 const WorkoutSession = require("../models/WorkoutSession");
 const Exercise = require("../models/Exercise");
 const SavedRoutine = require("../models/SavedRoutine");
+const AccessLog = require("../models/AccessLog");
 
+const { recordAccess } = require("../services/accessLogService");
 const { protect, requireAdmin } = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -54,6 +56,16 @@ function seriesFromRange({ items, min, max, labelFor, keyName, total }) {
       percentage: percent(count, total)
     };
   });
+}
+
+function isValidVideoUrl(value) {
+  const videoUrl = String(value || "").trim();
+
+  if (!videoUrl) return true;
+
+  return /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtube\.com\/shorts\/|youtu\.be\/)/i.test(
+    videoUrl
+  );
 }
 
 router.post("/login", async (req, res) => {
@@ -107,6 +119,8 @@ router.post("/login", async (req, res) => {
       }
     );
 
+    await recordAccess({ req, user, type: "admin_login" });
+
     res.json({
       token,
       user: {
@@ -140,16 +154,36 @@ router.get("/users", protect, requireAdmin, async (req, res) => {
       { $match: { userId: { $in: userIds } } },
       { $group: { _id: "$userId", count: { $sum: 1 } } }
     ]);
+    const accessStats = await AccessLog.aggregate([
+      { $match: { userId: { $in: userIds } } },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: "$userId",
+          count: { $sum: 1 },
+          lastAccessAt: { $first: "$createdAt" },
+          lastAccessType: { $first: "$type" }
+        }
+      }
+    ]);
     const countMap = new Map(
       sessionCounts.map((item) => [item._id.toString(), item.count])
     );
     const savedCountMap = new Map(
       savedCounts.map((item) => [item._id.toString(), item.count])
     );
+    const accessStatsMap = new Map(
+      accessStats.map((item) => [item._id.toString(), item])
+    );
     const usersWithRoutines = users.map((user) => ({
       ...user,
       workoutCount: countMap.get(user._id.toString()) || 0,
-      savedRoutineCount: savedCountMap.get(user._id.toString()) || 0
+      savedRoutineCount: savedCountMap.get(user._id.toString()) || 0,
+      accessCount: accessStatsMap.get(user._id.toString())?.count || 0,
+      lastAccessAt:
+        accessStatsMap.get(user._id.toString())?.lastAccessAt || null,
+      lastAccessType:
+        accessStatsMap.get(user._id.toString())?.lastAccessType || null
     }));
 
     res.json({
@@ -594,6 +628,10 @@ router.delete("/users/:id", protect, requireAdmin, async (req, res) => {
       userId: userId
     });
 
+    await AccessLog.deleteMany({
+      userId: userId
+    });
+
     await User.findByIdAndDelete(userId);
 
     res.json({
@@ -677,6 +715,12 @@ router.post("/exercises", protect, requireAdmin, async (req, res) => {
       });
     }
 
+    if (!isValidVideoUrl(videoUrl)) {
+      return res.status(400).json({
+        message: "La URL del video debe ser de YouTube"
+      });
+    }
+
     const exercise = await Exercise.create({
       name,
       level: level || "principiante",
@@ -724,6 +768,15 @@ router.put("/exercises/:id", protect, requireAdmin, async (req, res) => {
         updates[field] = req.body[field];
       }
     });
+
+    if (
+      updates.videoUrl !== undefined &&
+      !isValidVideoUrl(updates.videoUrl)
+    ) {
+      return res.status(400).json({
+        message: "La URL del video debe ser de YouTube"
+      });
+    }
 
     const exercise = await Exercise.findByIdAndUpdate(
       exerciseId,

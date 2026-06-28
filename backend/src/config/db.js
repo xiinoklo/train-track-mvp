@@ -14,6 +14,7 @@ const seedInitialData = async () => {
     }
 
     let upsertedExercises = 0;
+    let updatedExerciseVideos = 0;
 
     for (const exercise of exercises) {
       const result = await Exercise.updateOne(
@@ -25,10 +26,28 @@ const seedInitialData = async () => {
       if (result.upsertedCount > 0) {
         upsertedExercises += 1;
       }
+
+      if (exercise.videoUrl) {
+        const videoResult = await Exercise.updateOne(
+          {
+            name: exercise.name,
+            $or: [{ videoUrl: "" }, { videoUrl: { $exists: false } }]
+          },
+          { $set: { videoUrl: exercise.videoUrl } }
+        );
+
+        updatedExerciseVideos += videoResult.modifiedCount || 0;
+      }
     }
 
     if (upsertedExercises > 0) {
       console.log(`[+] ${upsertedExercises} ejercicios nuevos inyectados.`);
+    }
+
+    if (updatedExerciseVideos > 0) {
+      console.log(
+        `[+] ${updatedExerciseVideos} videos de ejercicios actualizados.`
+      );
     }
   } catch (error) {
     console.error("[ERROR] Fallo al inyectar datos iniciales:", error);

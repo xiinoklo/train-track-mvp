@@ -1,10 +1,105 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+class WellnessSaveResult {
+  const WellnessSaveResult({required this.saved, required this.queuedOffline});
+
+  final bool saved;
+  final bool queuedOffline;
+}
+
 class ApiService {
   // static const String baseUrl = 'https://train-track-mvp.onrender.com/api';
-  static const String baseUrl = 'http://127.0.0.1:3000/api';
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://train-track-mvp.onrender.com/api',
+  );
+
+  static void _log(Object message) {
+    developer.log(message.toString(), name: 'ApiService');
+  }
+
+  static const String _pendingWellnessKey = 'pending_wellness_sync';
+
+  static Future<void> _queueWellnessForSync(
+    Map<String, int> wellnessData,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final pending = prefs.getStringList(_pendingWellnessKey) ?? [];
+
+    pending.add(
+      jsonEncode({
+        ...wellnessData,
+        'queuedAt': DateTime.now().toIso8601String(),
+      }),
+    );
+
+    await prefs.setStringList(_pendingWellnessKey, pending);
+    _log('[OFFLINE] Bienestar guardado en cola local (${pending.length})');
+  }
+
+  static Future<int> getPendingWellnessCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_pendingWellnessKey)?.length ?? 0;
+  }
+
+  static Future<int> syncPendingWellness() async {
+    final token = await getToken();
+
+    if (token == null) {
+      return 0;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final pending = prefs.getStringList(_pendingWellnessKey) ?? [];
+
+    if (pending.isEmpty) {
+      return 0;
+    }
+
+    final remaining = <String>[];
+    var synced = 0;
+
+    for (final raw in pending) {
+      try {
+        final decoded = Map<String, dynamic>.from(jsonDecode(raw));
+        final wellnessData = <String, int>{
+          'sleep': (decoded['sleep'] as num).toInt(),
+          'pain': (decoded['pain'] as num).toInt(),
+          'fatigue': (decoded['fatigue'] as num).toInt(),
+          'stress': (decoded['stress'] as num).toInt(),
+          'mood': (decoded['mood'] as num).toInt(),
+        };
+
+        final response = await http.post(
+          Uri.parse('$baseUrl/wellness'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(wellnessData),
+        );
+
+        if (response.statusCode == 201) {
+          synced++;
+        } else {
+          remaining.add(raw);
+        }
+      } catch (e) {
+        remaining.add(raw);
+      }
+    }
+
+    await prefs.setStringList(_pendingWellnessKey, remaining);
+
+    if (synced > 0) {
+      _log('[OFFLINE] Registros de bienestar sincronizados: $synced');
+    }
+
+    return synced;
+  }
 
   static Future<bool> registerUser({
     required String email,
@@ -29,14 +124,14 @@ class ApiService {
       );
 
       if (response.statusCode == 201) {
-        print('[+] Registro exitoso en DB');
+        _log('[+] Registro exitoso en DB');
         return true;
       } else {
-        print('[ERROR] Registro fallido: ${response.body}');
+        _log('[ERROR] Registro fallido: ${response.body}');
         return false;
       }
     } catch (e) {
-      print('[ERROR] Excepcion de red en registro: $e');
+      _log('[ERROR] Excepcion de red en registro: $e');
       return false;
     }
   }
@@ -62,15 +157,16 @@ class ApiService {
         await prefs.setString('jwt_token', token);
         await prefs.setString('user_role', role);
         await prefs.setBool('is_admin', isAdmin);
+        await syncPendingWellness();
 
-        print('[+] Verificacion exitosa. Token guardado.');
+        _log('[+] Verificacion exitosa. Token guardado.');
         return true;
       } else {
-        print('[ERROR] Fallo en verificacion: ${response.body}');
+        _log('[ERROR] Fallo en verificacion: ${response.body}');
         return false;
       }
     } catch (e) {
-      print('[ERROR] Excepcion de red en verificacion: $e');
+      _log('[ERROR] Excepcion de red en verificacion: $e');
       return false;
     }
   }
@@ -93,19 +189,20 @@ class ApiService {
         await prefs.setString('jwt_token', token);
         await prefs.setString('user_role', role);
         await prefs.setBool('is_admin', isAdmin);
+        await syncPendingWellness();
 
-        print('[+] Login exitoso. Token guardado.');
-        print('[+] Rol: $role | Admin: $isAdmin');
+        _log('[+] Login exitoso. Token guardado.');
+        _log('[+] Rol: $role | Admin: $isAdmin');
 
         return true;
       } else {
-        print(
+        _log(
           '[ERROR] Login fallido: ${response.statusCode} - ${response.body}',
         );
         return false;
       }
     } catch (e) {
-      print('[ERROR] Excepcion de red: $e');
+      _log('[ERROR] Excepcion de red: $e');
       return false;
     }
   }
@@ -152,7 +249,7 @@ class ApiService {
       return jsonDecode(response.body);
     }
 
-    print(
+    _log(
       '[ERROR] Error al obtener perfil: ${response.statusCode} - ${response.body}',
     );
     return null;
@@ -162,7 +259,7 @@ class ApiService {
     final token = await getToken();
 
     if (token == null) {
-      print('[ERROR] No autorizado para actualizar perfil');
+      _log('[ERROR] No autorizado para actualizar perfil');
       return false;
     }
 
@@ -187,16 +284,16 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        print('[+] Perfil actualizado correctamente');
+        _log('[+] Perfil actualizado correctamente');
         return true;
       }
 
-      print(
+      _log(
         '[ERROR] Error al actualizar perfil: ${response.statusCode} - ${response.body}',
       );
       return false;
     } catch (e) {
-      print('[ERROR] Excepcion al actualizar perfil: $e');
+      _log('[ERROR] Excepcion al actualizar perfil: $e');
       return false;
     }
   }
@@ -207,7 +304,7 @@ class ApiService {
     final token = await getToken();
 
     if (token == null) {
-      print('[ERROR] No hay token. El usuario debe iniciar sesion primero.');
+      _log('[ERROR] No hay token. El usuario debe iniciar sesion primero.');
       return null;
     }
 
@@ -224,13 +321,13 @@ class ApiService {
       if (response.statusCode == 201) {
         return jsonDecode(response.body);
       } else {
-        print(
+        _log(
           '[ERROR] Rechazo del servidor: ${response.statusCode} - ${response.body}',
         );
         return null;
       }
     } catch (e) {
-      print('[ERROR] Caida de red al generar sesion: $e');
+      _log('[ERROR] Caida de red al generar sesion: $e');
       return null;
     }
   }
@@ -274,10 +371,7 @@ class ApiService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({
-        'rpe': rpe,
-        if (exercises != null) 'exercises': exercises,
-      }),
+      body: jsonEncode({'rpe': rpe, 'exercises': ?exercises}),
     );
 
     if (response.statusCode == 200) {
@@ -287,12 +381,14 @@ class ApiService {
     throw Exception('Error al registrar RPE');
   }
 
-  static Future<bool> saveWellness(Map<String, int> wellnessData) async {
+  static Future<WellnessSaveResult> saveWellnessWithStatus(
+    Map<String, int> wellnessData,
+  ) async {
     final token = await getToken();
 
     if (token == null) {
-      print('[ERROR] No autorizado para guardar bienestar');
-      return false;
+      _log('[ERROR] No autorizado para guardar bienestar');
+      return const WellnessSaveResult(saved: false, queuedOffline: false);
     }
 
     try {
@@ -305,11 +401,24 @@ class ApiService {
         body: jsonEncode(wellnessData),
       );
 
-      return response.statusCode == 201;
+      if (response.statusCode == 201) {
+        return const WellnessSaveResult(saved: true, queuedOffline: false);
+      }
+
+      _log(
+        '[ERROR] Error al guardar bienestar: ${response.statusCode} - ${response.body}',
+      );
+      return const WellnessSaveResult(saved: false, queuedOffline: false);
     } catch (e) {
-      print('[ERROR] Error al guardar bienestar: $e');
-      return false;
+      _log('[ERROR] Error al guardar bienestar: $e');
+      await _queueWellnessForSync(wellnessData);
+      return const WellnessSaveResult(saved: true, queuedOffline: true);
     }
+  }
+
+  static Future<bool> saveWellness(Map<String, int> wellnessData) async {
+    final result = await saveWellnessWithStatus(wellnessData);
+    return result.saved;
   }
 
   static Future<Map<String, dynamic>> getRecoveryStatus() async {
@@ -356,8 +465,8 @@ class ApiService {
         },
       );
 
-      print('[ADMIN USERS] Status: ${response.statusCode}');
-      print('[ADMIN USERS] Body: ${response.body}');
+      _log('[ADMIN USERS] Status: ${response.statusCode}');
+      _log('[ADMIN USERS] Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -368,7 +477,7 @@ class ApiService {
 
       throw Exception('Error al cargar usuarios admin');
     } catch (e) {
-      print('[ADMIN USERS] Error: $e');
+      _log('[ADMIN USERS] Error: $e');
       rethrow;
     }
   }
@@ -377,7 +486,7 @@ class ApiService {
     final token = await getAdminToken();
 
     if (token == null) {
-      print('[ADMIN DELETE USER] No hay token admin');
+      _log('[ADMIN DELETE USER] No hay token admin');
       return false;
     }
 
@@ -390,12 +499,12 @@ class ApiService {
         },
       );
 
-      print('[ADMIN DELETE USER] Status: ${response.statusCode}');
-      print('[ADMIN DELETE USER] Body: ${response.body}');
+      _log('[ADMIN DELETE USER] Status: ${response.statusCode}');
+      _log('[ADMIN DELETE USER] Body: ${response.body}');
 
       return response.statusCode == 200;
     } catch (e) {
-      print('[ADMIN DELETE USER] Error: $e');
+      _log('[ADMIN DELETE USER] Error: $e');
       return false;
     }
   }
@@ -420,7 +529,7 @@ class ApiService {
         },
       );
 
-      print('[ADMIN STATS] Status: ${response.statusCode}');
+      _log('[ADMIN STATS] Status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -428,7 +537,7 @@ class ApiService {
 
       throw Exception('Error al cargar estadisticas admin');
     } catch (e) {
-      print('[ADMIN STATS] Error: $e');
+      _log('[ADMIN STATS] Error: $e');
       rethrow;
     }
   }
@@ -449,7 +558,7 @@ class ApiService {
         },
       );
 
-      print('[ADMIN USER STATS] Status: ${response.statusCode}');
+      _log('[ADMIN USER STATS] Status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -457,7 +566,7 @@ class ApiService {
 
       throw Exception('Error al cargar estadisticas del usuario');
     } catch (e) {
-      print('[ADMIN USER STATS] Error: $e');
+      _log('[ADMIN USER STATS] Error: $e');
       rethrow;
     }
   }
@@ -482,8 +591,8 @@ class ApiService {
         },
       );
 
-      print('[ADMIN EXERCISES] Status: ${response.statusCode}');
-      print('[ADMIN EXERCISES] Body: ${response.body}');
+      _log('[ADMIN EXERCISES] Status: ${response.statusCode}');
+      _log('[ADMIN EXERCISES] Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -494,7 +603,7 @@ class ApiService {
 
       throw Exception('Error al cargar ejercicios admin');
     } catch (e) {
-      print('[ADMIN EXERCISES] Error: $e');
+      _log('[ADMIN EXERCISES] Error: $e');
       rethrow;
     }
   }
@@ -512,7 +621,7 @@ class ApiService {
     final token = await getAdminToken();
 
     if (token == null) {
-      print('[ADMIN CREATE EXERCISE] No hay token admin');
+      _log('[ADMIN CREATE EXERCISE] No hay token admin');
       return false;
     }
 
@@ -535,12 +644,12 @@ class ApiService {
         }),
       );
 
-      print('[ADMIN CREATE EXERCISE] Status: ${response.statusCode}');
-      print('[ADMIN CREATE EXERCISE] Body: ${response.body}');
+      _log('[ADMIN CREATE EXERCISE] Status: ${response.statusCode}');
+      _log('[ADMIN CREATE EXERCISE] Body: ${response.body}');
 
       return response.statusCode == 201;
     } catch (e) {
-      print('[ADMIN CREATE EXERCISE] Error: $e');
+      _log('[ADMIN CREATE EXERCISE] Error: $e');
       return false;
     }
   }
@@ -552,7 +661,7 @@ class ApiService {
     final token = await getAdminToken();
 
     if (token == null) {
-      print('[ADMIN UPDATE EXERCISE] No hay token admin');
+      _log('[ADMIN UPDATE EXERCISE] No hay token admin');
       return false;
     }
 
@@ -566,12 +675,12 @@ class ApiService {
         body: jsonEncode(updates),
       );
 
-      print('[ADMIN UPDATE EXERCISE] Status: ${response.statusCode}');
-      print('[ADMIN UPDATE EXERCISE] Body: ${response.body}');
+      _log('[ADMIN UPDATE EXERCISE] Status: ${response.statusCode}');
+      _log('[ADMIN UPDATE EXERCISE] Body: ${response.body}');
 
       return response.statusCode == 200;
     } catch (e) {
-      print('[ADMIN UPDATE EXERCISE] Error: $e');
+      _log('[ADMIN UPDATE EXERCISE] Error: $e');
       return false;
     }
   }
@@ -580,7 +689,7 @@ class ApiService {
     final token = await getAdminToken();
 
     if (token == null) {
-      print('[ADMIN DELETE EXERCISE] No hay token admin');
+      _log('[ADMIN DELETE EXERCISE] No hay token admin');
       return false;
     }
 
@@ -593,12 +702,12 @@ class ApiService {
         },
       );
 
-      print('[ADMIN DELETE EXERCISE] Status: ${response.statusCode}');
-      print('[ADMIN DELETE EXERCISE] Body: ${response.body}');
+      _log('[ADMIN DELETE EXERCISE] Status: ${response.statusCode}');
+      _log('[ADMIN DELETE EXERCISE] Body: ${response.body}');
 
       return response.statusCode == 200;
     } catch (e) {
-      print('[ADMIN DELETE EXERCISE] Error: $e');
+      _log('[ADMIN DELETE EXERCISE] Error: $e');
       return false;
     }
   }

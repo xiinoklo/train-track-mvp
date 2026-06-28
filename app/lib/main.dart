@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'services/api_service.dart';
+import 'services/notification_service.dart';
 import 'theme/app_theme_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppThemeController.loadTheme();
+  await NotificationService.initialize();
 
   runApp(const TrainTrackApp());
 }
@@ -61,9 +63,7 @@ class AuthWrapper extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             backgroundColor: Color(0xFF1E3A8A),
-            body: Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
+            body: Center(child: CircularProgressIndicator(color: Colors.white)),
           );
         }
 

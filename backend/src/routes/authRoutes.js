@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const rateLimit = require("express-rate-limit");
 const User = require("../models/User");
 const { sendVerificationEmail } = require("../services/emailService");
+const { recordAccess } = require("../services/accessLogService");
 const {
   getStartingLevel,
   XP_PER_LEVEL
@@ -136,6 +137,8 @@ router.post("/verify", async (req, res) => {
       }
     );
 
+    await recordAccess({ req, user, type: "verification" });
+
     res.json({
       token,
       userId: user._id,
@@ -200,6 +203,8 @@ router.post("/login", loginLimiter, async (req, res) => {
         expiresIn: "30d"
       }
     );
+
+    await recordAccess({ req, user, type: "login" });
 
     res.json({
       token,

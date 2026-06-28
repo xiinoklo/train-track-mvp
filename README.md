@@ -67,6 +67,17 @@ static const String baseUrl = 'http://10.0.2.2:3000/api';
 Inicia la aplicación en tu emulador o dispositivo:
 > flutter run
 
+Nota actualizada: la URL de la API tambien se puede configurar sin editar codigo mediante `--dart-define=API_BASE_URL=...`.
+
+Windows/web/local:
+> flutter run --dart-define=API_BASE_URL=http://127.0.0.1:3000/api
+
+Android Emulator:
+> flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api
+
+Dispositivo fisico en la misma red:
+> flutter run --dart-define=API_BASE_URL=http://192.168.1.100:3000/api
+
 ---
 
 ## 🗂 Estructura del Proyecto

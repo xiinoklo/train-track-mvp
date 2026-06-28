@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme_controller.dart';
 import '../utils/navigation_guard.dart';
+import 'dashboard_screen.dart';
 import 'workout_blocked_screen.dart';
 import 'workout_screen.dart';
 
@@ -173,6 +174,8 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
       isLoading = true;
     });
 
+    var wellnessSaved = false;
+
     try {
       final wellnessData = <String, int>{
         "sleep": sleep.round(),
@@ -186,6 +189,41 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
         ...wellnessData,
         "targetMuscleGroup": targetMuscleGroup,
       };
+
+      final saveResult = await ApiService.saveWellnessWithStatus(wellnessData);
+      wellnessSaved = saveResult.saved;
+
+      if (!saveResult.saved) {
+        if (!mounted) return;
+
+        setState(() {
+          isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo guardar tu bienestar. Intenta de nuevo.'),
+            backgroundColor: dangerColor,
+          ),
+        );
+
+        return;
+      }
+
+      if (saveResult.queuedOffline) {
+        if (!mounted) return;
+
+        setState(() {
+          isLoading = false;
+        });
+
+        _returnToDashboardWithMessage(
+          'Bienestar guardado offline. Se sincronizará cuando vuelva la conexión.',
+          secondaryColor,
+        );
+
+        return;
+      }
 
       final blockedMuscles = await _getBlockedBeginnerMuscles();
 
@@ -210,8 +248,6 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
 
         return;
       }
-
-      await ApiService.saveWellness(wellnessData);
 
       final data = await ApiService.generateWorkout(workoutData);
 
@@ -268,11 +304,9 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
           isLoading = false;
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al generar la rutina. Revisa tu conexion.'),
-            backgroundColor: Colors.red,
-          ),
+        _returnToDashboardWithMessage(
+          'Bienestar guardado. No se pudo generar la rutina; revisa tu conexión.',
+          warningColor,
         );
       }
     } catch (e) {
@@ -281,6 +315,15 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
       setState(() {
         isLoading = false;
       });
+
+      if (wellnessSaved) {
+        _returnToDashboardWithMessage(
+          'Bienestar guardado. No se pudo generar la rutina; revisa tu conexión.',
+          warningColor,
+        );
+
+        return;
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -291,6 +334,18 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
         ),
       );
     }
+  }
+
+  void _returnToDashboardWithMessage(String message, Color backgroundColor) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: backgroundColor),
+    );
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const DashboardScreen()),
+      (route) => false,
+    );
   }
 
   @override
@@ -368,7 +423,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                               const SizedBox(height: 18),
 
                               _buildMetricCard(
-                                title: 'Calidad de sueno',
+                                title: 'Calidad de sueño',
                                 subtitle: '1 = muy mala | 5 = excelente',
                                 icon: Icons.bedtime_outlined,
                                 value: sleep,
@@ -408,7 +463,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                               ),
 
                               _buildMetricCard(
-                                title: 'Nivel de estres',
+                                title: 'Nivel de estrés',
                                 subtitle: '1 = tranquilo | 5 = muy estresado',
                                 icon: Icons.psychology_alt_outlined,
                                 value: stress,
@@ -422,7 +477,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                               ),
 
                               _buildMetricCard(
-                                title: 'Estado de animo',
+                                title: 'Estado de ánimo',
                                 subtitle: '1 = bajo | 5 = excelente',
                                 icon: Icons.sentiment_satisfied_alt_outlined,
                                 value: mood,
@@ -521,7 +576,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Evalua tu estado actual',
+                  'Evalúa tu estado actual',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
@@ -530,7 +585,7 @@ class _WellnessFormScreenState extends State<WellnessFormScreen>
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Usa una escala del 1 al 5 y elige que quieres entrenar hoy.',
+                  'Usa una escala del 1 al 5 y elige qué quieres entrenar hoy.',
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.35,

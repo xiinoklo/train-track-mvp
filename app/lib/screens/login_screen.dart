@@ -162,20 +162,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              width: 82,
-                              height: 82,
+                              width: 174,
+                              height: 92,
+                              clipBehavior: Clip.antiAlias,
                               decoration: BoxDecoration(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.08)
-                                    : primaryColor.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Image.asset(
-                                  'assets/images/traintrack_logo.png',
-                                  fit: BoxFit.contain,
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(22),
+                                border: Border.all(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.18)
+                                      : primaryColor.withValues(alpha: 0.10),
                                 ),
+                              ),
+                              child: Image.asset(
+                                'assets/images/traintrack_logo.png',
+                                fit: BoxFit.cover,
+                                alignment: Alignment.topCenter,
                               ),
                             ),
 

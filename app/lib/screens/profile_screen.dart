@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 import '../theme/app_theme_controller.dart';
 import '../utils/navigation_guard.dart';
 import 'login_screen.dart';
@@ -18,6 +19,8 @@ class _ProfileScreenState extends State<ProfileScreen>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  bool _dailyReminderEnabled = false;
+  bool _updatingReminder = false;
 
   static const Color primaryColor = Color(0xFF1E3A8A);
   static const Color secondaryColor = Color(0xFF22C55E);
@@ -49,6 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward();
+    _loadReminderState();
   }
 
   @override
@@ -98,6 +102,56 @@ class _ProfileScreenState extends State<ProfileScreen>
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),
       (route) => false,
+    );
+  }
+
+  Future<void> _loadReminderState() async {
+    final enabled = await NotificationService.isDailyReminderEnabled();
+    if (!mounted) return;
+    setState(() => _dailyReminderEnabled = enabled);
+  }
+
+  Future<void> _toggleDailyReminder(bool enabled) async {
+    if (_updatingReminder) return;
+
+    final previousValue = _dailyReminderEnabled;
+
+    setState(() {
+      _dailyReminderEnabled = enabled;
+      _updatingReminder = true;
+    });
+
+    var success = false;
+
+    try {
+      if (enabled) {
+        success = await NotificationService.scheduleDailyReminder();
+      } else {
+        await NotificationService.cancelDailyReminder();
+        success = true;
+      }
+    } catch (_) {
+      success = false;
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _dailyReminderEnabled = success ? enabled : previousValue;
+      _updatingReminder = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? enabled
+                    ? 'Recordatorio diario activado'
+                    : 'Recordatorio diario desactivado'
+              : 'No se pudo activar el permiso de notificaciones',
+        ),
+        backgroundColor: success ? secondaryColor : dangerColor,
+      ),
     );
   }
 
@@ -203,6 +257,14 @@ class _ProfileScreenState extends State<ProfileScreen>
                                 const SizedBox(height: 18),
                                 _buildUserInfoCard(
                                   user: user,
+                                  isDark: isDark,
+                                  cardColor: cardColor,
+                                  titleColor: titleColor,
+                                  subtitleColor: subtitleColor,
+                                  borderColor: borderColor,
+                                ),
+                                const SizedBox(height: 18),
+                                _buildReminderCard(
                                   isDark: isDark,
                                   cardColor: cardColor,
                                   titleColor: titleColor,
@@ -514,6 +576,58 @@ class _ProfileScreenState extends State<ProfileScreen>
             isDark: isDark,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildReminderCard({
+    required bool isDark,
+    required Color cardColor,
+    required Color titleColor,
+    required Color subtitleColor,
+    required Color borderColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: SwitchListTile.adaptive(
+        value: _dailyReminderEnabled,
+        onChanged: _updatingReminder ? null : _toggleDailyReminder,
+        activeThumbColor: secondaryColor,
+        contentPadding: EdgeInsets.zero,
+        secondary: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: secondaryColor.withValues(alpha: isDark ? 0.18 : 0.12),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Icon(
+            Icons.notifications_active_rounded,
+            color: secondaryColor,
+          ),
+        ),
+        title: Text(
+          'Recordatorio diario',
+          style: TextStyle(color: titleColor, fontWeight: FontWeight.w900),
+        ),
+        subtitle: Text(
+          _updatingReminder
+              ? 'Actualizando recordatorio...'
+              : 'A las 8:00 PM te recordaremos registrar tu sesión y RPE.',
+          style: TextStyle(color: subtitleColor, fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }

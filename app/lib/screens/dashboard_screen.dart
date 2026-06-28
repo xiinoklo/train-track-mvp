@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme_controller.dart';
-import 'wellness_form_screen.dart';
 import 'history_screen.dart';
 import 'recovery_screen.dart';
 import 'profile_screen.dart';
 import 'admin_panel_screen.dart';
 import 'saved_routines_screen.dart';
+import 'video_preload_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -58,6 +58,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     _controller.forward();
     _loadAdminState();
+    _syncPendingWellness();
   }
 
   Future<void> _loadAdminState() async {
@@ -80,6 +81,22 @@ class _DashboardScreenState extends State<DashboardScreen>
     });
   }
 
+  Future<void> _syncPendingWellness() async {
+    final pendingBefore = await ApiService.getPendingWellnessCount();
+    final synced = await ApiService.syncPendingWellness();
+
+    if (!mounted || pendingBefore == 0 || synced == 0) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Bienestar offline sincronizado correctamente.'),
+        backgroundColor: secondaryColor,
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -89,7 +106,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   void _goToWellnessForm() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const WellnessFormScreen()),
+      MaterialPageRoute(builder: (context) => const VideoPreloadScreen()),
     );
   }
 
